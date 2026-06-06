@@ -12,12 +12,17 @@ import { api } from './api.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   enregistrerSW();
-  await initNavbar();
+  const session = await initNavbar();
   await Promise.all([
     chargerVedettes(),
     chargerNouveautes(),
   ]);
   initHamburger();
+  /* Pubs Monetag — chargées après le contenu, respecte les abonnés */
+  if (window.initAds) {
+    const abonne = session?.user?.user_metadata?.plan === 'premium';
+    window.initAds(abonne);
+  }
 });
 
 /* ============================================================
@@ -46,6 +51,7 @@ function enregistrerSW() {
 
 async function initNavbar() {
   const session = await getSession();
+  /* retourne la session pour que DOMContentLoaded puisse l'utiliser */
   const navbarActions = document.getElementById('navbar-actions');
   const heroActions   = document.getElementById('hero-actions');
   const heroStats     = document.getElementById('hero-stats');
@@ -77,6 +83,7 @@ async function initNavbar() {
   `;
 
   chargerStats();
+  return session;
 }
 
 /* ============================================================
