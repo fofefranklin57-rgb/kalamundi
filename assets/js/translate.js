@@ -75,11 +75,18 @@ export async function traduire(chapitreId, contenu, langueCible, langueSource = 
    ============================================================ */
 
 async function _appelEdgeFunction(texte, langueCible, langueSource = 'fr') {
-  const segments = _decouper(texte, 900); // 900 chars max → moins de requêtes
+  // Supprimer l'en-tête Project Gutenberg (en anglais) si présent
+  const contenuNet = _supprimerEnTeteGutenberg(texte);
+  const segments = _decouper(contenuNet, 480); // 480 chars — limite MyMemory 500
   const traduits = [];
   for (const s of segments) {
-    traduits.push(await _traduireSegment(s, langueSource, langueCible));
-    if (segments.length > 1) await new Promise(r => setTimeout(r, 50));
+    try {
+      traduits.push(await _traduireSegment(s, langueSource, langueCible));
+    } catch (e) {
+      // En cas d'erreur sur un segment, garder le texte original
+      traduits.push(s);
+    }
+    if (segments.length > 1) await new Promise(r => setTimeout(r, 200));
   }
   return traduits.join(' ');
 }
@@ -96,15 +103,28 @@ async function _traduireSegment(segment, langueSource, langueCible) {
 
   const json = await reponse.json();
 
-  /* MyMemory retourne responseStatus 200 si OK, 429 si quota dépassé */
   if (json.responseStatus === 429) {
-    throw new Error('Quota de traduction journalier atteint. Réessayez demain.');
+    throw new Error('Quota journalier atteint.');
   }
-  if (!json.responseData?.translatedText) {
-    throw new Error('Réponse MyMemory invalide');
+  if (json.responseStatus !== 200 || !json.responseData?.translatedText) {
+    throw new Error(`MyMemory: ${json.responseStatus} — ${json.responseDetails || '?'}`);
   }
 
   return json.responseData.translatedText;
+}
+
+/* Supprime le préambule Project Gutenberg (toujours en anglais)
+   pour éviter de "traduire" de l'anglais comme du français */
+function _supprimerEnTeteGutenberg(texte) {
+  // Les textes Gutenberg finissent leur en-tête par "*** START OF..."
+  const marqueur = /\*{3}\s*START OF (THIS |THE )?PROJECT GUTENBERG/i;
+  const match = texte.search(marqueur);
+  if (match !== -1) {
+    // Sauter jusqu'à la fin de la ligne du marqueur
+    const apres = texte.indexOf('\n', match);
+    return apres !== -1 ? texte.slice(apres + 1).trim() : texte;
+  }
+  return texte;
 }
 
 function _decouper(texte, maxLen) {
