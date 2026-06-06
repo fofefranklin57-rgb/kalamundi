@@ -79,11 +79,11 @@
   <path d="M61 67 L64 60 L67 68 Z" fill="#D97706"/>
 
   <!-- TEXTE KALAMUNDI -->
-  <text x="142" y="72" font-family="Georgia, 'Times New Roman', serif"
-        font-size="42" font-weight="700" fill="url(#text-grad)" letter-spacing="1">Kalamundi</text>
+  <text x="142" y="75" font-family="Garamond, 'EB Garamond', 'Cormorant Garamond', 'Times New Roman', serif"
+        font-size="46" font-weight="700" fill="url(#text-grad)" letter-spacing="1">Kalamundi</text>
 
   <!-- Slogan -->
-  <text x="144" y="94" font-family="Georgia, 'Times New Roman', serif"
+  <text x="144" y="96" font-family="Garamond, 'EB Garamond', 'Cormorant Garamond', 'Times New Roman', serif"
         font-size="13" fill="#16A34A" letter-spacing="4" opacity="0.8">LA PLUME DU MONDE</text>
 
   <!-- Ligne dorée sous slogan -->
