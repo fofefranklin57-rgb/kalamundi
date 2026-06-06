@@ -7,8 +7,11 @@
 
 import { api } from './api.js';
 
-const SUPABASE_URL  = 'https://iobieffnaauecyukecds.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvYmllZmZuYWF1ZWN5dWtlY2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDIzNTEsImV4cCI6MjA5NjMxODM1MX0.w1_Zv9VeVvoLlt1H0d7wN8To-A5DAxSfszV0kJ_5NRE';
+/* MyMemory API — gratuit, pas de clé requise
+   Quota : 10 000 mots/jour (inscription email gratuite)
+   Avec cache Supabase : chaque chapitre traduit une seule fois */
+const MYMEMORY_URL = 'https://api.mymemory.translated.net/get';
+const MYMEMORY_EMAIL = ''; /* optionnel — ajouter un email pour 10k mots/jour au lieu de 1k */
 
 /* Langues disponibles dans le lecteur — triées alpha nom natif */
 export const LANGUES_LECTURE = [
@@ -66,27 +69,65 @@ export async function traduire(chapitreId, contenu, langueCible) {
 }
 
 /* ============================================================
-   Appel à l'Edge Function Supabase
+   Appel MyMemory API
+   Les textes longs sont découpés en segments de 500 chars max
+   (limite MyMemory par requête)
    ============================================================ */
 
 async function _appelEdgeFunction(texte, langueCible) {
-  const reponse = await fetch(`${SUPABASE_URL}/functions/v1/traduire`, {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${SUPABASE_ANON}`,
-    },
-    body: JSON.stringify({ texte, langue_cible: langueCible }),
-  });
+  const segments = _decouper(texte, 480);
+  const traduits = await Promise.all(segments.map(s => _traduireSegment(s, langueCible)));
+  return traduits.join(' ');
+}
 
-  if (!reponse.ok) {
-    const err = await reponse.text().catch(() => '');
-    throw new Error(`Edge Function erreur ${reponse.status}: ${err}`);
-  }
+async function _traduireSegment(segment, langueCible) {
+  const params = new URLSearchParams({
+    q:        segment,
+    langpair: `auto|${langueCible}`,
+  });
+  if (MYMEMORY_EMAIL) params.set('de', MYMEMORY_EMAIL);
+
+  const reponse = await fetch(`${MYMEMORY_URL}?${params}`);
+  if (!reponse.ok) throw new Error(`MyMemory HTTP ${reponse.status}`);
 
   const json = await reponse.json();
-  if (!json.traduit) throw new Error('Réponse Edge Function invalide');
-  return json.traduit;
+
+  /* MyMemory retourne responseStatus 200 si OK, 429 si quota dépassé */
+  if (json.responseStatus === 429) {
+    throw new Error('Quota de traduction journalier atteint. Réessayez demain.');
+  }
+  if (!json.responseData?.translatedText) {
+    throw new Error('Réponse MyMemory invalide');
+  }
+
+  return json.responseData.translatedText;
+}
+
+function _decouper(texte, maxLen) {
+  if (texte.length <= maxLen) return [texte];
+
+  const segments = [];
+  const phrases  = texte.split(/(?<=[.!?])\s+/); // coupe après ponctuation
+  let courant    = '';
+
+  for (const phrase of phrases) {
+    if ((courant + ' ' + phrase).trim().length <= maxLen) {
+      courant = (courant + ' ' + phrase).trim();
+    } else {
+      if (courant) segments.push(courant);
+      /* phrase seule trop longue → découpage brutal */
+      if (phrase.length > maxLen) {
+        for (let i = 0; i < phrase.length; i += maxLen) {
+          segments.push(phrase.slice(i, i + maxLen));
+        }
+        courant = '';
+      } else {
+        courant = phrase;
+      }
+    }
+  }
+  if (courant) segments.push(courant);
+  return segments;
 }
 
 /* ============================================================
