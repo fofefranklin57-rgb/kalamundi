@@ -1,0 +1,417 @@
+/* ============================================================
+   publish.css — Page de publication d'une œuvre
+   Kalamundi — La Plume du Monde
+   ============================================================ */
+
+.publish-page {
+  max-width: 860px;
+  margin-inline: auto;
+  padding: var(--spacing-lg) var(--spacing-md);
+}
+
+/* ============================================================
+   En-tête
+   ============================================================ */
+
+.publish-header {
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.publish-header__title {
+  font-size: var(--font-size-2xl);
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.publish-header__sub {
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+}
+
+/* ============================================================
+   Étapes (stepper)
+   ============================================================ */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: var(--spacing-xl);
+  overflow-x: auto;
+  padding-bottom: var(--spacing-xs);
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  position: relative;
+  flex: 1;
+  min-width: 80px;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background-color: var(--border-color);
+  z-index: 0;
+}
+
+.step--done:not(:last-child)::after {
+  background-color: var(--color-primary);
+}
+
+.step__num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background-color: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-light);
+  position: relative;
+  z-index: 1;
+  transition: all var(--transition-normal);
+}
+
+.step--active .step__num {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.step--done .step__num {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.step__label {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.step--active .step__label {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ============================================================
+   Sections du formulaire
+   ============================================================ */
+
+.publish-section {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  display: none;
+}
+
+.publish-section.is-active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+.publish-section__title {
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.publish-section__title::before {
+  content: attr(data-icon);
+  font-size: 20px;
+}
+
+.publish-section__hint {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-md);
+  border-left: 3px solid var(--color-accent);
+}
+
+/* ============================================================
+   Sélecteur de mode de saisie
+   ============================================================ */
+
+.mode-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background-color: var(--bg-main);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.mode-btn:hover {
+  border-color: var(--color-primary-light);
+  background-color: var(--bg-secondary);
+}
+
+.mode-btn.is-active {
+  border-color: var(--color-primary);
+  background-color: var(--bg-secondary);
+}
+
+.mode-btn__icon { font-size: 28px; }
+.mode-btn__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+.mode-btn__sub {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+}
+
+.mode-btn--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================================
+   Éditeur WYSIWYG simple
+   ============================================================ */
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: var(--spacing-sm);
+  border: 1.5px solid var(--border-color);
+  border-bottom: none;
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+  background-color: var(--bg-secondary);
+}
+
+.editor-toolbar__btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--bg-main);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-family: inherit;
+  transition: background-color var(--transition-fast);
+}
+
+.editor-toolbar__btn:hover {
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+  border-color: var(--color-primary);
+}
+
+.editor-content {
+  min-height: 320px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+  padding: var(--spacing-md);
+  font-family: var(--font-lecture);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-loose);
+  color: var(--text-primary);
+  background-color: var(--bg-main);
+  outline: none;
+  overflow-y: auto;
+}
+
+.editor-content:focus {
+  border-color: var(--color-primary);
+}
+
+.editor-content:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-light);
+  pointer-events: none;
+}
+
+.editor-counter {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  text-align: right;
+  margin-top: var(--spacing-xs);
+}
+
+/* ============================================================
+   Aperçu couverture
+   ============================================================ */
+
+.cover-picker {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: var(--spacing-lg);
+  align-items: start;
+}
+
+.cover-preview {
+  width: 140px;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--border-radius-md);
+  border: 2px dashed var(--border-color);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-secondary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.cover-preview:hover { border-color: var(--color-primary); }
+
+.cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-preview__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  text-align: center;
+  padding: var(--spacing-sm);
+}
+
+.cover-preview__placeholder span { font-size: 32px; }
+
+/* ============================================================
+   Licence
+   ============================================================ */
+
+.licence-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.licence-card {
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.licence-card:hover { border-color: var(--color-primary-light); }
+.licence-card.is-active { border-color: var(--color-primary); background-color: var(--bg-secondary); }
+
+.licence-card__titre {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.licence-card__desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   Certificat d'horodatage
+   ============================================================ */
+
+.certificat {
+  border: 2px solid var(--color-accent);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, #FFFBEE 0%, #FFF8DC 100%);
+  text-align: center;
+  display: none;
+}
+
+.certificat.is-visible { display: block; animation: fadeIn 0.5s ease; }
+
+.certificat__icon { font-size: 48px; margin-bottom: var(--spacing-sm); }
+
+.certificat__titre {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.certificat__hash {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  word-break: break-all;
+  margin-block: var(--spacing-sm);
+}
+
+.certificat__date {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   Navigation entre étapes
+   ============================================================ */
+
+.publish-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+}
+
+.publish-progress {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 600px) {
+  .mode-selector { grid-template-columns: 1fr; }
+  .licence-options { grid-template-columns: 1fr; }
+  .cover-picker { grid-template-columns: 1fr; }
+  .cover-preview { width: 100%; max-width: 200px; margin-inline: auto; }
+  .stepper { justify-content: flex-start; }
+}

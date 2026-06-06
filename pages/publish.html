@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Publier une œuvre — Kalamundi, La Plume du Monde" />
+  <title>Publier mon œuvre — Kalamundi</title>
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/publish.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">Kalamundi</a>
+      <div class="navbar__nav" id="navbar-nav">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/library.html" class="navbar__link">Bibliothèque</a>
+        <a href="/pages/publish.html" class="navbar__link navbar__link--active">Publier</a>
+      </div>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="navbar-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="publish-page">
+
+      <!-- En-tête -->
+      <div class="publish-header">
+        <h1 class="publish-header__title">✍️ Publie ton œuvre</h1>
+        <p class="publish-header__sub">
+          Que tu écrives pour la première fois ou que tu sois un auteur confirmé —
+          ta plume mérite d'être lue.
+        </p>
+      </div>
+
+      <!-- Stepper -->
+      <div class="stepper" id="stepper" role="list">
+        <div class="step step--active" data-step="1" role="listitem">
+          <div class="step__num">1</div>
+          <div class="step__label">Infos</div>
+        </div>
+        <div class="step" data-step="2" role="listitem">
+          <div class="step__num">2</div>
+          <div class="step__label">Contenu</div>
+        </div>
+        <div class="step" data-step="3" role="listitem">
+          <div class="step__num">3</div>
+          <div class="step__label">Droits</div>
+        </div>
+        <div class="step" data-step="4" role="listitem">
+          <div class="step__num">4</div>
+          <div class="step__label">Publier</div>
+        </div>
+      </div>
+
+      <!-- Alerte globale -->
+      <div class="alert alert--error publish-alert hidden" role="alert" id="publish-alert"></div>
+
+      <!-- ====================================================
+           ÉTAPE 1 — Informations générales
+           ==================================================== -->
+      <div class="publish-section is-active" data-section="1">
+        <h2 class="publish-section__title" data-icon="📖">Informations sur ton œuvre</h2>
+        <p class="publish-section__hint">
+          Ces informations aident les lecteurs à trouver et comprendre ton œuvre.
+          Ne t'inquiète pas — tu pourras les modifier après publication.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label form-label--required" for="titre">Titre de l'œuvre</label>
+          <input class="form-input" type="text" id="titre" name="titre"
+            placeholder="Ex : Les Étoiles de Douala, Ma Vie en Chansons..."
+            maxlength="200" required />
+          <span class="form-hint">Choisis un titre qui te représente — même imparfait</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label--required" for="genre">Genre littéraire</label>
+          <select class="form-select" id="genre" name="genre" required>
+            <option value="">— Choisir un genre —</option>
+            <option value="roman">Roman</option>
+            <option value="nouvelle">Nouvelle</option>
+            <option value="poesie">Poésie</option>
+            <option value="essai">Essai</option>
+            <option value="conte">Conte traditionnel</option>
+            <option value="autobiographie">Autobiographie / Mémoires</option>
+            <option value="recit_voyage">Récit de voyage</option>
+            <option value="recit_historique">Récit historique</option>
+            <option value="temoignage">Témoignage</option>
+            <option value="thriller">Thriller / Policier</option>
+            <option value="romance">Romance</option>
+            <option value="sf_fantasy">Science-fiction / Fantasy</option>
+            <option value="jeunesse">Littérature jeunesse</option>
+            <option value="litterature_orale">Littérature orale transcrite</option>
+            <option value="philosophie">Philosophie</option>
+            <option value="developpement_perso">Développement personnel</option>
+            <option value="humour">Humour / Satire</option>
+            <option value="bd">Bande dessinée / Roman graphique</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label--required" for="langue">Langue originale</label>
+          <select class="form-select" id="langue" name="langue" required>
+            <option value="fr" selected>Français</option>
+            <option value="en">Anglais</option>
+            <option value="es">Espagnol</option>
+            <option value="pt">Portugais</option>
+            <option value="ar">Arabe</option>
+            <option value="sw">Swahili</option>
+            <option value="ha">Haoussa</option>
+            <option value="yo">Yoruba</option>
+            <option value="ig">Igbo</option>
+            <option value="ln">Lingala</option>
+            <option value="wo">Wolof</option>
+            <option value="bm">Bambara</option>
+            <option value="de">Allemand</option>
+            <option value="zh">Mandarin</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="resume">Résumé de l'œuvre</label>
+          <textarea class="form-textarea" id="resume" name="resume"
+            placeholder="Décris ton œuvre en quelques phrases — ce qui la rend unique, ce que le lecteur va découvrir..."
+            maxlength="1000" rows="4"></textarea>
+          <span class="form-hint" id="resume-counter">0 / 1000 caractères</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="public_cible">Public cible</label>
+          <select class="form-select" id="public_cible" name="public_cible">
+            <option value="tous">Tout public</option>
+            <option value="adultes">Adultes (18+)</option>
+            <option value="jeunesse">Jeunesse (10-17 ans)</option>
+            <option value="enfants">Enfants (moins de 10 ans)</option>
+          </select>
+        </div>
+
+        <!-- Couverture -->
+        <div class="form-group">
+          <label class="form-label">Couverture (optionnel)</label>
+          <div class="cover-picker">
+            <div class="cover-preview" id="cover-preview" role="button" tabindex="0" aria-label="Choisir une couverture">
+              <div class="cover-preview__placeholder">
+                <span>🖼</span>
+                <p>Ajouter une image</p>
+              </div>
+            </div>
+            <div>
+              <input type="file" id="cover-input" name="couverture"
+                accept="image/jpeg,image/png,image/webp" class="hidden" />
+              <p style="color:var(--text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--spacing-sm);">
+                Une image de couverture donne envie de lire ton œuvre.
+                Si tu n'en as pas, on en génère une automatiquement.
+              </p>
+              <button type="button" class="btn btn--outline btn--sm" id="cover-btn">
+                📁 Choisir une image
+              </button>
+              <button type="button" class="btn btn--ghost btn--sm hidden" id="cover-remove">
+                Retirer
+              </button>
+              <p class="form-hint" style="margin-top:var(--spacing-xs);">
+                JPG, PNG ou WebP — max 5 Mo
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="publish-nav">
+          <span class="publish-progress">Étape 1 sur 4</span>
+          <button type="button" class="btn btn--primary" id="next-1">
+            Suivant — Le contenu →
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           ÉTAPE 2 — Contenu de l'œuvre
+           ==================================================== -->
+      <div class="publish-section" data-section="2">
+        <h2 class="publish-section__title" data-icon="📝">Le contenu de ton œuvre</h2>
+        <p class="publish-section__hint">
+          Choisis comment tu veux soumettre ton texte.
+          Tous les formats sont acceptés — même un simple fichier texte.
+        </p>
+
+        <!-- Sélecteur de mode -->
+        <div class="mode-selector">
+          <button type="button" class="mode-btn is-active" data-mode="upload">
+            <span class="mode-btn__icon">📁</span>
+            <span class="mode-btn__label">Importer un fichier</span>
+            <span class="mode-btn__sub">txt, docx, pdf, epub, odt</span>
+          </button>
+          <button type="button" class="mode-btn" data-mode="editor">
+            <span class="mode-btn__icon">✍️</span>
+            <span class="mode-btn__label">Écrire ici</span>
+            <span class="mode-btn__sub">Éditeur intégré</span>
+          </button>
+          <button type="button" class="mode-btn mode-btn--disabled" data-mode="voice">
+            <span class="mode-btn__icon">🎤</span>
+            <span class="mode-btn__label">Dictée vocale</span>
+            <span class="mode-btn__sub">Phase 2 — bientôt</span>
+          </button>
+        </div>
+
+        <!-- Zone upload -->
+        <div id="zone-upload">
+          <div class="upload-zone" id="upload-zone" role="button" tabindex="0" aria-label="Zone de dépôt de fichier">
+            <div class="upload-zone__icon">📄</div>
+            <p class="upload-zone__text">
+              <strong>Glisse ton fichier ici</strong> ou clique pour choisir
+            </p>
+            <p class="upload-zone__text" style="margin-top:4px;font-size:var(--font-size-xs);">
+              .txt · .docx · .pdf · .epub · .odt — max 50 Mo
+            </p>
+          </div>
+          <input type="file" id="fichier-input"
+            accept=".txt,.docx,.pdf,.epub,.odt" class="hidden" />
+
+          <!-- Fichier sélectionné -->
+          <div class="hidden" id="fichier-info">
+            <div class="alert alert--success" style="margin-top:var(--spacing-md);">
+              <span id="fichier-nom"></span> —
+              <span id="fichier-taille"></span>
+              <button type="button" class="btn btn--ghost btn--sm" id="fichier-retirer" style="margin-left:auto;">
+                Retirer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Éditeur WYSIWYG -->
+        <div id="zone-editor" class="hidden">
+          <div class="editor-toolbar">
+            <button type="button" class="editor-toolbar__btn" data-cmd="bold"><strong>G</strong></button>
+            <button type="button" class="editor-toolbar__btn" data-cmd="italic"><em>I</em></button>
+            <button type="button" class="editor-toolbar__btn" data-cmd="underline"><u>S</u></button>
+            <button type="button" class="editor-toolbar__btn" data-cmd="insertUnorderedList">• Liste</button>
+            <button type="button" class="editor-toolbar__btn" data-cmd="formatBlock" data-val="h2">Titre</button>
+            <button type="button" class="editor-toolbar__btn" data-cmd="formatBlock" data-val="p">§ Para</button>
+            <button type="button" class="editor-toolbar__btn" data-cmd="removeFormat">✕ Effacer</button>
+          </div>
+          <div class="editor-content"
+            id="editor-content"
+            contenteditable="true"
+            data-placeholder="Commence à écrire ton œuvre ici... Tu peux coller du texte depuis Word ou un autre éditeur."
+            aria-label="Éditeur de texte"
+            role="textbox"
+            aria-multiline="true">
+          </div>
+          <div class="editor-counter" id="editor-counter">0 mot(s)</div>
+        </div>
+
+        <!-- Publication par chapitres -->
+        <div class="form-group" style="margin-top:var(--spacing-lg);">
+          <div class="form-check">
+            <input type="checkbox" id="par-chapitres" name="par_chapitres" />
+            <label class="form-check__label" for="par-chapitres">
+              <strong>Publier chapitre par chapitre</strong> — tu pourras ajouter des chapitres après la publication initiale
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group hidden" id="groupe-titre-chapitre">
+          <label class="form-label" for="titre-chapitre">Titre du premier chapitre (optionnel)</label>
+          <input class="form-input" type="text" id="titre-chapitre"
+            placeholder="Ex : Prologue, Chapitre 1, L'Enfance..." maxlength="200" />
+        </div>
+
+        <div class="publish-nav">
+          <button type="button" class="btn btn--ghost" id="prev-2">← Retour</button>
+          <span class="publish-progress">Étape 2 sur 4</span>
+          <button type="button" class="btn btn--primary" id="next-2">Suivant — Les droits →</button>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           ÉTAPE 3 — Droits et tarification
+           ==================================================== -->
+      <div class="publish-section" data-section="3">
+        <h2 class="publish-section__title" data-icon="⚖️">Droits et tarification</h2>
+        <p class="publish-section__hint">
+          Tu conserves 100% de tes droits d'auteur. Tu accordes uniquement à Kalamundi
+          une licence d'affichage et de traduction automatique.
+        </p>
+
+        <!-- Statut gratuit / premium -->
+        <div class="form-group">
+          <label class="form-label form-label--required">Accès à l'œuvre</label>
+          <div class="licence-options">
+            <div class="licence-card is-active" data-statut="gratuit">
+              <div class="licence-card__titre">🆓 Gratuit</div>
+              <div class="licence-card__desc">
+                Accessible à tous les lecteurs — plus de visibilité, plus de lectures.
+                Tu gagnes sur les revenus publicitaires.
+              </div>
+            </div>
+            <div class="licence-card" data-statut="premium">
+              <div class="licence-card__titre">⭐ Premium</div>
+              <div class="licence-card__desc">
+                Les lecteurs paient pour accéder. Tu fixes le prix.
+                Tu reçois 70% des revenus directs.
+              </div>
+            </div>
+          </div>
+          <input type="hidden" id="statut-oeuvre" name="statut" value="gratuit" />
+        </div>
+
+        <!-- Prix (si premium) -->
+        <div class="form-group hidden" id="groupe-prix">
+          <label class="form-label form-label--required" for="prix">Prix (en USD)</label>
+          <input class="form-input" type="number" id="prix" name="prix"
+            min="0.99" max="99.99" step="0.01" placeholder="Ex : 2.99" />
+          <span class="form-hint">Minimum 0,99 USD — Maximum 99,99 USD</span>
+        </div>
+
+        <!-- Licence -->
+        <div class="form-group" style="margin-top:var(--spacing-lg);">
+          <label class="form-label form-label--required">Licence</label>
+          <div class="licence-options">
+            <div class="licence-card is-active" data-licence="tous_droits">
+              <div class="licence-card__titre">© Tous droits réservés</div>
+              <div class="licence-card__desc">
+                Personne ne peut reproduire ou modifier ton œuvre sans ta permission.
+              </div>
+            </div>
+            <div class="licence-card" data-licence="cc">
+              <div class="licence-card__titre">🔓 Creative Commons</div>
+              <div class="licence-card__desc">
+                Tu permets le partage et parfois la modification, sous conditions.
+                Idéal pour diffuser largement.
+              </div>
+            </div>
+          </div>
+          <input type="hidden" id="licence-oeuvre" name="licence" value="tous_droits" />
+        </div>
+
+        <!-- Déclaration de propriété -->
+        <div class="form-group" style="margin-top:var(--spacing-lg);">
+          <div class="form-check">
+            <input type="checkbox" id="declaration-proprio" name="declaration_proprio" required />
+            <label class="form-check__label" for="declaration-proprio">
+              <strong>Je déclare être l'auteur(e) de cette œuvre</strong> et avoir le droit de la publier.
+              Je comprends que toute fausse déclaration est passible de suppression du compte.
+            </label>
+          </div>
+        </div>
+
+        <div class="publish-nav">
+          <button type="button" class="btn btn--ghost" id="prev-3">← Retour</button>
+          <span class="publish-progress">Étape 3 sur 4</span>
+          <button type="button" class="btn btn--primary" id="next-3">Suivant — Publier →</button>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           ÉTAPE 4 — Confirmation et publication
+           ==================================================== -->
+      <div class="publish-section" data-section="4">
+        <h2 class="publish-section__title" data-icon="🚀">Prêt à publier</h2>
+        <p class="publish-section__hint">
+          Vérifie les informations ci-dessous avant de publier.
+          Un certificat d'horodatage sera généré automatiquement pour protéger tes droits.
+        </p>
+
+        <!-- Récapitulatif -->
+        <div class="card" style="margin-bottom:var(--spacing-lg);">
+          <div class="card__body">
+            <h3 style="margin-bottom:var(--spacing-md);color:var(--color-primary);">Récapitulatif</h3>
+            <div style="display:grid;gap:var(--spacing-sm);">
+              <div class="flex-between">
+                <span class="text-secondary">Titre</span>
+                <strong id="recap-titre">—</strong>
+              </div>
+              <div class="flex-between">
+                <span class="text-secondary">Genre</span>
+                <span id="recap-genre">—</span>
+              </div>
+              <div class="flex-between">
+                <span class="text-secondary">Langue</span>
+                <span id="recap-langue">—</span>
+              </div>
+              <div class="flex-between">
+                <span class="text-secondary">Accès</span>
+                <span id="recap-statut">—</span>
+              </div>
+              <div class="flex-between">
+                <span class="text-secondary">Licence</span>
+                <span id="recap-licence">—</span>
+              </div>
+              <div class="flex-between">
+                <span class="text-secondary">Contenu</span>
+                <span id="recap-contenu">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificat (affiché après publication) -->
+        <div class="certificat" id="certificat">
+          <div class="certificat__icon">🏆</div>
+          <div class="certificat__titre">Certificat d'horodatage</div>
+          <p style="color:var(--text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--spacing-sm);">
+            Ton œuvre a été enregistrée à la date suivante. Cette empreinte prouve que tu en es l'auteur(e).
+          </p>
+          <div class="certificat__hash" id="certificat-hash">—</div>
+          <div class="certificat__date" id="certificat-date">—</div>
+          <button type="button" class="btn btn--outline btn--sm" style="margin-top:var(--spacing-md);" id="copier-hash">
+            📋 Copier l'empreinte
+          </button>
+        </div>
+
+        <div class="publish-nav" id="publish-nav-final">
+          <button type="button" class="btn btn--ghost" id="prev-4">← Retour</button>
+          <span class="publish-progress">Étape 4 sur 4</span>
+          <button type="button" class="btn btn--accent btn--lg" id="btn-publier">
+            🚀 Publier mon œuvre
+          </button>
+        </div>
+
+        <!-- Après publication -->
+        <div class="hidden" id="post-publication" style="text-align:center;padding:var(--spacing-xl);">
+          <div style="font-size:64px;margin-bottom:var(--spacing-md);">🎉</div>
+          <h2 style="color:var(--color-primary);margin-bottom:var(--spacing-sm);">
+            Félicitations, tu es publié(e) !
+          </h2>
+          <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg);">
+            Ton œuvre est maintenant accessible à des lecteurs du monde entier.
+          </p>
+          <div style="display:flex;gap:var(--spacing-sm);justify-content:center;flex-wrap:wrap;">
+            <a href="#" class="btn btn--primary" id="voir-oeuvre">Voir mon œuvre</a>
+            <a href="/pages/publish.html" class="btn btn--outline">Publier une autre œuvre</a>
+            <a href="/pages/author-dashboard.html" class="btn btn--ghost">Mon tableau de bord</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script type="module" src="/assets/js/publish.js"></script>
+</body>
+</html>
