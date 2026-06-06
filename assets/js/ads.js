@@ -14,7 +14,7 @@
   /* ──────────────────────────────────────────────────────────
      CONFIG — À personnaliser après inscription Monetag
   ────────────────────────────────────────────────────────── */
-  var MONETAG_ZONE_ID = 'VOTRE_ZONE_ID'; // ← remplacer par le vrai ID
+  var MONETAG_ZONE_ID = '11110665';
   var MONETAG_SRC     = 'https://nap5k.com/tag.min.js';
   var AD_DELAY_MS     = 3000; // délai avant chargement (3 s)
 
