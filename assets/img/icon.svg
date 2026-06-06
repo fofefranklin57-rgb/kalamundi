@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <!-- Fond dégradé vert vif 3D -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="45%" stop-color="#16A34A"/>
+      <stop offset="100%" stop-color="#0D5C2A"/>
+    </linearGradient>
+
+    <!-- Ombre portée du fond -->
+    <filter id="shadow-outer">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+
+    <!-- Ombre livre -->
+    <filter id="shadow-book">
+      <feDropShadow dx="4" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+
+    <!-- Ombre plume -->
+    <filter id="shadow-feather">
+      <feDropShadow dx="3" dy="6" stdDeviation="6" flood-color="#7C4D00" flood-opacity="0.5"/>
+    </filter>
+
+    <!-- Dégradé page gauche -->
+    <linearGradient id="page-left" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c8f5d8"/>
+      <stop offset="100%" stop-color="#e8fff2"/>
+    </linearGradient>
+
+    <!-- Dégradé page droite -->
+    <linearGradient id="page-right" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e8fff2"/>
+      <stop offset="100%" stop-color="#b8ecd0"/>
+    </linearGradient>
+
+    <!-- Dégradé reliure dorée -->
+    <linearGradient id="spine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="40%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <!-- Dégradé plume -->
+    <linearGradient id="feather-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+
+    <!-- Reflet blanc sur le fond -->
+    <radialGradient id="shine" cx="35%" cy="25%" r="55%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Fond arrondi avec ombre -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)" filter="url(#shadow-outer)"/>
+  <!-- Reflet sphérique sur le fond -->
+  <rect width="512" height="512" rx="100" fill="url(#shine)"/>
+  <!-- Bordure haut lumière -->
+  <rect x="2" y="2" width="508" height="200" rx="100" fill="white" opacity="0.05"/>
+
+  <!-- === LIVRE 3D === -->
+  <!-- Ombre du livre projetée -->
+  <ellipse cx="256" cy="390" rx="140" ry="18" fill="#000" opacity="0.25"/>
+
+  <!-- Couverture dessous (épaisseur 3D) -->
+  <path d="M110 170 L110 360 L130 375 L382 375 L402 360 L402 170 Z" fill="#0A3D1F" opacity="0.7"/>
+
+  <!-- Page gauche -->
+  <path d="M118 158 C118 148 124 142 134 143 L248 153 L248 365 L134 355
+           C124 354 118 348 118 338 Z"
+        fill="url(#page-left)" filter="url(#shadow-book)"/>
+  <!-- Ombre interne page gauche (courbe) -->
+  <path d="M228 153 L248 153 L248 365 L228 365 Z" fill="#0D5C2A" opacity="0.08"/>
+
+  <!-- Page droite -->
+  <path d="M394 158 C394 148 388 142 378 143 L264 153 L264 365 L378 355
+           C388 354 394 348 394 338 Z"
+        fill="url(#page-right)" filter="url(#shadow-book)"/>
+  <!-- Ombre interne page droite -->
+  <path d="M264 153 L284 153 L284 365 L264 365 Z" fill="#0D5C2A" opacity="0.06"/>
+
+  <!-- Reliure centrale dorée 3D -->
+  <rect x="244" y="148" width="24" height="222" rx="6" fill="url(#spine)"/>
+  <!-- Reflet reliure -->
+  <rect x="248" y="148" width="6" height="222" rx="3" fill="white" opacity="0.35"/>
+
+  <!-- Lignes de texte page gauche -->
+  <line x1="140" y1="186" x2="236" y2="189" stroke="#2D6A4F" stroke-width="4" opacity="0.35" stroke-linecap="round"/>
+  <line x1="140" y1="210" x2="234" y2="213" stroke="#2D6A4F" stroke-width="4" opacity="0.35" stroke-linecap="round"/>
+  <line x1="140" y1="234" x2="235" y2="237" stroke="#2D6A4F" stroke-width="3" opacity="0.28" stroke-linecap="round"/>
+  <line x1="140" y1="258" x2="232" y2="261" stroke="#2D6A4F" stroke-width="3" opacity="0.22" stroke-linecap="round"/>
+  <line x1="140" y1="282" x2="233" y2="285" stroke="#2D6A4F" stroke-width="3" opacity="0.22" stroke-linecap="round"/>
+  <line x1="140" y1="306" x2="230" y2="309" stroke="#2D6A4F" stroke-width="2" opacity="0.16" stroke-linecap="round"/>
+
+  <!-- Lignes de texte page droite -->
+  <line x1="276" y1="189" x2="372" y2="186" stroke="#2D6A4F" stroke-width="4" opacity="0.35" stroke-linecap="round"/>
+  <line x1="278" y1="213" x2="372" y2="210" stroke="#2D6A4F" stroke-width="4" opacity="0.35" stroke-linecap="round"/>
+  <line x1="277" y1="237" x2="372" y2="234" stroke="#2D6A4F" stroke-width="3" opacity="0.28" stroke-linecap="round"/>
+  <line x1="280" y1="261" x2="372" y2="258" stroke="#2D6A4F" stroke-width="3" opacity="0.22" stroke-linecap="round"/>
+  <line x1="279" y1="285" x2="372" y2="282" stroke="#2D6A4F" stroke-width="3" opacity="0.22" stroke-linecap="round"/>
+  <line x1="281" y1="309" x2="372" y2="306" stroke="#2D6A4F" stroke-width="2" opacity="0.16" stroke-linecap="round"/>
+
+  <!-- === PLUME 3D === -->
+  <g filter="url(#shadow-feather)">
+    <!-- Corps de la plume -->
+    <path d="M296 96 C328 52 402 42 412 54 C400 84 364 108 330 142
+             C310 162 296 188 290 214 C280 186 270 150 278 116 Z"
+          fill="url(#feather-grad)"/>
+    <!-- Nervure centrale plume -->
+    <path d="M290 214 C296 188 310 162 330 142" stroke="#92400E" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Reflet plume -->
+    <path d="M302 100 C326 66 384 54 402 58 C390 74 360 94 334 120 Z"
+          fill="white" opacity="0.22"/>
+    <!-- Pointe de la plume -->
+    <path d="M287 218 L292 200 L298 222 Z" fill="#D97706"/>
+  </g>
+
+  <!-- Reflet global haut gauche (effet sphère) -->
+  <ellipse cx="175" cy="155" rx="55" ry="28" fill="white" opacity="0.07" transform="rotate(-20 175 155)"/>
+</svg>

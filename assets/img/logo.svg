@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 130" fill="none">
+  <defs>
+    <linearGradient id="bg-logo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="45%" stop-color="#16A34A"/>
+      <stop offset="100%" stop-color="#0D5C2A"/>
+    </linearGradient>
+    <linearGradient id="page-l" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c8f5d8"/>
+      <stop offset="100%" stop-color="#e8fff2"/>
+    </linearGradient>
+    <linearGradient id="page-r" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e8fff2"/>
+      <stop offset="100%" stop-color="#b8ecd0"/>
+    </linearGradient>
+    <linearGradient id="spine-logo" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="40%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="feather-logo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="60%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <radialGradient id="shine-logo" cx="35%" cy="25%" r="55%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="fshadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#16A34A"/>
+      <stop offset="100%" stop-color="#0D5C2A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icône fond 3D -->
+  <rect x="0" y="4" width="122" height="122" rx="22" fill="#000" opacity="0.2"/>
+  <rect x="0" y="0" width="122" height="122" rx="22" fill="url(#bg-logo)"/>
+  <rect x="0" y="0" width="122" height="122" rx="22" fill="url(#shine-logo)"/>
+
+  <!-- Ombre livre -->
+  <ellipse cx="61" cy="108" rx="38" ry="6" fill="#000" opacity="0.2"/>
+
+  <!-- Épaisseur livre (3D) -->
+  <path d="M20 42 L20 91 L26 96 L96 96 L102 91 L102 42 Z" fill="#0A3D1F" opacity="0.6"/>
+
+  <!-- Page gauche -->
+  <path d="M22 37 C22 31 25 28 30 29 L59 33 L59 89 L30 85 C25 85 22 82 22 76 Z"
+        fill="url(#page-l)" filter="url(#fshadow)"/>
+
+  <!-- Page droite -->
+  <path d="M100 37 C100 31 97 28 92 29 L63 33 L63 89 L92 85 C97 85 100 82 100 76 Z"
+        fill="url(#page-r)" filter="url(#fshadow)"/>
+
+  <!-- Reliure dorée -->
+  <rect x="57" y="31" width="8" height="59" rx="2" fill="url(#spine-logo)"/>
+  <rect x="58.5" y="31" width="2" height="59" rx="1" fill="white" opacity="0.4"/>
+
+  <!-- Lignes texte gauche -->
+  <line x1="28" y1="44" x2="55" y2="46" stroke="#2D6A4F" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
+  <line x1="28" y1="53" x2="54" y2="55" stroke="#2D6A4F" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
+  <line x1="28" y1="62" x2="54" y2="64" stroke="#2D6A4F" stroke-width="1.5" opacity="0.3" stroke-linecap="round"/>
+  <line x1="28" y1="71" x2="53" y2="73" stroke="#2D6A4F" stroke-width="1.5" opacity="0.25" stroke-linecap="round"/>
+
+  <!-- Lignes texte droite -->
+  <line x1="67" y1="46" x2="94" y2="44" stroke="#2D6A4F" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
+  <line x1="68" y1="55" x2="94" y2="53" stroke="#2D6A4F" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
+  <line x1="68" y1="64" x2="94" y2="62" stroke="#2D6A4F" stroke-width="1.5" opacity="0.3" stroke-linecap="round"/>
+  <line x1="68" y1="73" x2="94" y2="71" stroke="#2D6A4F" stroke-width="1.5" opacity="0.25" stroke-linecap="round"/>
+
+  <!-- Plume dorée -->
+  <path d="M70 22 C82 10 102 8 105 12 C101 22 88 30 76 42 C70 48 65 57 63 65
+           C59 55 56 42 60 30 Z" fill="url(#feather-logo)"/>
+  <path d="M63 65 C65 57 70 48 76 42" stroke="#92400E" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M72 24 C83 13 100 10 104 13 C100 18 89 25 78 36 Z" fill="white" opacity="0.2"/>
+  <path d="M61 67 L64 60 L67 68 Z" fill="#D97706"/>
+
+  <!-- TEXTE KALAMUNDI -->
+  <text x="142" y="72" font-family="Georgia, 'Times New Roman', serif"
+        font-size="42" font-weight="700" fill="url(#text-grad)" letter-spacing="1">Kalamundi</text>
+
+  <!-- Slogan -->
+  <text x="144" y="94" font-family="Georgia, 'Times New Roman', serif"
+        font-size="13" fill="#16A34A" letter-spacing="4" opacity="0.8">LA PLUME DU MONDE</text>
+
+  <!-- Ligne dorée sous slogan -->
+  <line x1="144" y1="101" x2="468" y2="101" stroke="url(#spine-logo)" stroke-width="1.5" opacity="0.7"/>
+</svg>
