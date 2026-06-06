@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="page-title">Lecture — Kalamundi</title>
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/reader.css" />
+</head>
+<body class="reader-body">
+
+<div class="reader-page">
+
+  <!-- Topbar -->
+  <header>
+    <div class="reader-topbar">
+      <a href="#" class="reader-topbar__back" id="back-btn">← Retour</a>
+      <div class="reader-topbar__info">
+        <div class="reader-topbar__titre" id="topbar-titre">Chargement...</div>
+        <div class="reader-topbar__chapitre" id="topbar-chapitre"></div>
+      </div>
+      <div class="reader-topbar__actions">
+        <button class="reader-action-btn" id="btn-toc" title="Table des matières">☰ Chapitres</button>
+        <button class="reader-action-btn" id="btn-lang" title="Changer la langue">🌐 <span id="lang-label">FR</span></button>
+        <button class="reader-action-btn" id="btn-settings" title="Paramètres de lecture">⚙ Aa</button>
+      </div>
+    </div>
+    <div class="reader-progress-bar">
+      <div class="reader-progress-bar__fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </header>
+
+  <!-- Panneau paramètres -->
+  <div class="reader-settings" id="reader-settings">
+    <div class="reader-settings__title">Paramètres de lecture</div>
+
+    <div class="reader-settings__group">
+      <div class="reader-settings__label">Thème</div>
+      <div class="theme-options">
+        <button class="theme-btn theme-btn--light is-active" data-theme="light">Clair</button>
+        <button class="theme-btn theme-btn--dark" data-theme="dark">Sombre</button>
+        <button class="theme-btn theme-btn--sepia" data-theme="sepia">Sépia</button>
+      </div>
+    </div>
+
+    <div class="reader-settings__group">
+      <div class="reader-settings__label">Taille du texte</div>
+      <div class="font-size-options">
+        <button class="font-size-btn" id="font-down">A−</button>
+        <div class="font-size-display" id="font-size-display">18px</div>
+        <button class="font-size-btn" id="font-up">A+</button>
+      </div>
+    </div>
+
+    <div class="reader-settings__group">
+      <div class="reader-settings__label">Interligne</div>
+      <div class="line-height-options">
+        <button class="line-height-btn is-active" data-lh="1.6">Compact</button>
+        <button class="line-height-btn" data-lh="1.9">Normal</button>
+        <button class="line-height-btn" data-lh="2.4">Aéré</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panneau langues -->
+  <div class="reader-lang-panel" id="reader-lang-panel">
+    <div class="reader-lang-panel__title">Langue de lecture</div>
+    <div id="lang-options">
+      <div class="lang-option is-active" data-lang="original">
+        <span>📖 Langue originale</span>
+      </div>
+      <div class="lang-option" data-lang="fr"><span>🇫🇷 Français</span></div>
+      <div class="lang-option" data-lang="en"><span>🇬🇧 Anglais</span></div>
+      <div class="lang-option" data-lang="es"><span>🇪🇸 Espagnol</span></div>
+      <div class="lang-option" data-lang="pt"><span>🇵🇹 Portugais</span></div>
+      <div class="lang-option" data-lang="ar"><span>🇸🇦 Arabe</span></div>
+      <div class="lang-option" data-lang="sw"><span>🌍 Swahili</span></div>
+      <div class="lang-option" data-lang="de"><span>🇩🇪 Allemand</span></div>
+      <div class="lang-option" data-lang="zh"><span>🇨🇳 Mandarin</span></div>
+    </div>
+    <div class="translation-notice" id="translation-notice" style="display:none;">
+      ⚠ Traduction automatique — la version originale fait foi.
+    </div>
+  </div>
+
+  <!-- Table des matières -->
+  <div class="reader-toc" id="reader-toc">
+    <div class="reader-toc__overlay" id="toc-overlay"></div>
+    <div class="reader-toc__panel">
+      <div class="reader-toc__header">
+        <h2 class="reader-toc__title">Chapitres</h2>
+        <button class="btn btn--ghost btn--sm" id="close-toc">✕</button>
+      </div>
+      <div id="toc-list"></div>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <main class="reader-main">
+    <div id="reader-loading" class="reader-translating">
+      <div class="spinner"></div>
+      <span>Chargement...</span>
+    </div>
+    <div class="reader-content" id="reader-content" aria-live="polite"></div>
+  </main>
+
+  <!-- Bottombar navigation -->
+  <footer class="reader-bottombar">
+    <button class="reader-nav-btn" id="btn-prev" disabled>← Chapitre précédent</button>
+    <div class="reader-position" id="reader-position">—</div>
+    <button class="reader-nav-btn" id="btn-next">Chapitre suivant →</button>
+  </footer>
+
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+<script type="module" src="/assets/js/reader.js"></script>
+</body>
+</html>
