@@ -131,14 +131,8 @@ export const api = {
   },
 
   async incrementerLectures(oeuvreId) {
-    const { error } = await supabase.rpc('increment_lectures', { oeuvre_id: oeuvreId });
-    if (error) {
-      // Fallback si la fonction RPC n'existe pas encore
-      await supabase
-        .from('oeuvres')
-        .update({ nb_lectures: supabase.raw('nb_lectures + 1') })
-        .eq('id', oeuvreId);
-    }
+    await supabase.rpc('increment_lectures', { oeuvre_id: oeuvreId });
+    // Pas de fallback — si la fonction RPC n'existe pas, on ignore silencieusement
   },
 
   /* ---- Chapitres ---------------------------------------- */

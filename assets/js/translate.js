@@ -75,11 +75,11 @@ export async function traduire(chapitreId, contenu, langueCible, langueSource = 
    ============================================================ */
 
 async function _appelEdgeFunction(texte, langueCible, langueSource = 'fr') {
-  const segments = _decouper(texte, 480);
+  const segments = _decouper(texte, 900); // 900 chars max → moins de requêtes
   const traduits = [];
   for (const s of segments) {
     traduits.push(await _traduireSegment(s, langueSource, langueCible));
-    await new Promise(r => setTimeout(r, 100)); // éviter rate limit
+    if (segments.length > 1) await new Promise(r => setTimeout(r, 50));
   }
   return traduits.join(' ');
 }
