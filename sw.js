@@ -101,6 +101,9 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   if (url.protocol === 'chrome-extension:') return;
 
+  /* Ignorer les navigations HTML — laisser le navigateur gérer les redirects */
+  if (request.mode === 'navigate') return;
+
   /* ── API Supabase + CDN → Network First ── */
   if (API_ORIGINS.some(origin => url.hostname.includes(origin))) {
     event.respondWith(networkFirst(request, CACHE_API));
@@ -113,8 +116,10 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  /* ── App shell (HTML / CSS / JS locaux) → Cache First ── */
-  event.respondWith(cacheFirst(request, CACHE_SHELL));
+  /* ── Assets statiques (CSS / JS / fonts) → Cache First ── */
+  if (url.hostname === self.location.hostname) {
+    event.respondWith(cacheFirst(request, CACHE_SHELL));
+  }
 });
 
 /* ============================================================
