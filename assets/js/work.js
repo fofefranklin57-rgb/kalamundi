@@ -33,7 +33,35 @@ let utilisateur = null;
   } else {
     document.getElementById('connexion-required').classList.remove('hidden');
   }
+
+  // Banner de bienvenue si arrivée via lien partagé
+  if (getParam('ref') === 'share' && !utilisateur) {
+    _afficherBannerPartage();
+  }
 })();
+
+function _afficherBannerPartage() {
+  const banner = document.createElement('div');
+  banner.style.cssText = `
+    background: linear-gradient(135deg, #1B4332, #2D6A4F);
+    color: white; padding: 16px 24px; text-align: center;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    flex-wrap: wrap; font-size: 15px;
+  `;
+  banner.innerHTML = `
+    <span>📚 Quelqu'un vous a partagé ce livre — lisez <strong>3 chapitres gratuitement</strong> !</span>
+    <a href="/pages/login.html?mode=inscription" style="
+      background:white; color:#1B4332; padding:6px 16px; border-radius:20px;
+      font-weight:600; text-decoration:none; white-space:nowrap; font-size:14px;
+    ">Créer un compte gratuit</a>
+    <button onclick="this.parentElement.remove()" style="
+      background:none; border:none; color:rgba(255,255,255,0.7);
+      cursor:pointer; font-size:18px; padding:0 4px;
+    ">✕</button>
+  `;
+  document.body.prepend(banner);
+}
 
 /* ============================================================
    Charger l'œuvre
@@ -144,15 +172,19 @@ async function rendreActions(oeuvre) {
     }
   }
 
-  // Partager
+  // Partager — lien avec ?ref=share pour tracking
   document.getElementById('btn-partager')?.addEventListener('click', async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      await navigator.share({ title: document.title, url });
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast('Lien copié !', 'success');
-    }
+    const url = `${window.location.origin}/pages/work.html?id=${oeuvreId}&ref=share`;
+    const titre = oeuvre.titre;
+    const texte = `Lis "${titre}" gratuitement sur Kalamundi — La Plume du Monde`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: titre, text: texte, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast('Lien copié ! Partagez-le pour inviter quelqu\'un à lire.', 'success');
+      }
+    } catch { /* annulé */ }
   });
 }
 

@@ -26,6 +26,7 @@
       <div class="reader-topbar__actions">
         <button class="reader-action-btn" id="btn-toc" title="Table des matières">☰ Chapitres</button>
         <button class="reader-action-btn" id="btn-lang" title="Changer la langue">🌐 <span id="lang-label">FR</span></button>
+        <button class="reader-action-btn" id="btn-partager" title="Partager ce livre">🔗 Partager</button>
         <button class="reader-action-btn" id="btn-settings" title="Paramètres de lecture">⚙ Aa</button>
         <span id="theme-slot"></span>
       </div>
@@ -104,6 +105,31 @@
     <button class="reader-nav-btn" id="btn-next">Chapitre suivant →</button>
   </footer>
 
+</div>
+
+<!-- Modal abonnement visiteur -->
+<div class="modal-overlay" id="modal-abonnement" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-titre">
+  <div class="modal" style="max-width:420px;text-align:center;padding:var(--spacing-2xl)">
+    <div style="font-size:2.5rem;margin-bottom:var(--spacing-md)">📚</div>
+    <h2 id="modal-titre" style="font-size:var(--font-size-xl);color:var(--color-primary);margin-bottom:var(--spacing-sm)">
+      Continuez votre lecture
+    </h2>
+    <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg);line-height:1.6">
+      Vous avez lu <strong>3 chapitres gratuits</strong> en mode visiteur.<br>
+      Créez un compte gratuit pour accéder à <strong>tous les chapitres</strong> et sauvegarder votre progression.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:var(--spacing-sm)">
+      <a href="/pages/login.html?mode=inscription" class="btn btn--accent btn--lg" id="modal-btn-inscription">
+        ✨ Créer un compte gratuit
+      </a>
+      <a href="/pages/login.html" class="btn btn--outline btn--lg" id="modal-btn-connexion">
+        Se connecter
+      </a>
+      <button class="btn btn--ghost btn--sm" id="modal-btn-visiteur" style="color:var(--text-light);margin-top:var(--spacing-xs)">
+        Continuer comme visiteur (lecture limitée)
+      </button>
+    </div>
+  </div>
 </div>
 
 <div class="toast-container" id="toast-container"></div>

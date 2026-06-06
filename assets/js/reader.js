@@ -9,6 +9,9 @@ import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
 import { traduire, viderCacheTraduction, rendreOptionLangues, LANGUES_LECTURE } from './translate.js';
 import { activerProtections } from './security.js';
 
+/* Nombre de chapitres gratuits pour les visiteurs non connectés */
+const LIMIT_VISITEUR = 3;
+
 /* ============================================================
    État du lecteur
    ============================================================ */
@@ -110,6 +113,11 @@ async function chargerChapitre(numero) {
   mettreAJourTOC();
   sauvegarderProgression();
 
+  // Limite visiteur — afficher modal après LIMIT_VISITEUR chapitres
+  if (!etat.utilisateur && numero >= LIMIT_VISITEUR) {
+    _afficherModalAbonnement();
+  }
+
   // Scroll vers le haut
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -175,6 +183,11 @@ document.getElementById('btn-prev')?.addEventListener('click', () => {
 });
 
 document.getElementById('btn-next')?.addEventListener('click', () => {
+  // Bloquer le chapitre suivant si visiteur et limite atteinte
+  if (!etat.utilisateur && etat.chapitreNum >= LIMIT_VISITEUR) {
+    _afficherModalAbonnement();
+    return;
+  }
   if (etat.chapitreNum < etat.chapitres.length) chargerChapitre(etat.chapitreNum + 1);
 });
 
@@ -383,6 +396,53 @@ function appliquerPreferences() {
     document.getElementById('translation-notice').style.display = 'block';
   }
 }
+
+/* ============================================================
+   Modal abonnement visiteur
+   ============================================================ */
+
+function _afficherModalAbonnement() {
+  const modal = document.getElementById('modal-abonnement');
+  if (!modal) return;
+
+  // Pré-remplir le lien de retour après inscription
+  const retour = encodeURIComponent(`/pages/reader.html?id=${etat.oeuvreId}&ch=${etat.chapitreNum}`);
+  document.getElementById('modal-btn-inscription').href =
+    `/pages/login.html?mode=inscription&next=${retour}`;
+  document.getElementById('modal-btn-connexion').href =
+    `/pages/login.html?next=${retour}`;
+
+  modal.style.display = 'flex';
+  modal.style.cssText = `
+    display:flex; position:fixed; inset:0; z-index:9999;
+    background:rgba(0,0,0,0.7); align-items:center; justify-content:center;
+    padding:var(--spacing-lg);
+  `;
+
+  document.getElementById('modal-btn-visiteur')?.addEventListener('click', () => {
+    modal.style.display = 'none';
+    toast('Vous êtes en mode visiteur — 3 chapitres gratuits disponibles.', 'info');
+  }, { once: true });
+}
+
+/* ============================================================
+   Bouton partager
+   ============================================================ */
+
+document.getElementById('btn-partager')?.addEventListener('click', async () => {
+  const url = `${window.location.origin}/pages/work.html?id=${etat.oeuvreId}&ref=share`;
+  const titre = etat.oeuvre?.titre || 'Un livre sur Kalamundi';
+  const texte = `Lis "${titre}" gratuitement sur Kalamundi — La Plume du Monde`;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: titre, text: texte, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast('Lien copié ! Partagez-le pour inviter quelqu\'un à lire.', 'success');
+    }
+  } catch { /* annulé par l'utilisateur */ }
+});
 
 /* ============================================================
    Raccourcis clavier
