@@ -3,7 +3,6 @@
    Kalamundi — La Plume du Monde
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&display=swap');
 
 :root {
   /* Couleurs principales — inspirées de l'Afrique */
@@ -54,7 +53,6 @@
   --border-radius-full: 9999px;
 
   /* Typographie */
-  --font-brand:     'Cormorant Garamond', 'Garamond', 'EB Garamond', 'Times New Roman', serif;
   --font-interface: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
   --font-lecture:   'Georgia', 'Times New Roman', serif;
   --font-mono:      'Courier New', monospace;

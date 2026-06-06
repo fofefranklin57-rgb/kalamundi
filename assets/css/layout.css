@@ -46,10 +46,8 @@
   align-items: center;
   gap: var(--spacing-sm);
   color: var(--text-inverse);
-  font-family: var(--font-brand);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
   text-decoration: none;
 }
 
@@ -168,11 +166,9 @@
 }
 
 .hero__title {
-  font-family: var(--font-brand);
-  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-size: clamp(var(--font-size-2xl), 5vw, var(--font-size-3xl));
   color: var(--text-inverse);
   margin-bottom: var(--spacing-md);
-  letter-spacing: 0.5px;
 }
 
 .hero__subtitle {
