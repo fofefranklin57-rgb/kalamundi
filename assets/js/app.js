@@ -105,7 +105,7 @@ async function chargerStats() {
 async function chargerVedettes() {
   const grid = document.getElementById('grid-vedettes');
   try {
-    const { data } = await api.getOeuvres({ limit: 6 });
+    const { data } = await api.getOeuvres({ limit: 6, tri: 'lectures' });
     if (!data?.length) {
       grid.innerHTML = videState('Aucune œuvre disponible pour l\'instant.');
       return;
@@ -118,18 +118,22 @@ async function chargerVedettes() {
 }
 
 /* ============================================================
-   Grille nouveautés (les plus récentes)
+   Grille nouveautés (les plus récentes, hors vedettes)
    ============================================================ */
 
 async function chargerNouveautes() {
   const grid = document.getElementById('grid-nouveautes');
   try {
-    const { data } = await api.getOeuvres({ limit: 4 });
+    const { data } = await api.getOeuvres({ limit: 8, tri: 'recent' });
     if (!data?.length) {
       grid.innerHTML = videState('Aucune nouveauté pour l\'instant.');
       return;
     }
-    grid.innerHTML = data.map(renderCard).join('');
+    // Exclure celles déjà en vedette (nb_lectures élevé)
+    const nouveautes = data.filter(o => o.nb_lectures < 1000).slice(0, 4);
+    grid.innerHTML = nouveautes.length
+      ? nouveautes.map(renderCard).join('')
+      : videState('Toutes les œuvres sont déjà en vedette !');
   } catch (err) {
     grid.innerHTML = videState('Impossible de charger les nouveautés.');
     console.error(err);

@@ -54,7 +54,8 @@ export const api = {
 
   /* ---- Oeuvres ------------------------------------------ */
 
-  async getOeuvres({ page = 1, limit = 20, genre, langue, statut, recherche } = {}) {
+  async getOeuvres({ page = 1, limit = 20, genre, langue, statut, recherche, tri = 'recent' } = {}) {
+    const orderCol = tri === 'lectures' ? 'nb_lectures' : 'created_at';
     let query = supabase
       .from('oeuvres')
       .select(`
@@ -64,7 +65,7 @@ export const api = {
         profiles!oeuvres_auteur_id_fkey(nom, photo_url, pays, niveau_auteur)
       `, { count: 'exact' })
       .eq('visible', true)
-      .order('created_at', { ascending: false })
+      .order(orderCol, { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
     if (genre)    query = query.eq('genre', genre);
