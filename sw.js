@@ -151,7 +151,7 @@ async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   try {
     const response = await fetch(request);
-    if (response.ok && !response.redirected) cache.put(request, response.clone());
+    if (response.status === 200 && !response.redirected) cache.put(request, response.clone());
     return response;
   } catch {
     const cached = await cache.match(request);
