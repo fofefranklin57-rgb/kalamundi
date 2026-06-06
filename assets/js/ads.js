@@ -120,7 +120,7 @@
                   false/undefined → bandeau + In-Page Push
   ────────────────────────────────────────────────────────── */
   window.initAds = function (planAbonne) {
-    if (MONETAG_ZONE_ID === 'VOTRE_ZONE_ID') return; // pubs non configurées
+    if (!ZONE_INPAGE || !ZONE_MULTI) return; // pubs non configurées
 
     setTimeout(function () {
       loadMonetag();
