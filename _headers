@@ -7,7 +7,7 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
   # Content Security Policy
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://nap5k.com https://n6wxm.com https://quge5.com https://*.monetag.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://iobieffnaauecyukecds.supabase.co https://*.monetag.com https://www.gutenberg.org https://gutenberg.org; connect-src 'self' https: wss:; font-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://nap5k.com https://n6wxm.com https://quge5.com https://*.monetag.com https://tzegilo.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; font-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
 
 /assets/css/*
   Cache-Control: public, max-age=31536000, immutable
