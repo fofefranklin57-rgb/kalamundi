@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   chargerSignalements();
   chargerUsers();
   chargerInstitutions();
+  chargerPaiements();
 });
 
 /* ============================================================
@@ -259,6 +260,75 @@ window.verifierInstitution = async function (id, statut) {
     toast(statut === 'verifie' ? 'Institution validée ✅' : 'Institution rejetée.', 'success');
     chargerInstitutions();
     chargerStats();
+  } catch { toast('Erreur.', 'error'); }
+};
+
+/* ============================================================
+   Paiements
+   ============================================================ */
+
+window.chargerPaiements = async function () {
+  const el = document.getElementById('table-paiements');
+  el.innerHTML = '<div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>';
+  try {
+    const data = await api.adminGetPaiements();
+    const attente = data?.filter(p => p.statut === 'en_attente') || [];
+
+    if (attente.length > 0) {
+      const b = document.getElementById('badge-paiements');
+      b.textContent = attente.length;
+      b.style.display = '';
+    }
+
+    if (!data?.length) { el.innerHTML = vide('Aucun paiement.'); return; }
+
+    el.innerHTML = `
+      <table class="admin-table">
+        <thead><tr>
+          <th>Utilisateur</th><th>Type</th><th>Œuvre</th>
+          <th>Montant</th><th>Méthode</th><th>Référence</th>
+          <th>Statut</th><th>Date</th><th>Actions</th>
+        </tr></thead>
+        <tbody>${data.map(p => `
+          <tr>
+            <td>${p.profiles?.nom || '—'}</td>
+            <td style="font-size:11px">${p.type}</td>
+            <td style="font-size:11px">${p.oeuvres?.titre || '—'}</td>
+            <td><strong>${p.montant} ${p.devise}</strong></td>
+            <td><span class="badge badge--gratuit" style="font-size:10px">${p.methode}</span></td>
+            <td style="font-family:monospace;font-size:11px;color:var(--text-secondary)">${p.reference_transaction || '—'}</td>
+            <td><span class="badge ${
+              p.statut === 'confirme' ? 'badge--success' :
+              p.statut === 'rejete'   ? 'badge--danger'  : 'badge--warning'}">
+              ${p.statut}
+            </span></td>
+            <td style="color:var(--text-light);font-size:11px">${new Date(p.created_at).toLocaleDateString('fr-FR')}</td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              ${p.statut === 'en_attente' ? `
+                <button class="btn-xs btn-success" onclick="confirmerPaiement('${p.id}','${p.oeuvre_id||''}','${p.user_id}')">✅ Confirmer</button>
+                <button class="btn-xs btn-danger"  onclick="rejeterPaiement('${p.id}')">❌ Rejeter</button>
+              ` : '<span style="color:var(--text-light);font-size:11px">Traité</span>'}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) { el.innerHTML = vide('Erreur de chargement.'); }
+};
+
+window.confirmerPaiement = async function (id, oeuvreId, userId) {
+  try {
+    await api.adminConfirmerPaiement(id, oeuvreId || null, userId);
+    toast('Paiement confirmé — accès activé ✅', 'success');
+    chargerPaiements();
+    chargerStats();
+  } catch { toast('Erreur.', 'error'); }
+};
+
+window.rejeterPaiement = async function (id) {
+  try {
+    await api.adminRejeterPaiement(id);
+    toast('Paiement rejeté.', 'info');
+    chargerPaiements();
   } catch { toast('Erreur.', 'error'); }
 };
 

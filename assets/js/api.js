@@ -399,6 +399,72 @@ export const api = {
     return data;
   },
 
+  /* ---- Paiements ---------------------------------------- */
+
+  async creerPaiement(champs) {
+    const { data, error } = await supabase
+      .from('paiements')
+      .insert(champs)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async getMesPaiements(userId) {
+    const { data, error } = await supabase
+      .from('paiements')
+      .select('*, oeuvres(titre)')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  async verifierAccesPremium(userId, oeuvreId) {
+    const { data } = await supabase
+      .from('acces_premium')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('oeuvre_id', oeuvreId)
+      .single();
+    return !!data;
+  },
+
+  async adminGetPaiements() {
+    const { data, error } = await supabase
+      .from('paiements')
+      .select(`*, profiles!paiements_user_id_fkey(nom), oeuvres(titre)`)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return data;
+  },
+
+  async adminConfirmerPaiement(id, oeuvreId, userId) {
+    const { error } = await supabase
+      .from('paiements')
+      .update({ statut: 'confirme', confirme_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) throw error;
+
+    /* Donner accès premium si c'est un achat d'œuvre */
+    if (oeuvreId) {
+      await supabase
+        .from('acces_premium')
+        .upsert({ user_id: userId, oeuvre_id: oeuvreId, paiement_id: id },
+          { onConflict: 'user_id,oeuvre_id' });
+    }
+  },
+
+  async adminRejeterPaiement(id) {
+    const { error } = await supabase
+      .from('paiements')
+      .update({ statut: 'rejete' })
+      .eq('id', id);
+    if (error) throw error;
+  },
+
   /* ---- Admin -------------------------------------------- */
 
   async adminGetStats() {

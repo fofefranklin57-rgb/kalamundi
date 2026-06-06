@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abonnements — Kalamundi</title>
+  <meta name="description" content="Choisissez votre formule Kalamundi — Reader+, Auteur Pro, Institution." />
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <style>
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--spacing-lg);
+      margin: var(--spacing-2xl) 0;
+    }
+    .plan-card {
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-xl);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .plan-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+    .plan-card--featured {
+      border-color: var(--color-primary);
+      box-shadow: 0 4px 20px rgba(27,67,50,0.15);
+      position: relative;
+    }
+    .plan-card--featured::before {
+      content: '★ Le plus populaire';
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-primary);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .plan__icon { font-size: 36px; }
+    .plan__name { font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary); }
+    .plan__price { font-size: 2.4rem; font-weight: 700; color: var(--color-primary); }
+    .plan__price span { font-size: var(--font-size-sm); color: var(--text-light); font-weight: 400; }
+    .plan__desc { color: var(--text-secondary); font-size: var(--font-size-sm); }
+    .plan__features { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+    .plan__features li { font-size: var(--font-size-sm); color: var(--text-secondary); display: flex; align-items: flex-start; gap: 8px; }
+    .plan__features li::before { content: '✓'; color: var(--color-primary); font-weight: 700; flex-shrink: 0; }
+    .plan__cta { margin-top: auto; }
+    .gratuit-badge { background: var(--bg-secondary); border-radius: var(--border-radius-md); padding: var(--spacing-lg); margin-bottom: var(--spacing-xl); text-align: center; }
+  </style>
+</head>
+<body>
+
+  <header class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <nav class="navbar__nav" id="nav-menu">
+        <a href="/pages/library.html" class="navbar__link">Catalogue</a>
+        <a href="/pages/abonnements.html" class="navbar__link navbar__link--active">Tarifs</a>
+      </nav>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <div class="page-wrapper">
+
+    <section class="hero" style="padding-block: var(--spacing-2xl)">
+      <div class="container text-center">
+        <div class="hero__badge">💎 Formules Kalamundi</div>
+        <h1 class="hero__title">Choisissez votre formule</h1>
+        <p class="hero__subtitle">Commencez gratuitement. Passez premium quand vous êtes prêt.</p>
+      </div>
+    </section>
+
+    <main class="main-content">
+      <div class="container">
+
+        <div class="gratuit-badge">
+          <strong style="color:var(--color-primary)">✅ Accès gratuit inclus pour tous</strong>
+          <p style="color:var(--text-secondary);margin-top:4px;font-size:var(--font-size-sm)">
+            Lecture illimitée des œuvres gratuites · Traduction automatique · Publication d'œuvres
+          </p>
+        </div>
+
+        <div class="plans-grid">
+
+          <!-- READER+ -->
+          <div class="plan-card plan-card--featured">
+            <div class="plan__icon">📖</div>
+            <div class="plan__name">Reader+</div>
+            <div class="plan__price">2 USD <span>/ mois</span></div>
+            <div class="plan__desc">Pour les lecteurs passionnés qui veulent accéder à toutes les œuvres premium.</div>
+            <ul class="plan__features">
+              <li>Accès illimité aux œuvres premium</li>
+              <li>Lecture hors ligne (PWA)</li>
+              <li>Aucune publicité</li>
+              <li>Traduction dans les 11 langues</li>
+              <li>Historique de lecture complet</li>
+            </ul>
+            <div class="plan__cta">
+              <a href="/pages/payment.html?plan=reader_plus&montant=2" class="btn btn--primary" style="width:100%;text-align:center">
+                Souscrire Reader+
+              </a>
+            </div>
+          </div>
+
+          <!-- AUTEUR PRO -->
+          <div class="plan-card">
+            <div class="plan__icon">🖊️</div>
+            <div class="plan__name">Auteur Pro</div>
+            <div class="plan__price">5 USD <span>/ mois</span></div>
+            <div class="plan__desc">Pour les auteurs qui veulent développer leur audience et maximiser leurs revenus.</div>
+            <ul class="plan__features">
+              <li>Tout Reader+ inclus</li>
+              <li>Statistiques avancées de lecture</li>
+              <li>Badge Auteur Pro sur votre profil</li>
+              <li>Publication d'œuvres premium</li>
+              <li>Support prioritaire</li>
+              <li>Accès anticipé aux nouvelles fonctionnalités</li>
+            </ul>
+            <div class="plan__cta">
+              <a href="/pages/payment.html?plan=auteur_pro&montant=5" class="btn btn--accent" style="width:100%;text-align:center">
+                Souscrire Auteur Pro
+              </a>
+            </div>
+          </div>
+
+          <!-- INSTITUTION -->
+          <div class="plan-card">
+            <div class="plan__icon">🏛️</div>
+            <div class="plan__name">Institution</div>
+            <div class="plan__price">20 USD <span>/ mois</span></div>
+            <div class="plan__desc">Pour les ONG, écoles et bibliothèques. Tarif solidaire disponible sur demande.</div>
+            <ul class="plan__features">
+              <li>Accès pour toute votre équipe</li>
+              <li>Tableau de bord institution</li>
+              <li>Statistiques de lecture collective</li>
+              <li>Badge Institution vérifiée</li>
+              <li>Support dédié</li>
+              <li>Tarif ONG gratuit sur dossier</li>
+            </ul>
+            <div class="plan__cta">
+              <a href="/pages/institution.html" class="btn btn--outline" style="width:100%;text-align:center">
+                Contacter pour Institution
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- FAQ paiement -->
+        <div style="max-width:640px;margin:var(--spacing-2xl) auto">
+          <h2 style="color:var(--color-primary);margin-bottom:var(--spacing-lg);text-align:center">Comment payer ?</h2>
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-md)">
+            <div class="feature-card">
+              <div class="feature-card__icon">📱</div>
+              <h3 class="feature-card__title">MTN Mobile Money</h3>
+              <p class="feature-card__text">Pour les utilisateurs au Cameroun. Rapide et sans frais de carte.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-card__icon">🟠</div>
+              <h3 class="feature-card__title">Orange Money</h3>
+              <p class="feature-card__text">Pour les utilisateurs en Afrique francophone.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-card__icon">🌐</div>
+              <h3 class="feature-card__title">PayPal / Carte bancaire</h3>
+              <p class="feature-card__text">Pour les utilisateurs internationaux. Visa, Mastercard, PayPal acceptés.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer__bottom">
+          © 2025 Kalamundi &nbsp;|&nbsp;
+          <a href="/pages/cgu.html" class="footer__link">CGU</a> &nbsp;|&nbsp;
+          <a href="/pages/confidentialite.html" class="footer__link">Confidentialité</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script type="module" src="/assets/js/theme-init.js"></script>
+  <script type="module">
+    import { getSession } from '/assets/js/auth.js';
+    getSession().then(s => {
+      const el = document.getElementById('navbar-actions');
+      el.innerHTML = s
+        ? `<a href="/pages/author-dashboard.html" class="btn btn--outline btn--sm" style="color:white;border-color:rgba(255,255,255,0.5)">Mon espace</a>`
+        : `<a href="/pages/login.html" class="btn btn--ghost btn--sm" style="color:rgba(255,255,255,0.85)">Connexion</a>
+           <a href="/pages/login.html?mode=inscription" class="btn btn--accent btn--sm">S'inscrire</a>`;
+    });
+    document.getElementById('nav-toggle')?.addEventListener('click', () => {
+      const m = document.getElementById('nav-menu');
+      m.classList.toggle('is-open');
+    });
+  </script>
+</body>
+</html>

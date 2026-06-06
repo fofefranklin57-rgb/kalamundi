@@ -95,6 +95,13 @@
         </button>
       </div>
       <div class="sidebar__section">
+        <div class="sidebar__label">Finances</div>
+        <button class="sidebar__btn" data-section="paiements" onclick="showSection('paiements',this)">
+          💳 Paiements
+          <span class="badge-count" id="badge-paiements" style="display:none">0</span>
+        </button>
+      </div>
+      <div class="sidebar__section">
         <div class="sidebar__label">Utilisateurs</div>
         <button class="sidebar__btn" data-section="users" onclick="showSection('users',this)">
           👤 Utilisateurs
@@ -147,6 +154,15 @@
           <button class="btn btn--ghost btn--sm" onclick="chargerSignalements()">↻ Actualiser</button>
         </div>
         <div id="table-signalements"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
+      </section>
+
+      <!-- PAIEMENTS -->
+      <section class="admin-section" id="section-paiements">
+        <div class="section-header">
+          <h2>Paiements en attente</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerPaiements()">↻ Actualiser</button>
+        </div>
+        <div id="table-paiements"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
       </section>
 
       <!-- USERS -->
