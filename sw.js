@@ -16,7 +16,6 @@ const CACHE_IMAGES   = `${VERSION}-images`;
 /* Fichiers mis en cache à l'installation (app shell) */
 const SHELL_URLS = [
   '/',
-  '/index.html',
   '/pages/library.html',
   '/pages/login.html',
   '/pages/publish.html',
@@ -130,7 +129,7 @@ async function cacheFirst(request, cacheName) {
 
   try {
     const response = await fetch(request);
-    if (response.ok) cache.put(request, response.clone());
+    if (response.ok && !response.redirected) cache.put(request, response.clone());
     return response;
   } catch {
     /* Fallback page offline pour les navigations HTML */
@@ -147,7 +146,7 @@ async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   try {
     const response = await fetch(request);
-    if (response.ok) cache.put(request, response.clone());
+    if (response.ok && !response.redirected) cache.put(request, response.clone());
     return response;
   } catch {
     const cached = await cache.match(request);
