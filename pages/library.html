@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Bibliothèque — Kalamundi, La Plume du Monde" />
+  <title>Bibliothèque — Kalamundi</title>
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/library.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">Kalamundi</a>
+      <div class="navbar__nav" id="navbar-nav">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/library.html" class="navbar__link navbar__link--active">Bibliothèque</a>
+        <a href="/pages/publish.html" class="navbar__link">Publier</a>
+      </div>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="navbar-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Header bibliothèque -->
+  <div class="library-header">
+    <div class="container">
+      <h1 class="library-header__title">📚 Bibliothèque</h1>
+      <p class="library-header__sub">Des milliers d'œuvres à lire, dans toutes les langues</p>
+      <div class="library-search">
+        <div class="search-bar" id="search-bar">
+          <span>🔍</span>
+          <input class="search-bar__input" type="search" id="search-input"
+            placeholder="Chercher un titre, un auteur, un genre..." autocomplete="off" />
+        </div>
+        <button class="btn btn--accent" id="search-btn">Rechercher</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres rapides -->
+  <div class="filters-bar">
+    <div class="container">
+      <div class="filters-bar__inner">
+        <button class="filter-chip is-active" data-genre="">Tout</button>
+        <button class="filter-chip" data-genre="roman">Roman</button>
+        <button class="filter-chip" data-genre="nouvelle">Nouvelle</button>
+        <button class="filter-chip" data-genre="poesie">Poésie</button>
+        <button class="filter-chip" data-genre="conte">Conte</button>
+        <button class="filter-chip" data-genre="autobiographie">Autobiographie</button>
+        <button class="filter-chip" data-genre="thriller">Thriller</button>
+        <button class="filter-chip" data-genre="romance">Romance</button>
+        <button class="filter-chip" data-genre="sf_fantasy">SF / Fantasy</button>
+        <button class="filter-chip" data-genre="jeunesse">Jeunesse</button>
+        <button class="filter-chip" data-genre="essai">Essai</button>
+        <select class="filter-select" id="filter-langue">
+          <option value="">Toutes les langues</option>
+          <option value="fr">Français</option>
+          <option value="en">Anglais</option>
+          <option value="sw">Swahili</option>
+          <option value="ha">Haoussa</option>
+          <option value="yo">Yoruba</option>
+          <option value="ar">Arabe</option>
+          <option value="es">Espagnol</option>
+          <option value="pt">Portugais</option>
+        </select>
+        <select class="filter-select" id="filter-statut">
+          <option value="">Gratuit + Premium</option>
+          <option value="gratuit">Gratuit uniquement</option>
+          <option value="premium">Premium uniquement</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="library-layout">
+
+        <!-- Sidebar filtres avancés -->
+        <aside class="library-sidebar">
+
+          <div class="filter-group">
+            <div class="filter-group__title">Genre</div>
+            <div class="filter-group__options" id="sidebar-genres">
+              <div class="filter-option is-active" data-genre="">Tous les genres</div>
+              <div class="filter-option" data-genre="roman">Roman</div>
+              <div class="filter-option" data-genre="nouvelle">Nouvelle</div>
+              <div class="filter-option" data-genre="poesie">Poésie</div>
+              <div class="filter-option" data-genre="conte">Conte traditionnel</div>
+              <div class="filter-option" data-genre="autobiographie">Autobiographie</div>
+              <div class="filter-option" data-genre="temoignage">Témoignage</div>
+              <div class="filter-option" data-genre="thriller">Thriller / Policier</div>
+              <div class="filter-option" data-genre="romance">Romance</div>
+              <div class="filter-option" data-genre="sf_fantasy">SF / Fantasy</div>
+              <div class="filter-option" data-genre="jeunesse">Jeunesse</div>
+              <div class="filter-option" data-genre="essai">Essai</div>
+              <div class="filter-option" data-genre="philosophie">Philosophie</div>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-group__title">Public</div>
+            <div class="filter-group__options" id="sidebar-public">
+              <div class="filter-option is-active" data-public="">Tout public</div>
+              <div class="filter-option" data-public="adultes">Adultes</div>
+              <div class="filter-option" data-public="jeunesse">Jeunesse</div>
+              <div class="filter-option" data-public="enfants">Enfants</div>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-group__title">Accès</div>
+            <div class="filter-group__options" id="sidebar-statut">
+              <div class="filter-option is-active" data-statut="">Tout</div>
+              <div class="filter-option" data-statut="gratuit">🆓 Gratuit</div>
+              <div class="filter-option" data-statut="premium">⭐ Premium</div>
+            </div>
+          </div>
+
+          <button class="btn btn--ghost btn--sm btn--full" id="reset-filters">
+            Réinitialiser les filtres
+          </button>
+        </aside>
+
+        <!-- Contenu principal -->
+        <div class="library-main">
+
+          <!-- Section Premiers textes -->
+          <div class="premiers-textes" id="premiers-textes">
+            <div class="premiers-textes__header">
+              <h2 class="premiers-textes__title">✨ Premiers textes</h2>
+              <span class="premiers-textes__badge">À encourager</span>
+            </div>
+            <p style="color:var(--text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--spacing-md);">
+              Ces auteurs publient pour la première fois. Un commentaire, un like — ça change tout.
+            </p>
+            <div class="grid--cards" id="premiers-textes-grid">
+              <div class="empty-state">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Toolbar tri -->
+          <div class="library-toolbar">
+            <span class="library-count" id="library-count">Chargement...</span>
+            <div class="library-sort">
+              <span>Trier par</span>
+              <select id="sort-select">
+                <option value="recent">Plus récents</option>
+                <option value="lectures">Plus lus</option>
+                <option value="note">Mieux notés</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Grille œuvres -->
+          <div id="works-grid" style="display:flex;flex-direction:column;gap:var(--spacing-sm);">
+            <div class="empty-state">
+              <div class="spinner spinner--lg"></div>
+              <p class="empty-state__text" style="margin-top:var(--spacing-md);">Chargement des œuvres...</p>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" id="pagination"></div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <div class="footer__logo">Kalamundi</div>
+          <p class="footer__tagline">La Plume du Monde</p>
+          <p style="font-size:var(--font-size-xs);color:rgba(255,255,255,0.4);">
+            © 2026 Kalamundi — Tous droits réservés
+          </p>
+        </div>
+        <div>
+          <div class="footer__heading">Plateforme</div>
+          <div class="footer__links">
+            <a href="/pages/library.html" class="footer__link">Bibliothèque</a>
+            <a href="/pages/publish.html" class="footer__link">Publier</a>
+            <a href="/pages/login.html" class="footer__link">Connexion</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer__heading">Légal</div>
+          <div class="footer__links">
+            <a href="#" class="footer__link">CGU</a>
+            <a href="#" class="footer__link">Confidentialité</a>
+            <a href="#" class="footer__link">Droits d'auteur</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer__heading">Contact</div>
+          <div class="footer__links">
+            <a href="#" class="footer__link">À propos</a>
+            <a href="#" class="footer__link">Partenariats ONG</a>
+            <a href="#" class="footer__link">Support</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        Kalamundi — La Plume du Monde · Kalamu ya Dunia · The World's Pen
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script type="module" src="/assets/js/library.js"></script>
+</body>
+</html>

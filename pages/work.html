@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="page-title">Œuvre — Kalamundi</title>
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/library.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">Kalamundi</a>
+      <div class="navbar__nav" id="navbar-nav">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/library.html" class="navbar__link">Bibliothèque</a>
+        <a href="/pages/publish.html" class="navbar__link">Publier</a>
+      </div>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="navbar-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero œuvre -->
+  <div class="work-hero" id="work-hero">
+    <div class="work-hero__inner">
+      <div class="work-cover" id="work-cover">📖</div>
+      <div class="work-info">
+        <div class="work-info__genre" id="work-genre">—</div>
+        <h1 class="work-info__title" id="work-titre">Chargement...</h1>
+        <div class="work-info__author">
+          Par <a href="#" id="work-auteur-link" class="work-info__author-link">—</a>
+          <span id="work-pays"></span>
+        </div>
+        <div class="work-info__stats">
+          <div class="work-stat">
+            <span class="work-stat__value" id="stat-lectures">0</span>
+            <span class="work-stat__label">Lectures</span>
+          </div>
+          <div class="work-stat">
+            <span class="work-stat__value" id="stat-note">—</span>
+            <span class="work-stat__label">Note</span>
+          </div>
+          <div class="work-stat">
+            <span class="work-stat__value" id="stat-chapitres">0</span>
+            <span class="work-stat__label">Chapitres</span>
+          </div>
+        </div>
+        <div class="work-info__actions" id="work-actions">
+          <div class="spinner spinner--sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Corps -->
+  <main>
+    <div class="work-body">
+
+      <!-- Colonne principale -->
+      <div>
+
+        <!-- Badges -->
+        <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;margin-bottom:var(--spacing-lg);" id="work-badges"></div>
+
+        <!-- Résumé -->
+        <h2 style="font-size:var(--font-size-lg);color:var(--color-primary);margin-bottom:var(--spacing-md);">
+          À propos de cette œuvre
+        </h2>
+        <p class="work-resume" id="work-resume">—</p>
+
+        <!-- Chapitres -->
+        <div class="work-chapitres">
+          <h2 style="font-size:var(--font-size-lg);color:var(--color-primary);margin-bottom:var(--spacing-md);">
+            Table des chapitres
+          </h2>
+          <div id="chapitres-list">
+            <div class="empty-state">
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commentaires -->
+        <div class="comments-section">
+          <h2 style="font-size:var(--font-size-lg);color:var(--color-primary);margin-bottom:var(--spacing-lg);">
+            Commentaires et notes
+          </h2>
+
+          <!-- Formulaire commentaire (si connecté) -->
+          <div class="comment-form hidden" id="comment-form">
+            <h3 style="font-size:var(--font-size-md);margin-bottom:var(--spacing-md);">
+              Laisser un avis
+            </h3>
+            <div style="margin-bottom:var(--spacing-md);">
+              <div style="font-size:var(--font-size-sm);color:var(--text-secondary);margin-bottom:var(--spacing-xs);">
+                Ta note
+              </div>
+              <div class="star-rating" id="star-rating" role="group" aria-label="Note de 1 à 5">
+                <button class="star-rating__star" data-note="1" aria-label="1 étoile">★</button>
+                <button class="star-rating__star" data-note="2" aria-label="2 étoiles">★</button>
+                <button class="star-rating__star" data-note="3" aria-label="3 étoiles">★</button>
+                <button class="star-rating__star" data-note="4" aria-label="4 étoiles">★</button>
+                <button class="star-rating__star" data-note="5" aria-label="5 étoiles">★</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="comment-texte">Ton commentaire</label>
+              <textarea class="form-textarea" id="comment-texte"
+                placeholder="Partage ton ressenti — un encouragement peut faire toute la différence pour un auteur..."
+                rows="3" maxlength="1000"></textarea>
+            </div>
+            <button type="button" class="btn btn--primary" id="btn-commenter">
+              Publier mon avis
+            </button>
+          </div>
+
+          <div id="connexion-required" class="hidden">
+            <div class="alert alert--info">
+              <a href="/pages/login.html" style="color:inherit;font-weight:bold;">Connecte-toi</a>
+              pour laisser un commentaire et encourager l'auteur.
+            </div>
+          </div>
+
+          <!-- Liste commentaires -->
+          <div id="comments-list">
+            <div class="empty-state">
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div>
+        <!-- Infos auteur -->
+        <div class="work-sidebar-card" id="author-card">
+          <div class="work-sidebar-card__title">L'auteur</div>
+          <a href="#" class="author-mini" id="author-mini-link">
+            <div class="avatar avatar--md avatar--placeholder" id="author-avatar">?</div>
+            <div class="author-mini__info">
+              <div class="author-mini__nom" id="author-nom">—</div>
+              <div class="author-mini__pays" id="author-pays">—</div>
+            </div>
+          </a>
+          <p class="author-mini__bio" id="author-bio"
+            style="font-size:var(--font-size-sm);color:var(--text-secondary);margin-bottom:var(--spacing-md);">
+          </p>
+          <a href="#" class="btn btn--outline btn--sm btn--full" id="voir-profil-auteur">
+            Voir le profil
+          </a>
+        </div>
+
+        <!-- Infos techniques -->
+        <div class="work-sidebar-card" style="margin-top:var(--spacing-md);">
+          <div class="work-sidebar-card__title">Informations</div>
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-sm);font-size:var(--font-size-sm);">
+            <div class="flex-between">
+              <span class="text-secondary">Langue originale</span>
+              <span id="info-langue">—</span>
+            </div>
+            <div class="flex-between">
+              <span class="text-secondary">Genre</span>
+              <span id="info-genre">—</span>
+            </div>
+            <div class="flex-between">
+              <span class="text-secondary">Public</span>
+              <span id="info-public">—</span>
+            </div>
+            <div class="flex-between">
+              <span class="text-secondary">Publié le</span>
+              <span id="info-date">—</span>
+            </div>
+            <div class="flex-between">
+              <span class="text-secondary">Licence</span>
+              <span id="info-licence">© Tous droits réservés</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signalement -->
+        <div class="work-report">
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-signaler"
+            style="color:var(--text-light);font-size:var(--font-size-xs);">
+            ⚑ Signaler cette œuvre
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal signalement -->
+  <div class="modal-overlay" id="modal-signalement">
+    <div class="modal">
+      <div class="modal__header">
+        <h3 class="modal__title">Signaler cette œuvre</h3>
+        <button class="modal__close" id="close-modal-signalement">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="form-group">
+          <label class="form-label form-label--required" for="motif-signalement">Motif</label>
+          <select class="form-select" id="motif-signalement">
+            <option value="">— Choisir —</option>
+            <option value="plagiat">Plagiat / droits d'auteur</option>
+            <option value="contenu_inapproprie">Contenu inapproprié</option>
+            <option value="haine">Discours de haine</option>
+            <option value="spam">Spam / contenu dupliqué</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="detail-signalement">Précisions (optionnel)</label>
+          <textarea class="form-textarea" id="detail-signalement"
+            placeholder="Explique brièvement le problème..." rows="3" maxlength="500"></textarea>
+        </div>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn--ghost" id="cancel-signalement">Annuler</button>
+        <button class="btn btn--danger" id="confirm-signalement">Envoyer le signalement</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script type="module" src="/assets/js/work.js"></script>
+</body>
+</html>
