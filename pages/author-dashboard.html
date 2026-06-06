@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon tableau de bord — Kalamundi</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/dashboard.css">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <div class="navbar__nav" id="navbar-nav">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/library.html" class="navbar__link">Bibliothèque</a>
+        <a href="/pages/publish.html" class="navbar__link">Publier</a>
+        <a href="/pages/author-dashboard.html" class="navbar__link navbar__link--active">Dashboard</a>
+      </div>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="navbar-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="page-wrapper">
+    <main class="main-content">
+      <div class="container">
+
+        <!-- En-tête dashboard -->
+        <div class="dashboard-header">
+          <div class="dashboard-header__info">
+            <div class="avatar avatar--lg avatar--placeholder" id="avatar-auteur">?</div>
+            <div>
+              <h1 class="dashboard-header__nom" id="nom-auteur">Chargement…</h1>
+              <p class="dashboard-header__role" id="role-auteur"></p>
+            </div>
+          </div>
+          <div class="dashboard-header__actions">
+            <a href="/pages/author-profile.html" class="btn btn--outline btn--sm">✏️ Mon profil</a>
+            <a href="/pages/publish.html" class="btn btn--primary btn--sm">+ Nouvelle œuvre</a>
+          </div>
+        </div>
+
+        <!-- Statistiques globales -->
+        <div class="grid grid--4 stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card__label">Œuvres publiées</div>
+            <div class="stat-card__value" id="stat-nb-oeuvres">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__label">Total lectures</div>
+            <div class="stat-card__value" id="stat-lectures">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__label">Note moyenne</div>
+            <div class="stat-card__value" id="stat-note">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__label">Revenus totaux</div>
+            <div class="stat-card__value" id="stat-revenus">—</div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs dashboard-tabs" role="tablist">
+          <button class="tab tab--active" data-tab="oeuvres" role="tab">📖 Mes œuvres</button>
+          <button class="tab" data-tab="revenus" role="tab">💰 Revenus</button>
+        </div>
+
+        <!-- Panneau : Mes œuvres -->
+        <div class="dashboard-panel is-active" id="panel-oeuvres">
+          <div class="section__header">
+            <h2 class="section__title">Mes œuvres</h2>
+            <a href="/pages/publish.html" class="btn btn--primary btn--sm">+ Ajouter</a>
+          </div>
+          <div id="liste-oeuvres">
+            <div class="skeleton-card" style="height:80px"></div>
+            <div class="skeleton-card" style="height:80px"></div>
+            <div class="skeleton-card" style="height:80px"></div>
+          </div>
+        </div>
+
+        <!-- Panneau : Revenus -->
+        <div class="dashboard-panel" id="panel-revenus">
+          <div class="section__header">
+            <h2 class="section__title">Historique des revenus</h2>
+          </div>
+          <div class="revenus-summary" id="revenus-summary">
+            <div class="revenu-stat">
+              <span class="revenu-stat__label">Total encaissé</span>
+              <span class="revenu-stat__value text-success" id="rev-total">—</span>
+            </div>
+            <div class="revenu-stat">
+              <span class="revenu-stat__label">En attente</span>
+              <span class="revenu-stat__value text-accent" id="rev-attente">—</span>
+            </div>
+          </div>
+          <div id="liste-revenus">
+            <div class="empty-state">
+              <div class="empty-state__icon">💰</div>
+              <p class="empty-state__title">Aucun revenu pour l'instant</p>
+              <p class="empty-state__text">Vos revenus apparaîtront ici dès qu'une vente sera enregistrée.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer__bottom">© 2025 Kalamundi — Tous droits réservés</div>
+      </div>
+    </footer>
+  </div>
+
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- Modal confirmation suppression -->
+  <div class="modal-overlay" id="modal-supprimer" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal__header">
+        <h3 class="modal__title">Supprimer l'œuvre</h3>
+        <button class="modal__close" id="modal-close">✕</button>
+      </div>
+      <div class="modal__body">
+        <p>Êtes-vous sûr de vouloir supprimer <strong id="modal-titre-oeuvre"></strong> ?</p>
+        <p class="text-secondary" style="font-size:var(--font-size-sm);margin-top:var(--spacing-sm)">
+          L'œuvre sera masquée mais les données ne seront pas effacées.
+        </p>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn--ghost" id="btn-annuler-suppr">Annuler</button>
+        <button class="btn btn--danger" id="btn-confirmer-suppr">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/assets/js/author-dashboard.js"></script>
+</body>
+</html>

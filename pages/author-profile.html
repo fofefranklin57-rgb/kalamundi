@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon profil — Kalamundi</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/dashboard.css">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <div class="navbar__nav" id="navbar-nav">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/library.html" class="navbar__link">Bibliothèque</a>
+        <a href="/pages/publish.html" class="navbar__link">Publier</a>
+        <a href="/pages/author-dashboard.html" class="navbar__link">Dashboard</a>
+      </div>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="navbar-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="page-wrapper">
+    <main class="main-content">
+      <div class="container container--md">
+
+        <div class="profile-page-header">
+          <a href="/pages/author-dashboard.html" class="btn btn--ghost btn--sm">← Dashboard</a>
+          <h1 class="profile-page-header__title">Mon profil auteur</h1>
+        </div>
+
+        <!-- Alerte -->
+        <div class="alert alert--success hidden" id="alert-succes" role="status"></div>
+        <div class="alert alert--error hidden" id="alert-erreur" role="alert"></div>
+
+        <!-- Formulaire profil -->
+        <div class="card profile-card">
+          <div class="profile-card__avatar-section">
+            <div class="avatar avatar--xl avatar--placeholder" id="preview-avatar">?</div>
+            <div class="profile-card__avatar-actions">
+              <label for="input-avatar" class="btn btn--outline btn--sm" style="cursor:pointer">
+                📷 Changer la photo
+              </label>
+              <input type="file" id="input-avatar" accept="image/jpeg,image/png,image/webp"
+                     class="hidden" aria-label="Choisir une photo de profil">
+              <p class="form-hint">JPG, PNG ou WebP · Max 2 Mo</p>
+            </div>
+          </div>
+
+          <form class="profile-form" id="profile-form" novalidate>
+
+            <div class="grid grid--2 profile-grid">
+              <div class="form-group">
+                <label class="form-label form-label--required" for="champ-nom">Nom complet</label>
+                <input class="form-input" type="text" id="champ-nom" name="nom"
+                       placeholder="Votre nom d'auteur" required autocomplete="name">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="champ-pays">Pays</label>
+                <select class="form-select" id="champ-pays" name="pays">
+                  <option value="">Sélectionner un pays</option>
+                  <!-- JS injecte les options -->
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="champ-bio">Biographie</label>
+              <textarea class="form-textarea" id="champ-bio" name="bio"
+                        placeholder="Parlez de vous, de votre parcours, de vos inspirations…"
+                        rows="5" maxlength="1000"></textarea>
+              <div class="form-hint"><span id="bio-compteur">0</span> / 1000 caractères</div>
+            </div>
+
+            <div class="grid grid--2 profile-grid">
+              <div class="form-group">
+                <label class="form-label" for="champ-site">Site web</label>
+                <input class="form-input" type="url" id="champ-site" name="site_web"
+                       placeholder="https://monsite.com">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="champ-twitter">Twitter / X</label>
+                <input class="form-input" type="text" id="champ-twitter" name="twitter"
+                       placeholder="@monpseudo">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Genres d'écriture</label>
+              <div class="genres-checkboxes" id="genres-checkboxes">
+                <!-- JS injecte les checkboxes -->
+              </div>
+            </div>
+
+            <div class="profile-form__footer">
+              <button type="submit" class="btn btn--primary" id="btn-sauvegarder">
+                Enregistrer les modifications
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Section danger -->
+        <div class="card danger-zone">
+          <h3 class="danger-zone__title">Zone dangereuse</h3>
+          <div class="danger-zone__item">
+            <div>
+              <strong>Supprimer mon compte</strong>
+              <p class="form-hint">Cette action est irréversible. Toutes vos œuvres seront masquées.</p>
+            </div>
+            <button class="btn btn--danger btn--sm" id="btn-supprimer-compte">Supprimer le compte</button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer__bottom">© 2025 Kalamundi — Tous droits réservés</div>
+      </div>
+    </footer>
+  </div>
+
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <script type="module" src="/assets/js/author-profile.js"></script>
+</body>
+</html>

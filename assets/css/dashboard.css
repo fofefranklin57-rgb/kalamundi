@@ -1,0 +1,351 @@
+/* ============================================================
+   dashboard.css — Dashboard auteur + Profil
+   Kalamundi — La Plume du Monde
+   ============================================================ */
+
+/* ============================================================
+   En-tête dashboard
+   ============================================================ */
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  padding-block: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dashboard-header__info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.dashboard-header__nom {
+  font-size: var(--font-size-2xl);
+  color: var(--color-primary);
+  margin-bottom: 2px;
+}
+
+.dashboard-header__role {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  margin: 0;
+}
+
+.dashboard-header__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   Stats grid
+   ============================================================ */
+
+.stats-grid {
+  margin-bottom: var(--spacing-xl);
+}
+
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Tabs dashboard
+   ============================================================ */
+
+.dashboard-tabs {
+  margin-bottom: var(--spacing-lg);
+}
+
+.dashboard-panel {
+  display: none;
+}
+
+.dashboard-panel.is-active {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ============================================================
+   Liste des œuvres (dashboard)
+   ============================================================ */
+
+.oeuvre-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--spacing-sm);
+  transition: box-shadow var(--transition-fast);
+}
+
+.oeuvre-row:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.oeuvre-row__cover {
+  width: 48px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: var(--border-radius-sm);
+  background-color: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.oeuvre-row__cover--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  color: rgba(255,255,255,0.5);
+  font-size: 20px;
+  width: 48px;
+  height: 64px;
+  border-radius: var(--border-radius-sm);
+  flex-shrink: 0;
+}
+
+.oeuvre-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.oeuvre-row__titre {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.oeuvre-row__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+}
+
+.oeuvre-row__actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Revenus
+   ============================================================ */
+
+.revenus-summary {
+  display: flex;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.revenu-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.revenu-stat__label {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.revenu-stat__value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.revenu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  font-size: var(--font-size-sm);
+  gap: var(--spacing-md);
+}
+
+.revenu-row:last-child { border-bottom: none; }
+
+.revenu-row__titre {
+  flex: 1;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.revenu-row__date { color: var(--text-light); }
+
+.revenu-row__montant {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-success);
+}
+
+.revenu-row__statut {
+  font-size: var(--font-size-xs);
+}
+
+/* ============================================================
+   Page profil
+   ============================================================ */
+
+.profile-page-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding-block: var(--spacing-md);
+}
+
+.profile-page-header__title {
+  font-size: var(--font-size-2xl);
+  color: var(--color-primary);
+}
+
+.profile-card {
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.profile-card__avatar-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.profile-card__avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.profile-grid {
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 640px) {
+  .profile-grid { grid-template-columns: 1fr; }
+}
+
+.profile-form__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  margin-top: var(--spacing-lg);
+}
+
+/* ============================================================
+   Genres checkboxes
+   ============================================================ */
+
+.genres-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.genre-checkbox {
+  display: none;
+}
+
+.genre-checkbox + label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.genre-checkbox:checked + label {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.genre-checkbox + label:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* ============================================================
+   Zone danger
+   ============================================================ */
+
+.danger-zone {
+  padding: var(--spacing-lg);
+  border-color: rgba(192, 57, 43, 0.3);
+}
+
+.danger-zone__title {
+  font-size: var(--font-size-md);
+  color: var(--color-error);
+  margin-bottom: var(--spacing-md);
+}
+
+.danger-zone__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .oeuvre-row__actions {
+    flex-direction: column;
+  }
+
+  .profile-card__avatar-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-card {
+    padding: var(--spacing-lg);
+  }
+
+  .revenus-summary {
+    gap: var(--spacing-lg);
+  }
+}
