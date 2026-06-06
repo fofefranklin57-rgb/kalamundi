@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/assets/css/layout.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
   <link rel="stylesheet" href="/assets/css/library.css" />
+  <script>(function(){var t=localStorage.getItem('kala_theme');if(t==='dark')document.documentElement.classList.add('theme-dark-pre');if(t==='sepia')document.documentElement.classList.add('theme-sepia-pre');})()</script>
 </head>
 <body>
 
@@ -23,6 +24,7 @@
         <a href="/pages/library.html" class="navbar__link navbar__link--active">Bibliothèque</a>
         <a href="/pages/publish.html" class="navbar__link">Publier</a>
       </div>
+      <span id="theme-slot"></span>
       <div class="navbar__actions" id="navbar-actions"></div>
       <button class="navbar__toggle" id="navbar-toggle" aria-label="Menu" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -223,5 +225,6 @@
 
   <div class="toast-container" id="toast-container"></div>
   <script type="module" src="/assets/js/library.js"></script>
+  <script type="module" src="/assets/js/theme-init.js"></script>
 </body>
 </html>

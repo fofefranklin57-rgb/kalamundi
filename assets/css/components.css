@@ -641,6 +641,42 @@
 }
 
 /* ============================================================
+   Theme switcher
+   ============================================================ */
+
+.theme-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-full);
+  padding: 3px;
+}
+
+.theme-switcher__btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--border-radius-full);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast);
+  line-height: 1;
+}
+
+.theme-switcher__btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.theme-switcher__btn.is-active {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* ============================================================
    Animations
    ============================================================ */
 

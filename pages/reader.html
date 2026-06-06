@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/assets/css/base.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
   <link rel="stylesheet" href="/assets/css/reader.css" />
+  <script>(function(){var t=localStorage.getItem('kala_theme');if(t==='dark')document.documentElement.classList.add('theme-dark-pre');if(t==='sepia')document.documentElement.classList.add('theme-sepia-pre');})()</script>
 </head>
 <body class="reader-body">
 
@@ -26,6 +27,7 @@
         <button class="reader-action-btn" id="btn-toc" title="Table des matières">☰ Chapitres</button>
         <button class="reader-action-btn" id="btn-lang" title="Changer la langue">🌐 <span id="lang-label">FR</span></button>
         <button class="reader-action-btn" id="btn-settings" title="Paramètres de lecture">⚙ Aa</button>
+        <span id="theme-slot"></span>
       </div>
     </div>
     <div class="reader-progress-bar">
@@ -106,5 +108,6 @@
 
 <div class="toast-container" id="toast-container"></div>
 <script type="module" src="/assets/js/reader.js"></script>
+<script type="module" src="/assets/js/theme-init.js"></script>
 </body>
 </html>

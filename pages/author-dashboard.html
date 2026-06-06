@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/assets/css/layout.css">
   <link rel="stylesheet" href="/assets/css/components.css">
   <link rel="stylesheet" href="/assets/css/dashboard.css">
+  <script>(function(){var t=localStorage.getItem('kala_theme');if(t==='dark')document.documentElement.classList.add('theme-dark-pre');if(t==='sepia')document.documentElement.classList.add('theme-sepia-pre');})()</script>
 </head>
 <body>
 
@@ -22,6 +23,7 @@
         <a href="/pages/publish.html" class="navbar__link">Publier</a>
         <a href="/pages/author-dashboard.html" class="navbar__link navbar__link--active">Dashboard</a>
       </div>
+      <span id="theme-slot"></span>
       <div class="navbar__actions" id="navbar-actions"></div>
       <button class="navbar__toggle" id="navbar-toggle" aria-label="Menu" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -144,5 +146,6 @@
   </div>
 
   <script type="module" src="/assets/js/author-dashboard.js"></script>
+  <script type="module" src="/assets/js/theme-init.js"></script>
 </body>
 </html>
