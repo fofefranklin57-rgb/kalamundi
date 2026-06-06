@@ -37,3 +37,7 @@ desktop.ini
 # Fichiers temporaires
 *.tmp
 *.temp
+
+.dev.vars*
+!.dev.vars.example
+!.env.example
