@@ -14,9 +14,15 @@
   /* ──────────────────────────────────────────────────────────
      CONFIG — À personnaliser après inscription Monetag
   ────────────────────────────────────────────────────────── */
-  var MONETAG_ZONE_ID = '11110665';
-  var MONETAG_SRC     = 'https://nap5k.com/tag.min.js';
-  var AD_DELAY_MS     = 3000; // délai avant chargement (3 s)
+  /* In-Page Push — accueil (index.html) */
+  var ZONE_INPAGE   = '11110665';
+  var SRC_INPAGE    = 'https://nap5k.com/tag.min.js';
+
+  /* Multitag — catalogue (library.html) + page œuvre (work.html) */
+  var ZONE_MULTI    = '11110687';
+  var SRC_MULTI     = 'https://n6wxm.com/vignette.min.js';
+
+  var AD_DELAY_MS   = 3000;
 
   /* ──────────────────────────────────────────────────────────
      Charge le script Monetag (In-Page Push)
@@ -25,9 +31,14 @@
     if (window._kalaMonetag) return;
     window._kalaMonetag = true;
 
+    var page    = window.location.pathname;
+    var isMulti = page.includes('library') || page.includes('work');
+    var zone    = isMulti ? ZONE_MULTI : ZONE_INPAGE;
+    var src     = isMulti ? SRC_MULTI  : SRC_INPAGE;
+
     var s = document.createElement('script');
-    s.dataset.zone = MONETAG_ZONE_ID;
-    s.src          = MONETAG_SRC;
+    s.dataset.zone = zone;
+    s.src          = src;
     s.async        = true;
     document.body.appendChild(s);
   }
