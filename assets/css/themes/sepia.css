@@ -1,0 +1,3 @@
+/* Thème sépia — appliqué via body.theme-sepia dans base.css */
+/* Ce fichier permet le chargement dynamique ; les variables sont dans base.css */
+body { color-scheme: light; }

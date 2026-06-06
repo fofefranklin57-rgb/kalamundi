@@ -1,0 +1,39 @@
+# Variables d'environnement — NE JAMAIS committer
+.env
+.env.local
+.env.production
+
+# Dépendances
+node_modules/
+
+# Wrangler (Cloudflare)
+.wrangler/
+
+# Build
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Android Studio
+*.keystore
+*.jks
+/android/
+/electron/
+
+# Fichiers temporaires
+*.tmp
+*.temp

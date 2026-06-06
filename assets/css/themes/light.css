@@ -1,0 +1,3 @@
+/* Thème clair — défaut (variables déjà définies dans base.css) */
+/* Ce fichier existe pour permettre le chargement dynamique du thème */
+body { color-scheme: light; }
