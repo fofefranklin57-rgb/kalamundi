@@ -18,29 +18,43 @@
   var ZONE_INPAGE   = '11110665';
   var SRC_INPAGE    = 'https://nap5k.com/tag.min.js';
 
-  /* Multitag — catalogue (library.html) + page œuvre (work.html) */
+  /* Vignette Banner — catalogue (library.html) + page œuvre (work.html) */
   var ZONE_MULTI    = '11110687';
   var SRC_MULTI     = 'https://n6wxm.com/vignette.min.js';
+
+  /* Multitag (all-in-one) — catalogue + page œuvre uniquement */
+  var ZONE_MULTITAG = '246898';
+  var SRC_MULTITAG  = 'https://quge5.com/88/tag.min.js';
 
   var AD_DELAY_MS   = 3000;
 
   /* ──────────────────────────────────────────────────────────
      Charge le script Monetag (In-Page Push)
   ────────────────────────────────────────────────────────── */
+  function chargerScript(zone, src) {
+    var s = document.createElement('script');
+    s.dataset.zone       = zone;
+    s.src                = src;
+    s.async              = true;
+    s.dataset.cfasync    = 'false';
+    document.body.appendChild(s);
+  }
+
   function loadMonetag() {
     if (window._kalaMonetag) return;
     window._kalaMonetag = true;
 
-    var page    = window.location.pathname;
-    var isMulti = page.includes('library') || page.includes('work');
-    var zone    = isMulti ? ZONE_MULTI : ZONE_INPAGE;
-    var src     = isMulti ? SRC_MULTI  : SRC_INPAGE;
+    var page   = window.location.pathname;
+    var isBrowse = page.includes('library') || page.includes('work');
 
-    var s = document.createElement('script');
-    s.dataset.zone = zone;
-    s.src          = src;
-    s.async        = true;
-    document.body.appendChild(s);
+    if (isBrowse) {
+      /* Vignette Banner + Multitag sur les pages de navigation */
+      chargerScript(ZONE_MULTI,    SRC_MULTI);
+      chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
+    } else {
+      /* In-Page Push discret sur l'accueil */
+      chargerScript(ZONE_INPAGE, SRC_INPAGE);
+    }
   }
 
   /* ──────────────────────────────────────────────────────────
