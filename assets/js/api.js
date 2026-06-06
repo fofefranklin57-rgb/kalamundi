@@ -6,6 +6,11 @@
 
 import { supabase } from './auth.js';
 
+/* Modèle économique — splits officiels */
+export const SPLIT_AUTEUR_PREMIUM = 0.50; // 50% auteur sur ventes premium
+export const SPLIT_KALAMUNDI_PREMIUM = 0.50; // 50% Kalamundi
+// Pub : 100% Kalamundi, aucun reversement auteur
+
 /* ============================================================
    PROFILS
    ============================================================ */
