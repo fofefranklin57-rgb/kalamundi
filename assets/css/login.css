@@ -1,0 +1,193 @@
+/* ============================================================
+   login.css — Page connexion / inscription
+   Kalamundi — La Plume du Monde
+   ============================================================ */
+
+.login-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   Panneau visuel (gauche)
+   ============================================================ */
+
+.login-visual {
+  background: linear-gradient(160deg, var(--color-primary-dark) 0%, var(--color-primary) 50%, var(--color-primary-light) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-visual::before {
+  content: '✍';
+  position: absolute;
+  font-size: 320px;
+  opacity: 0.04;
+  bottom: -60px;
+  right: -40px;
+  line-height: 1;
+}
+
+.login-visual__content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: var(--text-inverse);
+}
+
+.login-visual__logo {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent-light);
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: -0.02em;
+}
+
+.login-visual__tagline {
+  font-size: var(--font-size-lg);
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: var(--spacing-lg);
+}
+
+.login-visual__sub {
+  font-size: var(--font-size-md);
+  color: rgba(255, 255, 255, 0.6);
+  line-height: var(--line-height-loose);
+}
+
+/* ============================================================
+   Panneau formulaire (droite)
+   ============================================================ */
+
+.login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  background-color: var(--bg-main);
+  overflow-y: auto;
+}
+
+.login-panel__inner {
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-tabs {
+  margin-bottom: var(--spacing-lg);
+}
+
+.login-alert,
+.login-success {
+  margin-bottom: var(--spacing-md);
+}
+
+/* ============================================================
+   Formulaires
+   ============================================================ */
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.login-forgot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(-1 * var(--spacing-xs));
+  margin-bottom: var(--spacing-md);
+}
+
+.login-forgot__intro {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.login-separator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-block: var(--spacing-md);
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+}
+
+.login-separator::before,
+.login-separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+/* ============================================================
+   Input mot de passe avec toggle
+   ============================================================ */
+
+.input-password {
+  position: relative;
+}
+
+.input-password .form-input {
+  padding-right: 44px;
+}
+
+.input-password__toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-light);
+  padding: 4px;
+  line-height: 1;
+}
+
+.input-password__toggle:hover {
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   Indicateur force mot de passe
+   ============================================================ */
+
+.password-strength {
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  height: 16px;
+}
+
+.password-strength--weak   { color: var(--color-error); }
+.password-strength--moyen  { color: var(--color-warning); }
+.password-strength--fort   { color: var(--color-success); }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-visual {
+    display: none;
+  }
+
+  .login-panel {
+    padding: var(--spacing-lg) var(--spacing-md);
+    align-items: flex-start;
+    padding-top: var(--spacing-xl);
+  }
+}
