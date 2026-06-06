@@ -6,6 +6,8 @@
 import { api } from './api.js';
 import { getUser } from './auth.js';
 import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
+import { traduire, viderCacheTraduction, rendreOptionLangues, LANGUES_LECTURE } from './translate.js';
+import { activerProtections } from './security.js';
 
 /* ============================================================
    État du lecteur
@@ -48,6 +50,7 @@ const etat = {
   appliquerPreferences();
   rendreInfos();
   rendreTOC();
+  _rendreOptionLangues();
   await chargerChapitre(etat.chapitreNum);
   restaurerProgression();
   api.incrementerLectures(etat.oeuvreId).catch(() => {});
@@ -98,6 +101,9 @@ async function chargerChapitre(numero) {
   loadingEl.style.display = 'none';
   contentEl.innerHTML = formaterTexte(contenu);
 
+  // Protections sécurité + watermark
+  activerProtections(contentEl, etat.utilisateur?.id);
+
   // Mise à jour UI
   mettreAJourNavigation();
   mettreAJourProgression();
@@ -122,33 +128,34 @@ function formaterTexte(texte) {
 }
 
 /* ============================================================
-   Traduction
+   Traduction — délégué à translate.js
    ============================================================ */
 
 async function obtenirTraduction(chapitreId, contenu, langue) {
-  // 1. Vérifier le cache Supabase
-  const cache = await api.getTraduction(chapitreId, langue);
-  if (cache) return cache.contenu_traduit;
+  return traduire(chapitreId, contenu, langue);
+}
 
-  // 2. Appeler l'Edge Function de traduction
-  const reponse = await fetch(
-    `https://iobieffnaauecyukecds.supabase.co/functions/v1/traduire`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvYmllZmZuYWF1ZWN5dWtlY2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDIzNTEsImV4cCI6MjA5NjMxODM1MX0.w1_Zv9VeVvoLlt1H0d7wN8To-A5DAxSfszV0kJ_5NRE`,
-      },
-      body: JSON.stringify({ texte: contenu, langue_cible: langue }),
-    }
-  );
+/* ============================================================
+   Panneau sélecteur de langues — 11 langues via translate.js
+   ============================================================ */
 
-  if (!reponse.ok) throw new Error('Traduction échouée');
-  const { traduit } = await reponse.json();
+function _rendreOptionLangues() {
+  const conteneur = document.getElementById('lang-options');
+  rendreOptionLangues(conteneur, etat.langueAffichee, async (code) => {
+    etat.langueAffichee = code;
+    lsSet('reader_langue', code);
 
-  // 3. Mettre en cache
-  await api.saveTraduction(chapitreId, langue, traduit);
-  return traduit;
+    const isOriginal = code === 'original';
+    document.getElementById('translation-notice').style.display = isOriginal ? 'none' : 'block';
+
+    const langue = LANGUES_LECTURE.find(l => l.code === code);
+    document.getElementById('lang-label').textContent = isOriginal
+      ? '🌐'
+      : (langue?.drapeau || code.toUpperCase());
+
+    document.getElementById('reader-lang-panel').classList.remove('is-open');
+    await chargerChapitre(etat.chapitreNum);
+  });
 }
 
 /* ============================================================
@@ -323,21 +330,7 @@ document.getElementById('btn-lang')?.addEventListener('click', () => {
   fermerPanneaux('lang');
 });
 
-document.querySelectorAll('.lang-option').forEach(opt => {
-  opt.addEventListener('click', async () => {
-    document.querySelectorAll('.lang-option').forEach(o => o.classList.remove('is-active'));
-    opt.classList.add('is-active');
-    etat.langueAffichee = opt.dataset.lang;
-    lsSet('reader_langue', etat.langueAffichee);
-
-    const isOriginal = etat.langueAffichee === 'original';
-    document.getElementById('translation-notice').style.display = isOriginal ? 'none' : 'block';
-    document.getElementById('lang-label').textContent = isOriginal ? 'FR' : opt.dataset.lang.toUpperCase();
-    document.getElementById('reader-lang-panel').classList.remove('is-open');
-
-    await chargerChapitre(etat.chapitreNum);
-  });
-});
+/* Les listeners .lang-option sont gérés par _rendreOptionLangues() via translate.js */
 
 /* ============================================================
    Fermer les panneaux ouverts
