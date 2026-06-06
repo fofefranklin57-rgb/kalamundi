@@ -192,7 +192,7 @@ export const api = {
       .select('contenu_traduit')
       .eq('chapitre_id', chapitreId)
       .eq('langue_cible', langueCible)
-      .single();
+      .maybeSingle();
     return data;
   },
 
