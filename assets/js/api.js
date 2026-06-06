@@ -399,6 +399,91 @@ export const api = {
     return data;
   },
 
+  /* ---- Admin -------------------------------------------- */
+
+  async adminGetStats() {
+    const [oeuvres, users, signalements, institutions] = await Promise.all([
+      supabase.from('oeuvres').select('id', { count: 'exact', head: true }),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('signalements').select('id', { count: 'exact', head: true }).eq('statut', 'ouvert'),
+      supabase.from('institutions').select('id', { count: 'exact', head: true }).eq('statut_verification', 'en_attente'),
+    ]);
+    return {
+      totalOeuvres:        oeuvres.count  || 0,
+      totalUsers:          users.count    || 0,
+      signalementsOuverts: signalements.count || 0,
+      institutionsAttente: institutions.count || 0,
+    };
+  },
+
+  async adminGetOeuvres({ page = 1, limit = 20 } = {}) {
+    const { data, error, count } = await supabase
+      .from('oeuvres')
+      .select(`id, titre, genre, statut, visible, nb_lectures, created_at,
+               profiles!oeuvres_auteur_id_fkey(nom)`, { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range((page - 1) * limit, page * limit - 1);
+    if (error) throw error;
+    return { data, total: count };
+  },
+
+  async adminToggleVisible(oeuvreId, visible) {
+    const { error } = await supabase
+      .from('oeuvres').update({ visible }).eq('id', oeuvreId);
+    if (error) throw error;
+  },
+
+  async adminGetSignalements() {
+    const { data, error } = await supabase
+      .from('signalements')
+      .select(`id, motif, statut, created_at,
+               oeuvres(id, titre),
+               profiles!signalements_user_id_fkey(nom)`)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    return data;
+  },
+
+  async adminTraiterSignalement(id, statut) {
+    const { error } = await supabase
+      .from('signalements').update({ statut }).eq('id', id);
+    if (error) throw error;
+  },
+
+  async adminGetInstitutions() {
+    const { data, error } = await supabase
+      .from('institutions')
+      .select(`id, nom, type, pays, domaine, statut_verification, created_at,
+               profiles!institutions_user_id_fkey(nom, email:id)`)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    return data;
+  },
+
+  async adminVerifierInstitution(id, statut) {
+    const { error } = await supabase
+      .from('institutions').update({ statut_verification: statut }).eq('id', id);
+    if (error) throw error;
+  },
+
+  async adminGetUsers({ limit = 30 } = {}) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, nom, role, niveau_auteur, badge_fondateur, created_at, pays')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data;
+  },
+
+  async adminSetRole(userId, role) {
+    const { error } = await supabase
+      .from('profiles').update({ role }).eq('id', userId);
+    if (error) throw error;
+  },
+
   /* ---- Stats dashboard auteur --------------------------- */
 
   async getStatsAuteur(auteurId) {

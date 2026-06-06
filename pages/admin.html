@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administration — Kalamundi</title>
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/dashboard.css" />
+  <style>
+    .admin-grid { display:grid; grid-template-columns:220px 1fr; min-height:calc(100vh - 64px); }
+    .admin-sidebar {
+      background:var(--color-primary-dark);
+      padding:var(--spacing-lg) 0;
+      position:sticky; top:64px; height:calc(100vh - 64px); overflow-y:auto;
+    }
+    .sidebar__section { padding:var(--spacing-sm) var(--spacing-md); margin-bottom:var(--spacing-xs); }
+    .sidebar__label { font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:3px; text-transform:uppercase; margin-bottom:var(--spacing-sm); }
+    .sidebar__btn {
+      display:flex; align-items:center; gap:10px;
+      width:100%; padding:10px var(--spacing-md);
+      background:none; border:none; color:rgba(255,255,255,0.75);
+      font-size:var(--font-size-sm); cursor:pointer; border-radius:0;
+      text-align:left; transition:background 0.15s, color 0.15s;
+    }
+    .sidebar__btn:hover { background:rgba(255,255,255,0.08); color:white; }
+    .sidebar__btn.active { background:var(--color-primary-light); color:white; font-weight:600; }
+    .sidebar__btn .badge-count {
+      margin-left:auto; background:var(--color-accent); color:#000;
+      font-size:10px; font-weight:700; padding:2px 7px; border-radius:99px;
+    }
+    .admin-main { padding:var(--spacing-xl); background:var(--bg-secondary); }
+    .admin-section { display:none; }
+    .admin-section.active { display:block; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:var(--spacing-md); margin-bottom:var(--spacing-xl); }
+    .stat-card {
+      background:white; border-radius:var(--border-radius-lg); padding:var(--spacing-lg);
+      box-shadow:0 2px 8px rgba(0,0,0,0.06); text-align:center;
+    }
+    .stat-card__icon { font-size:28px; margin-bottom:8px; }
+    .stat-card__val { font-size:2rem; font-weight:700; color:var(--color-primary); }
+    .stat-card__label { font-size:var(--font-size-xs); color:var(--text-light); margin-top:4px; }
+    .admin-table { width:100%; border-collapse:collapse; background:white; border-radius:var(--border-radius-lg); overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+    .admin-table th { background:var(--color-primary); color:white; padding:12px 14px; font-size:12px; text-align:left; font-weight:600; letter-spacing:0.5px; }
+    .admin-table td { padding:11px 14px; font-size:var(--font-size-sm); border-bottom:1px solid var(--bg-secondary); vertical-align:middle; }
+    .admin-table tr:last-child td { border-bottom:none; }
+    .admin-table tr:hover td { background:var(--bg-secondary); }
+    .btn-xs { padding:4px 10px; font-size:11px; border-radius:4px; border:none; cursor:pointer; font-weight:600; }
+    .btn-success { background:#d1fae5; color:#065f46; }
+    .btn-danger  { background:#fee2e2; color:#991b1b; }
+    .btn-warning { background:#fef3c7; color:#92400e; }
+    .btn-muted   { background:#f1f5f9; color:#64748b; }
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--spacing-lg); }
+    .section-header h2 { font-size:var(--font-size-2xl); color:var(--color-primary); }
+    @media(max-width:768px) {
+      .admin-grid { grid-template-columns:1fr; }
+      .admin-sidebar { position:static; height:auto; flex-direction:row; display:flex; overflow-x:auto; padding:var(--spacing-sm); }
+      .sidebar__section { padding:0; margin:0 4px; }
+      .sidebar__label { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <div class="navbar__actions">
+        <span id="admin-nom" style="color:rgba(255,255,255,0.8);font-size:var(--font-size-sm)"></span>
+        <a href="/pages/author-dashboard.html" class="btn btn--ghost btn--sm" style="color:rgba(255,255,255,0.85)">Mon espace</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="admin-grid">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <div class="sidebar__section">
+        <div class="sidebar__label">Vue d'ensemble</div>
+        <button class="sidebar__btn active" data-section="stats" onclick="showSection('stats',this)">
+          📊 Tableau de bord
+        </button>
+      </div>
+      <div class="sidebar__section">
+        <div class="sidebar__label">Contenu</div>
+        <button class="sidebar__btn" data-section="oeuvres" onclick="showSection('oeuvres',this)">
+          📖 Œuvres
+        </button>
+        <button class="sidebar__btn" data-section="signalements" onclick="showSection('signalements',this)">
+          🚨 Signalements
+          <span class="badge-count" id="badge-signalements" style="display:none">0</span>
+        </button>
+      </div>
+      <div class="sidebar__section">
+        <div class="sidebar__label">Utilisateurs</div>
+        <button class="sidebar__btn" data-section="users" onclick="showSection('users',this)">
+          👤 Utilisateurs
+        </button>
+        <button class="sidebar__btn" data-section="institutions" onclick="showSection('institutions',this)">
+          🏛️ Institutions
+          <span class="badge-count" id="badge-institutions" style="display:none">0</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="admin-main">
+
+      <!-- STATS -->
+      <section class="admin-section active" id="section-stats">
+        <div class="section-header">
+          <h2>Tableau de bord</h2>
+          <span style="font-size:var(--font-size-xs);color:var(--text-light)" id="last-update"></span>
+        </div>
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-card"><div class="stat-card__icon">📖</div><div class="stat-card__val" id="s-oeuvres">—</div><div class="stat-card__label">Œuvres publiées</div></div>
+          <div class="stat-card"><div class="stat-card__icon">👤</div><div class="stat-card__val" id="s-users">—</div><div class="stat-card__label">Utilisateurs inscrits</div></div>
+          <div class="stat-card"><div class="stat-card__icon">🚨</div><div class="stat-card__val" id="s-signalements">—</div><div class="stat-card__label">Signalements ouverts</div></div>
+          <div class="stat-card"><div class="stat-card__icon">🏛️</div><div class="stat-card__val" id="s-institutions">—</div><div class="stat-card__label">Institutions en attente</div></div>
+        </div>
+        <div style="background:white;border-radius:var(--border-radius-lg);padding:var(--spacing-lg);box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+          <h3 style="color:var(--color-primary);margin-bottom:var(--spacing-md)">Actions rapides</h3>
+          <div style="display:flex;gap:var(--spacing-md);flex-wrap:wrap">
+            <button class="btn btn--primary" onclick="showSection('signalements',document.querySelector('[data-section=signalements]'))">Voir les signalements</button>
+            <button class="btn btn--outline" onclick="showSection('institutions',document.querySelector('[data-section=institutions]'))">Valider les institutions</button>
+            <button class="btn btn--ghost" onclick="showSection('oeuvres',document.querySelector('[data-section=oeuvres]'))">Gérer les œuvres</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- OEUVRES -->
+      <section class="admin-section" id="section-oeuvres">
+        <div class="section-header">
+          <h2>Gestion des œuvres</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerOeuvres()">↻ Actualiser</button>
+        </div>
+        <div id="table-oeuvres"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
+      </section>
+
+      <!-- SIGNALEMENTS -->
+      <section class="admin-section" id="section-signalements">
+        <div class="section-header">
+          <h2>Signalements</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerSignalements()">↻ Actualiser</button>
+        </div>
+        <div id="table-signalements"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
+      </section>
+
+      <!-- USERS -->
+      <section class="admin-section" id="section-users">
+        <div class="section-header">
+          <h2>Utilisateurs récents</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerUsers()">↻ Actualiser</button>
+        </div>
+        <div id="table-users"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
+      </section>
+
+      <!-- INSTITUTIONS -->
+      <section class="admin-section" id="section-institutions">
+        <div class="section-header">
+          <h2>Institutions</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerInstitutions()">↻ Actualiser</button>
+        </div>
+        <div id="table-institutions"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+  <script type="module" src="/assets/js/admin.js"></script>
+  <script type="module" src="/assets/js/theme-init.js"></script>
+</body>
+</html>
