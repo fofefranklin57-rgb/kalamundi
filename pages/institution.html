@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espace Institutions — Kalamundi</title>
+  <meta name="description" content="Kalamundi pour les ONG, écoles, bibliothèques et universités. Accès étendu à la littérature mondiale pour vos bénéficiaires." />
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/dashboard.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <nav class="navbar__nav" id="nav-menu" aria-label="Navigation principale">
+        <a href="/pages/library.html" class="navbar__link">Catalogue</a>
+        <a href="/pages/institution.html" class="navbar__link navbar__link--active">Institutions</a>
+      </nav>
+      <span id="theme-slot"></span>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <div class="page-wrapper">
+
+    <!-- HERO INSTITUTIONS -->
+    <section class="hero" style="padding-block: var(--spacing-2xl)">
+      <div class="container">
+        <div class="hero__badge">🏛️ Espace Institutions</div>
+        <h1 class="hero__title" style="font-size: clamp(1.8rem,4vw,3rem)">La littérature mondiale pour vos bénéficiaires</h1>
+        <p class="hero__subtitle">
+          ONG, écoles, bibliothèques, universités — accédez à l'ensemble du catalogue Kalamundi pour vos apprenants, à tarif solidaire.
+        </p>
+        <div class="hero__actions" id="hero-cta">
+          <!-- injecté par JS -->
+        </div>
+      </div>
+    </section>
+
+    <main class="main-content">
+
+      <!-- AVANTAGES -->
+      <section class="section container">
+        <h2 class="section__title" style="margin-bottom: var(--spacing-lg)">Pourquoi rejoindre le programme ?</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-card__icon">📖</div>
+            <h3 class="feature-card__title">Accès illimité</h3>
+            <p class="feature-card__text">Toutes les œuvres du catalogue disponibles pour vos bénéficiaires, sans restriction de lecture.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card__icon">🌍</div>
+            <h3 class="feature-card__title">11 langues</h3>
+            <p class="feature-card__text">Chaque œuvre traduite automatiquement dans la langue de vos apprenants. Aucune barrière linguistique.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card__icon">💲</div>
+            <h3 class="feature-card__title">Tarif solidaire</h3>
+            <p class="feature-card__text">Abonnement institutionnel à prix réduit. Les ONG à but non lucratif peuvent bénéficier d'un accès gratuit.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card__icon">📊</div>
+            <h3 class="feature-card__title">Statistiques</h3>
+            <p class="feature-card__text">Tableau de bord dédié : suivi des lectures, œuvres les plus consultées, langues utilisées.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TYPES D'INSTITUTIONS -->
+      <section class="section section--alt">
+        <div class="container">
+          <h2 class="section__title" style="margin-bottom: var(--spacing-lg)">Qui peut rejoindre ?</h2>
+          <div class="genres-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px,1fr))">
+            <div class="genre-card"><span class="genre-card__icon">🏫</span><span class="genre-card__name">Écoles</span></div>
+            <div class="genre-card"><span class="genre-card__icon">🏛️</span><span class="genre-card__name">Universités</span></div>
+            <div class="genre-card"><span class="genre-card__icon">📚</span><span class="genre-card__name">Bibliothèques</span></div>
+            <div class="genre-card"><span class="genre-card__icon">🤝</span><span class="genre-card__name">ONG</span></div>
+            <div class="genre-card"><span class="genre-card__icon">🏢</span><span class="genre-card__name">Entreprises</span></div>
+            <div class="genre-card"><span class="genre-card__icon">⛪</span><span class="genre-card__name">Associations</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ZONE DYNAMIQUE : statut / formulaire / dashboard -->
+      <section class="section container">
+        <div id="zone-institution">
+          <!-- Chargement -->
+          <div class="empty-state">
+            <div class="empty-state__icon">⏳</div>
+            <p class="empty-state__title">Chargement…</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer__bottom">
+          © 2025 Kalamundi — Tous droits réservés &nbsp;|&nbsp;
+          <a href="/pages/cgu.html" class="footer__link">CGU</a> &nbsp;|&nbsp;
+          <a href="/pages/confidentialite.html" class="footer__link">Confidentialité</a>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <script src="/assets/js/ads.js?v=20260606"></script>
+  <script type="module" src="/assets/js/institution.js"></script>
+  <script type="module" src="/assets/js/theme-init.js"></script>
+</body>
+</html>
