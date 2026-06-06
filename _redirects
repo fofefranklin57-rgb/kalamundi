@@ -1,0 +1,12 @@
+# Redirections Cloudflare Pages — Kalamundi
+
+# Alias pratiques
+/login          /pages/login.html       301
+/library        /pages/library.html     301
+/publish        /pages/publish.html     301
+/reader         /pages/reader.html      301
+
+# Compatibilité anciennes URLs
+/catalogue      /pages/library.html     301
+/connexion      /pages/login.html       301
+/inscription    /pages/login.html?mode=inscription  301
