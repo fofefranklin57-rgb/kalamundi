@@ -202,6 +202,8 @@ export const api = {
   },
 
   async saveTraduction(chapitreId, langueCible, contenuTraduit) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return; // skip silencieux si non authentifié (RLS bloquerait de toute façon)
     const { error } = await supabase
       .from('traductions')
       .upsert({

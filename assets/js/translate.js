@@ -41,7 +41,7 @@ const _cacheMemoire = new Map(); // clé : "chapitreId_langue"
    Ordre : cache mémoire → cache Supabase → Edge Function
    ============================================================ */
 
-export async function traduire(chapitreId, contenu, langueCible) {
+export async function traduire(chapitreId, contenu, langueCible, langueSource = 'fr') {
   if (langueCible === 'original') return contenu;
 
   const cleCache = `${chapitreId}_${langueCible}`;
@@ -58,8 +58,8 @@ export async function traduire(chapitreId, contenu, langueCible) {
     return cached.contenu_traduit;
   }
 
-  /* 3. Edge Function Supabase → Google Translate */
-  const traduit = await _appelEdgeFunction(contenu, langueCible);
+  /* 3. MyMemory API */
+  const traduit = await _appelEdgeFunction(contenu, langueCible, langueSource);
 
   /* Sauvegarder en base + cache mémoire */
   await api.saveTraduction(chapitreId, langueCible, traduit).catch(() => {});
@@ -74,16 +74,20 @@ export async function traduire(chapitreId, contenu, langueCible) {
    (limite MyMemory par requête)
    ============================================================ */
 
-async function _appelEdgeFunction(texte, langueCible) {
+async function _appelEdgeFunction(texte, langueCible, langueSource = 'fr') {
   const segments = _decouper(texte, 480);
-  const traduits = await Promise.all(segments.map(s => _traduireSegment(s, langueCible)));
+  const traduits = [];
+  for (const s of segments) {
+    traduits.push(await _traduireSegment(s, langueSource, langueCible));
+    await new Promise(r => setTimeout(r, 100)); // éviter rate limit
+  }
   return traduits.join(' ');
 }
 
-async function _traduireSegment(segment, langueCible) {
+async function _traduireSegment(segment, langueSource, langueCible) {
   const params = new URLSearchParams({
     q:        segment,
-    langpair: `auto|${langueCible}`,
+    langpair: `${langueSource}|${langueCible}`,
   });
   if (MYMEMORY_EMAIL) params.set('de', MYMEMORY_EMAIL);
 

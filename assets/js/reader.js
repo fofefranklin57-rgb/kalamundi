@@ -132,7 +132,8 @@ function formaterTexte(texte) {
    ============================================================ */
 
 async function obtenirTraduction(chapitreId, contenu, langue) {
-  return traduire(chapitreId, contenu, langue);
+  const langueSource = etat.oeuvre?.langue_originale || 'fr';
+  return traduire(chapitreId, contenu, langue, langueSource);
 }
 
 /* ============================================================

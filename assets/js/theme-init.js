@@ -1,13 +1,12 @@
-/* ============================================================
-   theme-init.js — Auto-init thème sur toutes les pages
-   Inclure via <script type="module" src="/assets/js/theme-init.js">
-   dans chaque page HTML, APRÈS le script principal.
-   Cherche #theme-slot dans le DOM et y injecte le switcher.
-   ============================================================ */
-
-import { initTheme, rendreThemeSwitcher } from './theme.js';
-
-initTheme();
-
-const slot = document.getElementById('theme-slot');
-if (slot) rendreThemeSwitcher(slot);
+(function(){
+  var t = localStorage.getItem("kala_theme");
+  var el = document.documentElement;
+  if (t === "dark") {
+    el.classList.add("theme-dark-pre");
+    if (document.body) document.body.classList.add("theme-dark");
+  }
+  if (t === "sepia") {
+    el.classList.add("theme-sepia-pre");
+    if (document.body) document.body.classList.add("theme-sepia");
+  }
+})();
