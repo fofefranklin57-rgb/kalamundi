@@ -7,11 +7,10 @@
 
 import { api } from './api.js';
 
-/* MyMemory API — gratuit, pas de clé requise
-   Quota : 10 000 mots/jour (inscription email gratuite)
-   Avec cache Supabase : chaque chapitre traduit une seule fois */
-const MYMEMORY_URL = 'https://api.mymemory.translated.net/get';
-const MYMEMORY_EMAIL = ''; /* optionnel — ajouter un email pour 10k mots/jour au lieu de 1k */
+/* Google Translate (endpoint public, sans clé API)
+   Limite : ~5000 chars par requête, pas de quota journalier strict
+   Cache Supabase : chaque chapitre traduit une seule fois en base */
+const GT_URL = 'https://translate.googleapis.com/translate_a/single';
 
 /* Langues disponibles dans le lecteur — triées alpha nom natif */
 export const LANGUES_LECTURE = [
@@ -75,42 +74,44 @@ export async function traduire(chapitreId, contenu, langueCible, langueSource = 
    ============================================================ */
 
 async function _appelEdgeFunction(texte, langueCible, langueSource = 'fr') {
-  // Supprimer l'en-tête Project Gutenberg (en anglais) si présent
   const contenuNet = _supprimerEnTeteGutenberg(texte);
-  const segments = _decouper(contenuNet, 480); // 480 chars — limite MyMemory 500
+  // Google Translate supporte jusqu'à 5000 chars par requête
+  const segments = _decouper(contenuNet, 4800);
   const traduits = [];
   for (const s of segments) {
     try {
       traduits.push(await _traduireSegment(s, langueSource, langueCible));
-    } catch (e) {
-      // En cas d'erreur sur un segment, garder le texte original
+    } catch {
       traduits.push(s);
     }
-    if (segments.length > 1) await new Promise(r => setTimeout(r, 200));
+    if (segments.length > 1) await new Promise(r => setTimeout(r, 300));
   }
   return traduits.join(' ');
 }
 
 async function _traduireSegment(segment, langueSource, langueCible) {
   const params = new URLSearchParams({
-    q:        segment,
-    langpair: `${langueSource}|${langueCible}`,
+    client: 'gtx',
+    sl:     langueSource,
+    tl:     langueCible,
+    dt:     't',
+    q:      segment,
   });
-  if (MYMEMORY_EMAIL) params.set('de', MYMEMORY_EMAIL);
 
-  const reponse = await fetch(`${MYMEMORY_URL}?${params}`);
-  if (!reponse.ok) throw new Error(`MyMemory HTTP ${reponse.status}`);
+  const reponse = await fetch(`${GT_URL}?${params}`);
+  if (!reponse.ok) throw new Error(`Google Translate HTTP ${reponse.status}`);
 
   const json = await reponse.json();
 
-  if (json.responseStatus === 429) {
-    throw new Error('Quota journalier atteint.');
-  }
-  if (json.responseStatus !== 200 || !json.responseData?.translatedText) {
-    throw new Error(`MyMemory: ${json.responseStatus} — ${json.responseDetails || '?'}`);
+  // Réponse : [[["texte traduit","texte original",...],...],...]
+  if (!Array.isArray(json) || !Array.isArray(json[0])) {
+    throw new Error('Réponse Google Translate invalide');
   }
 
-  return json.responseData.translatedText;
+  return json[0]
+    .filter(part => Array.isArray(part) && part[0])
+    .map(part => part[0])
+    .join('');
 }
 
 /* Supprime le préambule Project Gutenberg (toujours en anglais)
