@@ -465,18 +465,45 @@ export const api = {
   },
 
   async adminConfirmerPaiement(id, oeuvreId, userId) {
-    const { error } = await supabase
+    // 1. Marquer le paiement comme confirmé
+    const { data: paiement, error } = await supabase
       .from('paiements')
       .update({ statut: 'confirme', confirme_at: new Date().toISOString() })
-      .eq('id', id);
+      .eq('id', id)
+      .select('montant, devise, type')
+      .single();
     if (error) throw error;
 
-    /* Donner accès premium si c'est un achat d'œuvre */
+    // 2. Donner accès premium si c'est un achat d'œuvre
     if (oeuvreId) {
       await supabase
         .from('acces_premium')
         .upsert({ user_id: userId, oeuvre_id: oeuvreId, paiement_id: id },
           { onConflict: 'user_id,oeuvre_id' });
+
+      // 3. Créer automatiquement l'entrée de revenu pour l'auteur (50% split)
+      try {
+        const { data: oeuvre } = await supabase
+          .from('oeuvres')
+          .select('auteur_id, titre')
+          .eq('id', oeuvreId)
+          .single();
+
+        if (oeuvre?.auteur_id && paiement?.montant) {
+          const partAuteur = Math.round(Number(paiement.montant) * SPLIT_AUTEUR_PREMIUM * 100) / 100;
+          await supabase
+            .from('revenus')
+            .insert({
+              auteur_id:  oeuvre.auteur_id,
+              oeuvre_id:  oeuvreId,
+              paiement_id: id,
+              montant:    partAuteur,
+              devise:     paiement.devise || 'USD',
+              type:       'vente_premium',
+              statut:     'en_attente',
+            });
+        }
+      } catch { /* silencieux — ne bloque pas la confirmation du paiement */ }
     }
   },
 

@@ -149,6 +149,9 @@ async function chargerOeuvre() {
     // Chapitres
     await chargerChapitres(oeuvre);
 
+    // Recommandations (ne bloque pas le chargement principal)
+    chargerRecommandations(oeuvre.genre, oeuvre.id);
+
   } catch (err) {
     document.getElementById('work-titre').textContent = 'Œuvre introuvable';
     toastErreur('Impossible de charger cette œuvre.');
@@ -425,3 +428,37 @@ document.getElementById('confirm-signalement')?.addEventListener('click', async 
 document.getElementById('modal-signalement')?.addEventListener('click', (e) => {
   if (e.target === e.currentTarget) e.currentTarget.classList.remove('is-open');
 });
+
+/* ============================================================
+   Recommandations croisées — même genre, autres œuvres
+   ============================================================ */
+
+async function chargerRecommandations(genre, oeuvreActuelleId) {
+  if (!genre) return;
+  try {
+    const { data } = await api.getOeuvres({ genre, limit: 6 });
+    const filtrees = (data || []).filter(o => o.id !== oeuvreActuelleId).slice(0, 5);
+    if (!filtrees.length) return;
+
+    const section = document.getElementById('section-recommandations');
+    const grid    = document.getElementById('recommandations-grid');
+    if (!section || !grid) return;
+
+    grid.innerHTML = filtrees.map(o => `
+      <a href="/pages/work.html?id=${o.id}" class="book-card" style="text-decoration:none;display:flex;flex-direction:column;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.07);transition:transform 0.15s;">
+        <div style="height:200px;background:linear-gradient(135deg,#1B4332,#2D6A4F);display:flex;align-items:center;justify-content:center;font-size:48px;flex-shrink:0;">
+          ${o.couverture_url ? `<img src="${o.couverture_url}" alt="${o.titre}" style="width:100%;height:100%;object-fit:cover;" />` : '📖'}
+        </div>
+        <div style="padding:10px;">
+          <div style="font-weight:600;font-size:13px;color:var(--color-primary);line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${o.titre}</div>
+          <div style="font-size:11px;color:var(--text-light);">${o.profiles?.nom || '—'}</div>
+          <div style="margin-top:6px;">
+            <span style="font-size:10px;padding:2px 7px;border-radius:99px;background:${o.statut==='premium'?'#fef3c7':'#d1fae5'};color:${o.statut==='premium'?'#92400e':'#065f46'};font-weight:600;">${o.statut==='premium'?'⭐ Premium':'🆓 Gratuit'}</span>
+          </div>
+        </div>
+      </a>
+    `).join('');
+
+    section.style.display = 'block';
+  } catch { /* silencieux — les reco sont non-critiques */ }
+}

@@ -333,6 +333,78 @@ window.rejeterPaiement = async function (id) {
 };
 
 /* ============================================================
+   Export CSV
+   ============================================================ */
+
+window.exporterOeuvresCSV = async function () {
+  try {
+    const { data } = await api.adminGetOeuvres({ limit: 500 });
+    const entetes = ['Titre', 'Auteur', 'Genre', 'Statut', 'Lectures', 'Note', 'Visible', 'Date'];
+    const lignes  = data.map(o => [
+      `"${(o.titre || '').replace(/"/g,'""')}"`,
+      `"${(o.profiles?.nom || '').replace(/"/g,'""')}"`,
+      o.genre || '',
+      o.statut || '',
+      o.nb_lectures || 0,
+      o.note_moyenne || '',
+      o.visible ? 'oui' : 'non',
+      new Date(o.created_at).toLocaleDateString('fr-FR'),
+    ].join(';'));
+    _telechargerCSV('kalamundi_oeuvres.csv', [entetes.join(';'), ...lignes]);
+    toast('Export téléchargé.', 'success');
+  } catch { toast('Erreur export.', 'error'); }
+};
+
+window.exporterUsersCSV = async function () {
+  try {
+    const data = await api.adminGetUsers({ limit: 500 });
+    const entetes = ['Nom', 'Rôle', 'Niveau', 'Pays', 'Badge fondateur', 'Inscrit le'];
+    const lignes  = data.map(u => [
+      `"${(u.nom || '').replace(/"/g,'""')}"`,
+      u.role || '',
+      u.niveau_auteur || '',
+      u.pays || '',
+      u.badge_fondateur ? 'oui' : 'non',
+      new Date(u.created_at).toLocaleDateString('fr-FR'),
+    ].join(';'));
+    _telechargerCSV('kalamundi_utilisateurs.csv', [entetes.join(';'), ...lignes]);
+    toast('Export téléchargé.', 'success');
+  } catch { toast('Erreur export.', 'error'); }
+};
+
+window.exporterPaiementsCSV = async function () {
+  try {
+    const data = await api.adminGetPaiements();
+    const entetes = ['Utilisateur', 'Type', 'Œuvre', 'Montant', 'Devise', 'Méthode', 'Référence', 'Statut', 'Date'];
+    const lignes  = data.map(p => [
+      `"${(p.profiles?.nom || '').replace(/"/g,'""')}"`,
+      p.type || '',
+      `"${(p.oeuvres?.titre || '').replace(/"/g,'""')}"`,
+      p.montant || '',
+      p.devise || 'USD',
+      p.methode || '',
+      p.reference_transaction || '',
+      p.statut || '',
+      new Date(p.created_at).toLocaleDateString('fr-FR'),
+    ].join(';'));
+    _telechargerCSV('kalamundi_paiements.csv', [entetes.join(';'), ...lignes]);
+    toast('Export téléchargé.', 'success');
+  } catch { toast('Erreur export.', 'error'); }
+};
+
+function _telechargerCSV(nom, lignes) {
+  const bom     = '﻿'; // BOM UTF-8 pour Excel
+  const contenu = bom + lignes.join('\r\n');
+  const blob    = new Blob([contenu], { type: 'text/csv;charset=utf-8;' });
+  const url     = URL.createObjectURL(blob);
+  const a       = document.createElement('a');
+  a.href        = url;
+  a.download    = nom;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================================
    Utilitaires
    ============================================================ */
 

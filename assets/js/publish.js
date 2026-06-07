@@ -18,6 +18,101 @@ let utilisateur = null;
 })();
 
 /* ============================================================
+   Brouillon — sauvegarde automatique localStorage
+   ============================================================ */
+
+const CLE_BROUILLON = 'kalamundi_brouillon_v1';
+let _brouillonTimer = null;
+
+function sauvegarderBrouillon() {
+  clearTimeout(_brouillonTimer);
+  _brouillonTimer = setTimeout(() => {
+    const data = {
+      titre:       qs('#titre')?.value || '',
+      genre:       qs('#genre')?.value || '',
+      langue:      qs('#langue')?.value || '',
+      resume:      qs('#resume')?.value || '',
+      public_cible: qs('#public_cible')?.value || '',
+      mode:        etat.mode,
+      editorHTML:  qs('#editor-content')?.innerHTML || '',
+      statut:      qs('#statut-oeuvre')?.value || 'gratuit',
+      prix:        qs('#prix')?.value || '',
+      savedAt:     new Date().toISOString(),
+    };
+    try {
+      localStorage.setItem(CLE_BROUILLON, JSON.stringify(data));
+      const ind = qs('#brouillon-indicator');
+      if (ind) { ind.textContent = 'Brouillon enregistré'; ind.classList.add('saved'); setTimeout(() => ind.classList.remove('saved'), 2000); }
+    } catch { /* quota dépassé — silencieux */ }
+  }, 2000);
+}
+
+function effacerBrouillon() {
+  localStorage.removeItem(CLE_BROUILLON);
+}
+
+function restaurerBrouillon(data) {
+  if (data.titre)       { const el = qs('#titre');        if (el) el.value = data.titre; }
+  if (data.genre)       { const el = qs('#genre');        if (el) el.value = data.genre; }
+  if (data.langue)      { const el = qs('#langue');       if (el) el.value = data.langue; }
+  if (data.resume)      { const el = qs('#resume');       if (el) { el.value = data.resume; qs('#resume-counter').textContent = `${data.resume.length} / 1000 caractères`; } }
+  if (data.public_cible){ const el = qs('#public_cible'); if (el) el.value = data.public_cible; }
+  if (data.editorHTML)  { const el = qs('#editor-content'); if (el) el.innerHTML = data.editorHTML; }
+  if (data.prix)        { const el = qs('#prix');          if (el) el.value = data.prix; }
+  if (data.statut === 'premium') {
+    document.querySelectorAll('[data-statut]').forEach(c => c.classList.remove('is-active'));
+    document.querySelector('[data-statut="premium"]')?.classList.add('is-active');
+    qs('#statut-oeuvre').value = 'premium';
+    qs('#groupe-prix')?.classList.remove('hidden');
+  }
+  if (data.mode === 'editor') {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('is-active'));
+    document.querySelector('[data-mode="editor"]')?.classList.add('is-active');
+    etat.mode = 'editor';
+    qs('#zone-upload')?.classList.add('hidden');
+    qs('#zone-editor')?.classList.remove('hidden');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const raw = localStorage.getItem(CLE_BROUILLON);
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    if (!data.titre && !data.editorHTML) return;
+    const date = data.savedAt ? new Date(data.savedAt).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+    const banner = document.createElement('div');
+    banner.id = 'brouillon-banner';
+    banner.style.cssText = 'background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;';
+    banner.innerHTML = `
+      <span style="font-size:18px">📝</span>
+      <span style="flex:1;font-size:14px;color:#713f12;">Brouillon disponible${date ? ` — sauvegardé le ${date}` : ''}. Veux-tu le restaurer ?</span>
+      <button type="button" id="btn-restaurer" style="background:#1B4332;color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600;">Restaurer</button>
+      <button type="button" id="btn-ignorer-brouillon" style="background:transparent;border:1px solid #999;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;color:#555;">Ignorer</button>
+    `;
+    qs('.publish-page')?.insertBefore(banner, qs('.stepper'));
+
+    qs('#btn-restaurer')?.addEventListener('click', () => {
+      restaurerBrouillon(data);
+      banner.remove();
+      toast('Brouillon restauré !', 'success');
+    });
+    qs('#btn-ignorer-brouillon')?.addEventListener('click', () => {
+      effacerBrouillon();
+      banner.remove();
+    });
+  } catch { localStorage.removeItem(CLE_BROUILLON); }
+});
+
+/* Auto-sauvegarde sur chaque modification */
+['#titre','#genre','#langue','#resume','#public_cible','#prix','#statut-oeuvre','#editor-content'].forEach(sel => {
+  document.addEventListener('DOMContentLoaded', () => {
+    qs(sel)?.addEventListener('input', sauvegarderBrouillon);
+    qs(sel)?.addEventListener('change', sauvegarderBrouillon);
+  });
+});
+
+/* ============================================================
    État global du formulaire
    ============================================================ */
 
@@ -396,6 +491,7 @@ qs('#btn-publier')?.addEventListener('click', async () => {
     afficher(qs('#post-publication'));
     qs('#voir-oeuvre').href = `/pages/work.html?id=${oeuvre.id}`;
 
+    effacerBrouillon();
     toast('Œuvre publiée avec succès ! 🎉', 'success', 5000);
 
   } catch (err) {

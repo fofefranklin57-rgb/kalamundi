@@ -142,7 +142,10 @@
       <section class="admin-section" id="section-oeuvres">
         <div class="section-header">
           <h2>Gestion des œuvres</h2>
-          <button class="btn btn--ghost btn--sm" onclick="chargerOeuvres()">↻ Actualiser</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn--ghost btn--sm" onclick="chargerOeuvres()">↻ Actualiser</button>
+            <button class="btn btn--outline btn--sm" onclick="exporterOeuvresCSV()">⬇ Exporter CSV</button>
+          </div>
         </div>
         <div id="table-oeuvres"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
       </section>
@@ -160,7 +163,10 @@
       <section class="admin-section" id="section-paiements">
         <div class="section-header">
           <h2>Paiements en attente</h2>
-          <button class="btn btn--ghost btn--sm" onclick="chargerPaiements()">↻ Actualiser</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn--ghost btn--sm" onclick="chargerPaiements()">↻ Actualiser</button>
+            <button class="btn btn--outline btn--sm" onclick="exporterPaiementsCSV()">⬇ Exporter CSV</button>
+          </div>
         </div>
         <div id="table-paiements"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
       </section>
@@ -169,7 +175,10 @@
       <section class="admin-section" id="section-users">
         <div class="section-header">
           <h2>Utilisateurs récents</h2>
-          <button class="btn btn--ghost btn--sm" onclick="chargerUsers()">↻ Actualiser</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn--ghost btn--sm" onclick="chargerUsers()">↻ Actualiser</button>
+            <button class="btn btn--outline btn--sm" onclick="exporterUsersCSV()">⬇ Exporter CSV</button>
+          </div>
         </div>
         <div id="table-users"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
       </section>
