@@ -145,10 +145,10 @@ async function chargerVedettes() {
       grid.innerHTML = videState('Aucune œuvre disponible pour l\'instant.');
       return;
     }
-    // Dupliquer pour boucle infinie
     const html = data.map(renderBookMini).join('');
     grid.innerHTML = html + html;
     grid.addEventListener('click', () => grid.classList.toggle('paused'));
+    gererErreurImages(grid);
   } catch (err) {
     grid.innerHTML = videState('Impossible de charger les œuvres.');
     console.error(err);
@@ -170,10 +170,21 @@ async function chargerNouveautes() {
     const html = data.map(renderBookMini).join('');
     grid.innerHTML = html + html;
     grid.addEventListener('click', () => grid.classList.toggle('paused'));
+    gererErreurImages(grid);
   } catch (err) {
     grid.innerHTML = videState('Impossible de charger les nouveautés.');
     console.error(err);
   }
+}
+
+function gererErreurImages(container) {
+  container.querySelectorAll('.book-mini__img').forEach(img => {
+    img.addEventListener('error', () => {
+      img.style.display = 'none';
+      const fallback = img.nextElementSibling;
+      if (fallback) fallback.style.display = 'flex';
+    });
+  });
 }
 
 /* ============================================================
@@ -189,8 +200,7 @@ function renderBookMini(oeuvre) {
   const initiale = titre.charAt(0).toUpperCase();
 
   const cover = oeuvre.couverture_url
-    ? `<img src="${oeuvre.couverture_url}" alt="${titre}" loading="lazy"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    ? `<img src="${oeuvre.couverture_url}" alt="${titre}" loading="lazy" class="book-mini__img" data-fallback-color="${couleur}" data-fallback-initiale="${initiale}">`
     : '';
   const fallback = `<div class="book-mini__fallback" style="background:${couleur};display:${oeuvre.couverture_url ? 'none' : 'flex'}">
     <span>${initiale}</span>
