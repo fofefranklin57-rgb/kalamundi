@@ -191,7 +191,17 @@ let _scrollPagesLues = 0;
 let _scrollHandler   = null;
 let _modalMontree    = false;
 
+function _reinitScrollVisiteur() {
+  // Réinitialise l'état entre chapitres pour éviter le freeze persistant
+  _scrollPagesLues = 0;
+  _modalMontree    = false;
+  document.body.style.overflow = '';
+}
+
 function _surveilerScrollVisiteur() {
+  // Réinitialiser l'état au chargement de chaque chapitre
+  _reinitScrollVisiteur();
+
   // Supprimer l'ancien handler si existant
   if (_scrollHandler) window.removeEventListener('scroll', _scrollHandler);
 
@@ -202,7 +212,10 @@ function _surveilerScrollVisiteur() {
     if (_modalMontree) return;
     const scrollY   = window.scrollY;
     const docHeight = document.documentElement.scrollHeight;
-    const pct       = scrollY / (docHeight - hauteurFenetre);
+
+    // Bug fix : éviter la division par zéro sur les chapitres courts
+    const scrollable = Math.max(1, docHeight - hauteurFenetre);
+    const pct        = scrollY / scrollable;
 
     // Chaque "page" = 100% de hauteur fenêtre scrollée
     const pageActuelle = Math.floor(scrollY / hauteurFenetre);
@@ -213,7 +226,9 @@ function _surveilerScrollVisiteur() {
     }
 
     // Après LIMIT_VISITEUR_PAGES pages scrollées OU arrivée à 80% du contenu
-    if (_scrollPagesLues >= LIMIT_VISITEUR_PAGES || pct >= 0.80) {
+    // (pct >= 0.80 seulement si le contenu est scrollable — chapitre long)
+    const contenuScrollable = (docHeight - hauteurFenetre) > 100;
+    if (_scrollPagesLues >= LIMIT_VISITEUR_PAGES || (contenuScrollable && pct >= 0.80)) {
       _modalMontree = true;
       window.removeEventListener('scroll', _scrollHandler);
       // Bloquer le scroll
@@ -441,20 +456,54 @@ function _afficherModalAbonnement() {
 
   // Pré-remplir le lien de retour après inscription
   const retour = encodeURIComponent(`/pages/reader.html?id=${etat.oeuvreId}&ch=${etat.chapitreNum}`);
-  document.getElementById('modal-btn-inscription').href =
-    `/pages/login.html?mode=inscription&next=${retour}`;
-  document.getElementById('modal-btn-connexion').href =
-    `/pages/login.html?next=${retour}`;
 
-  modal.style.display = 'flex';
-  modal.style.cssText = `
-    display:flex; position:fixed; inset:0; z-index:9999;
-    background:rgba(0,0,0,0.7); align-items:center; justify-content:center;
-    padding:var(--spacing-lg);
-  `;
+  const btnInscription = document.getElementById('modal-btn-inscription');
+  const btnConnexion   = document.getElementById('modal-btn-connexion');
+  if (btnInscription) btnInscription.href = `/pages/login.html?mode=inscription&next=${retour}`;
+  if (btnConnexion)   btnConnexion.href   = `/pages/login.html?next=${retour}`;
 
-  // Le bouton "continuer visiteur" n'existe plus — on retire cette option
-  // Le modal est bloquant : seul s'inscrire ou se connecter permet de continuer
+  // Afficher via la classe CSS (gère l'animation opacity)
+  modal.style.display = '';     // enlever l'inline display:none du HTML
+  modal.classList.add('is-open');
+
+  // Bouton "Continuer comme visiteur" — ferme le modal + débloque le scroll
+  const btnVisiteur = document.getElementById('modal-btn-visiteur');
+  if (btnVisiteur) {
+    // Remplacer l'éventuel ancien listener avant d'en ajouter un nouveau
+    const newBtn = btnVisiteur.cloneNode(true);
+    btnVisiteur.parentNode.replaceChild(newBtn, btnVisiteur);
+    newBtn.addEventListener('click', () => {
+      modal.classList.remove('is-open');
+      document.body.style.overflow = '';
+      // Autoriser encore quelques scrolls avant le prochain déclenchement
+      _scrollPagesLues = 0;
+      _modalMontree    = false;
+      // Re-attacher le handler avec un seuil remonté (1 seule page restante)
+      if (!etat.utilisateur) _surveilerScrollVisiteurStrict();
+    });
+  }
+}
+
+/* Variante stricte : re-déclenche immédiatement si le visiteur scrolle encore */
+function _surveilerScrollVisiteurStrict() {
+  if (_scrollHandler) window.removeEventListener('scroll', _scrollHandler);
+  const hauteurFenetre = window.innerHeight;
+
+  _scrollHandler = () => {
+    if (_modalMontree) return;
+    const scrollY   = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight;
+    const scrollable = Math.max(1, docHeight - hauteurFenetre);
+    const pct        = scrollY / scrollable;
+
+    if (pct >= 0.95) { // Toute tentative d'arriver en bas
+      _modalMontree = true;
+      window.removeEventListener('scroll', _scrollHandler);
+      document.body.style.overflow = 'hidden';
+      _afficherModalAbonnement();
+    }
+  };
+  window.addEventListener('scroll', _scrollHandler, { passive: true });
 }
 
 /* ============================================================
