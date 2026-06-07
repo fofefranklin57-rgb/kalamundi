@@ -3,12 +3,14 @@
    Kalamundi — La Plume du Monde
 
    Formats actifs :
-   - In-Page Push  : accueil + toutes les pages de navigation
-   - Vignette Banner : bibliothèque + fiche œuvre
-   - Multitag (all-in-one) : bibliothèque + fiche œuvre
+   - Accueil       : Vignette Banner + Multitag (bannières discrètes — pas de In-Page Push)
+   - Bibliothèque  : Vignette Banner + Multitag
+   - Fiche œuvre   : Vignette Banner + Multitag
+   - Login/autres  : In-Page Push uniquement (discret, ne bloque pas)
 
    Règle : ZERO pub pendant la lecture (reader.html)
            ZERO pub pour les abonnés Reader+ et Auteur Pro
+           ZERO In-Page Push sur l'accueil (réduit le rebond)
    ============================================================ */
 
 (function () {
@@ -86,9 +88,10 @@
       _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
 
     } else if (isAccueil) {
-      /* Accueil : In-Page Push + Vignette — trafic élevé, deux formats */
-      _chargerScript(ZONE_INPAGE,   SRC_INPAGE);
+      /* Accueil : Vignette Banner + Multitag — bannières discrètes, pas de In-Page Push */
       _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
+      _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
+      _injecterBannieresMidpage();
 
     } else if (isLogin) {
       /* Login/inscription : In-Page Push uniquement — discret,
@@ -113,6 +116,41 @@
     s.async           = true;
     s.dataset.cfasync = 'false';
     document.body.appendChild(s);
+  }
+
+  /* ── Bannières mid-page accueil (sous le fold, entre les sections) ── */
+  function _injecterBannieresMidpage() {
+    var slots = [
+      document.getElementById('ad-slot-mid1'),
+      document.getElementById('ad-slot-mid2'),
+    ];
+    slots.forEach(function (slot) {
+      if (!slot) return;
+      slot.style.cssText = [
+        'display:flex', 'align-items:center', 'justify-content:center',
+        'background:var(--bg-card,#fff)',
+        'border-radius:10px',
+        'padding:8px',
+        'margin:0 auto',
+        'max-width:740px',
+        'box-shadow:0 2px 8px rgba(0,0,0,0.05)',
+        'overflow:hidden',
+        'position:relative',
+      ].join(';');
+
+      var label = document.createElement('span');
+      label.textContent = 'Publicité';
+      label.style.cssText = 'position:absolute;top:4px;left:8px;font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;';
+      slot.appendChild(label);
+
+      /* Script Multitag ciblé sur le slot */
+      var s       = document.createElement('script');
+      s.dataset.zone    = ZONE_MULTITAG;
+      s.src             = SRC_MULTITAG;
+      s.async           = true;
+      s.dataset.cfasync = 'false';
+      slot.appendChild(s);
+    });
   }
 
   /* ── Bandeau bas discret ─────────────────────────────────── */
