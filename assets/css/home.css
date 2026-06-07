@@ -217,6 +217,72 @@
 }
 
 /* ============================================================
+   Carrousel présentation
+   ============================================================ */
+
+.promo-carousel {
+  display: flex;
+  gap: var(--spacing-md);
+  animation: carousel-scroll 45s linear infinite;
+  width: max-content;
+}
+
+.promo-carousel:hover { animation-play-state: paused; }
+
+.promo-card {
+  width: 200px;
+  flex-shrink: 0;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid transparent;
+  cursor: default;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.promo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.promo-card--green {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+.promo-card--gold {
+  background: #fffbee;
+  border-color: var(--color-accent-light);
+}
+
+.promo-card__icon { font-size: 1.75rem; }
+
+.promo-card__title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.promo-card__text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .promo-card--green {
+  background: var(--dark-card);
+  border-color: var(--dark-border);
+}
+[data-theme="dark"] .promo-card--gold {
+  background: #1e1a00;
+  border-color: var(--color-accent-dark);
+}
+[data-theme="dark"] .promo-card__title { color: var(--color-accent-light); }
+[data-theme="dark"] .promo-card__text  { color: var(--dark-text-secondary); }
+
+/* ============================================================
    Carrousel livres défilant
    ============================================================ */
 
