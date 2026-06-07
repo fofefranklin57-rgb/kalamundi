@@ -24,59 +24,46 @@
   <!-- NAVBAR -->
   <header class="navbar" id="navbar">
     <div class="navbar__inner">
-      <a href="/index.html" class="navbar__logo">
-        📚 Kalamundi
-      </a>
-
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
       <nav class="navbar__nav" id="nav-menu" aria-label="Navigation principale">
         <a href="/pages/library.html" class="navbar__link">Catalogue</a>
         <a href="/pages/library.html?genre=roman" class="navbar__link">Romans</a>
         <a href="/pages/library.html?genre=poesie" class="navbar__link">Poésie</a>
         <a href="/pages/library.html?genre=conte" class="navbar__link">Contes</a>
       </nav>
-
       <span id="theme-slot"></span>
-      <div class="navbar__actions" id="navbar-actions">
-        <!-- JS injecte les boutons selon l'état de connexion -->
-      </div>
-
+      <div class="navbar__actions" id="navbar-actions"></div>
       <button class="navbar__toggle" id="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false">
-        <span></span>
-        <span></span>
-        <span></span>
+        <span></span><span></span><span></span>
       </button>
     </div>
   </header>
 
   <div class="page-wrapper">
 
-    <!-- BANDEAU DÉFILANT -->
-    <div class="ticker-wrap">
-      <div class="ticker">
-        <span class="ticker__item">📚 <strong>Kalamundi</strong> — La Plume du Monde</span>
-        <span class="ticker__item">✍️ Publiez gratuitement — votre œuvre protégée par horodatage</span>
-        <span class="ticker__item">🌍 Lisez dans votre langue — 30 langues disponibles</span>
-        <span class="ticker__item">🆓 <span id="ticker-oeuvres">118</span> œuvres gratuites dans la bibliothèque</span>
-        <span class="ticker__item">⭐ Devenez <strong>Auteur Fondateur</strong> — parmi les 500 premiers</span>
-        <span class="ticker__item">📱 PWA installable — fonctionne hors ligne</span>
-        <span class="ticker__item">🔐 Droits d'auteur protégés dès la publication</span>
-        <!-- Duplication pour boucle infinie -->
-        <span class="ticker__item">📚 <strong>Kalamundi</strong> — La Plume du Monde</span>
-        <span class="ticker__item">✍️ Publiez gratuitement — votre œuvre protégée par horodatage</span>
-        <span class="ticker__item">🌍 Lisez dans votre langue — 30 langues disponibles</span>
-        <span class="ticker__item">🆓 <span id="ticker-oeuvres2">118</span> œuvres gratuites dans la bibliothèque</span>
-        <span class="ticker__item">⭐ Devenez <strong>Auteur Fondateur</strong> — parmi les 500 premiers</span>
-        <span class="ticker__item">📱 PWA installable — fonctionne hors ligne</span>
-        <span class="ticker__item">🔐 Droits d'auteur protégés dès la publication</span>
+    <!-- HERO ORIGINAL -->
+    <section class="hero hero--home" id="hero">
+      <div class="container">
+        <div class="hero__badge">✨ La littérature africaine et mondiale</div>
+        <h1 class="hero__title">La Plume du Monde</h1>
+        <p class="hero__subtitle">
+          Découvrez des œuvres d'auteurs du monde entier. Publiez vos textes, protégés par horodatage blockchain. Lisez dans votre langue.
+        </p>
+        <div class="hero__actions" id="hero-actions"></div>
+        <div class="hero__stats" id="hero-stats"></div>
       </div>
-    </div>
+    </section>
 
     <main class="main-content">
 
       <!-- CARROUSEL PRÉSENTATION -->
       <section class="section container">
+        <div class="section__header">
+          <h2 class="section__title">Pourquoi Kalamundi ?</h2>
+          <a href="/pages/bienvenue.html" class="btn btn--ghost btn--sm">En savoir plus →</a>
+        </div>
         <div class="books-carousel-wrap">
-          <div class="promo-carousel" id="promo-carousel">
+          <div class="promo-carousel">
             <div class="promo-card promo-card--green">
               <div class="promo-card__icon">✍️</div>
               <div class="promo-card__title">Publiez gratuitement</div>
@@ -90,34 +77,34 @@
             <div class="promo-card promo-card--green">
               <div class="promo-card__icon">🔐</div>
               <div class="promo-card__title">Droits protégés</div>
-              <div class="promo-card__text">Horodatage SHA-256 automatique à la publication. Votre paternité prouvable à tout moment.</div>
+              <div class="promo-card__text">Horodatage SHA-256 automatique. Votre paternité prouvable à tout moment.</div>
             </div>
             <div class="promo-card promo-card--gold">
               <div class="promo-card__icon">🆓</div>
               <div class="promo-card__title">Gratuit pour toujours</div>
-              <div class="promo-card__text">Lecture gratuite, publication gratuite. Aucune carte bancaire requise.</div>
+              <div class="promo-card__text">Lecture et publication gratuites. Aucune carte bancaire requise.</div>
             </div>
             <div class="promo-card promo-card--green">
               <div class="promo-card__icon">📱</div>
               <div class="promo-card__title">Hors ligne</div>
-              <div class="promo-card__text">Fonctionne sans connexion. Optimisé pour les mobiles Android et connexions lentes.</div>
+              <div class="promo-card__text">Fonctionne sans connexion. Optimisé pour mobiles Android et connexions lentes.</div>
             </div>
             <div class="promo-card promo-card--gold">
               <div class="promo-card__icon">💰</div>
               <div class="promo-card__title">Gagnez de l'argent</div>
-              <div class="promo-card__text">50% des ventes reversés à l'auteur. Paiements MTN MoMo, Orange Money, PayPal.</div>
+              <div class="promo-card__text">50% des ventes reversés à l'auteur. MTN MoMo, Orange Money, PayPal.</div>
             </div>
             <div class="promo-card promo-card--green">
               <div class="promo-card__icon">⭐</div>
               <div class="promo-card__title">Auteur Fondateur</div>
-              <div class="promo-card__text">Parmi les 500 premiers inscrits ? Badge exclusif et mise en avant permanente.</div>
+              <div class="promo-card__text">Parmi les 500 premiers ? Badge exclusif et mise en avant permanente.</div>
             </div>
             <div class="promo-card promo-card--gold">
               <div class="promo-card__icon">🏫</div>
               <div class="promo-card__title">Pour les institutions</div>
-              <div class="promo-card__text">ONG, écoles, bibliothèques — accès institutionnel gratuit 12 mois au lancement.</div>
+              <div class="promo-card__text">ONG, écoles, bibliothèques — accès institutionnel gratuit 12 mois.</div>
             </div>
-            <!-- Duplication pour boucle infinie -->
+            <!-- Duplication boucle infinie -->
             <div class="promo-card promo-card--green">
               <div class="promo-card__icon">✍️</div>
               <div class="promo-card__title">Publiez gratuitement</div>
@@ -131,38 +118,38 @@
             <div class="promo-card promo-card--green">
               <div class="promo-card__icon">🔐</div>
               <div class="promo-card__title">Droits protégés</div>
-              <div class="promo-card__text">Horodatage SHA-256 automatique à la publication. Votre paternité prouvable à tout moment.</div>
+              <div class="promo-card__text">Horodatage SHA-256 automatique. Votre paternité prouvable à tout moment.</div>
             </div>
             <div class="promo-card promo-card--gold">
               <div class="promo-card__icon">🆓</div>
               <div class="promo-card__title">Gratuit pour toujours</div>
-              <div class="promo-card__text">Lecture gratuite, publication gratuite. Aucune carte bancaire requise.</div>
+              <div class="promo-card__text">Lecture et publication gratuites. Aucune carte bancaire requise.</div>
             </div>
             <div class="promo-card promo-card--green">
               <div class="promo-card__icon">📱</div>
               <div class="promo-card__title">Hors ligne</div>
-              <div class="promo-card__text">Fonctionne sans connexion. Optimisé pour les mobiles Android et connexions lentes.</div>
+              <div class="promo-card__text">Fonctionne sans connexion. Optimisé pour mobiles Android et connexions lentes.</div>
             </div>
             <div class="promo-card promo-card--gold">
               <div class="promo-card__icon">💰</div>
               <div class="promo-card__title">Gagnez de l'argent</div>
-              <div class="promo-card__text">50% des ventes reversés à l'auteur. Paiements MTN MoMo, Orange Money, PayPal.</div>
+              <div class="promo-card__text">50% des ventes reversés à l'auteur. MTN MoMo, Orange Money, PayPal.</div>
             </div>
             <div class="promo-card promo-card--green">
               <div class="promo-card__icon">⭐</div>
               <div class="promo-card__title">Auteur Fondateur</div>
-              <div class="promo-card__text">Parmi les 500 premiers inscrits ? Badge exclusif et mise en avant permanente.</div>
+              <div class="promo-card__text">Parmi les 500 premiers ? Badge exclusif et mise en avant permanente.</div>
             </div>
             <div class="promo-card promo-card--gold">
               <div class="promo-card__icon">🏫</div>
               <div class="promo-card__title">Pour les institutions</div>
-              <div class="promo-card__text">ONG, écoles, bibliothèques — accès institutionnel gratuit 12 mois au lancement.</div>
+              <div class="promo-card__text">ONG, écoles, bibliothèques — accès institutionnel gratuit 12 mois.</div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- SECTION : Œuvres vedettes — carrousel défilant -->
+      <!-- SECTION : Œuvres vedettes -->
       <section class="section container">
         <div class="section__header">
           <h2 class="section__title">Œuvres du moment</h2>
@@ -173,98 +160,24 @@
         </div>
       </section>
 
-      <!-- HERO COMPACT — sous les livres -->
-      <section class="hero-compact" id="hero">
-        <div class="container hero-compact__inner">
-          <div class="hero-compact__text">
-            <h1 class="hero-compact__title">La bibliothèque littéraire mondiale</h1>
-            <p class="hero-compact__sub">Lire, écrire, partager — en Afrique et dans le monde.</p>
-          </div>
-          <div class="hero-compact__actions" id="hero-actions"></div>
-          <div class="hero-compact__stats" id="hero-stats"></div>
-        </div>
-      </section>
-
       <!-- SECTION : Genres -->
       <section class="section section--alt">
         <div class="container">
           <h2 class="section__title" style="margin-bottom: var(--spacing-lg)">Explorer par genre</h2>
-          <div class="genres-grid" id="genres-grid">
-            <a href="/pages/library.html?genre=roman" class="genre-card">
-              <span class="genre-card__icon">📖</span>
-              <span class="genre-card__name">Roman</span>
-            </a>
-            <a href="/pages/library.html?genre=poesie" class="genre-card">
-              <span class="genre-card__icon">🖊️</span>
-              <span class="genre-card__name">Poésie</span>
-            </a>
-            <a href="/pages/library.html?genre=conte" class="genre-card">
-              <span class="genre-card__icon">🌙</span>
-              <span class="genre-card__name">Conte</span>
-            </a>
-            <a href="/pages/library.html?genre=nouvelle" class="genre-card">
-              <span class="genre-card__icon">📝</span>
-              <span class="genre-card__name">Nouvelle</span>
-            </a>
-            <a href="/pages/library.html?genre=essai" class="genre-card">
-              <span class="genre-card__icon">💡</span>
-              <span class="genre-card__name">Essai</span>
-            </a>
-            <a href="/pages/library.html?genre=theatre" class="genre-card">
-              <span class="genre-card__icon">🎭</span>
-              <span class="genre-card__name">Théâtre</span>
-            </a>
-            <a href="/pages/library.html?genre=biographie" class="genre-card">
-              <span class="genre-card__icon">👤</span>
-              <span class="genre-card__name">Biographie</span>
-            </a>
-            <a href="/pages/library.html?genre=bd" class="genre-card">
-              <span class="genre-card__icon">🎨</span>
-              <span class="genre-card__name">BD / Manga</span>
-            </a>
+          <div class="genres-grid">
+            <a href="/pages/library.html?genre=roman" class="genre-card"><span class="genre-card__icon">📖</span><span class="genre-card__name">Roman</span></a>
+            <a href="/pages/library.html?genre=poesie" class="genre-card"><span class="genre-card__icon">🖊️</span><span class="genre-card__name">Poésie</span></a>
+            <a href="/pages/library.html?genre=conte" class="genre-card"><span class="genre-card__icon">🌙</span><span class="genre-card__name">Conte</span></a>
+            <a href="/pages/library.html?genre=nouvelle" class="genre-card"><span class="genre-card__icon">📝</span><span class="genre-card__name">Nouvelle</span></a>
+            <a href="/pages/library.html?genre=essai" class="genre-card"><span class="genre-card__icon">💡</span><span class="genre-card__name">Essai</span></a>
+            <a href="/pages/library.html?genre=theatre" class="genre-card"><span class="genre-card__icon">🎭</span><span class="genre-card__name">Théâtre</span></a>
+            <a href="/pages/library.html?genre=biographie" class="genre-card"><span class="genre-card__icon">👤</span><span class="genre-card__name">Biographie</span></a>
+            <a href="/pages/library.html?genre=bd" class="genre-card"><span class="genre-card__icon">🎨</span><span class="genre-card__name">BD / Manga</span></a>
           </div>
         </div>
       </section>
 
-      <!-- SECTION : Pourquoi Kalamundi -->
-      <section class="section container">
-        <h2 class="section__title" style="margin-bottom: var(--spacing-lg)">Pourquoi Kalamundi ?</h2>
-        <div class="features-grid">
-          <div class="feature-card">
-            <div class="feature-card__icon">🔐</div>
-            <h3 class="feature-card__title">Protection horodatée</h3>
-            <p class="feature-card__text">Chaque œuvre publiée reçoit une empreinte SHA-256 horodatée. Votre paternité est prouvable à tout moment.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-card__icon">🌍</div>
-            <h3 class="feature-card__title">Multilingue</h3>
-            <p class="feature-card__text">Lisez n'importe quelle œuvre dans votre langue grâce à la traduction automatique intégrée.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-card__icon">💰</div>
-            <h3 class="feature-card__title">Revenus pour les auteurs</h3>
-            <p class="feature-card__text">Les œuvres premium reversent 50 % des ventes directement à l'auteur. Publiez, gagnez.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-card__icon">📱</div>
-            <h3 class="feature-card__title">Partout, hors ligne</h3>
-            <p class="feature-card__text">Application installable sur mobile et tablette. Lisez même sans connexion internet.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- SECTION : Appel à l'action auteurs -->
-      <section class="section section--cta">
-        <div class="container text-center">
-          <div class="cta-box">
-            <h2 class="cta-box__title">Vous êtes auteur ?</h2>
-            <p class="cta-box__text">Publiez votre première œuvre gratuitement. Protégez votre création en quelques clics et rejoignez une communauté de lecteurs passionnés.</p>
-            <a href="/pages/login.html?mode=inscription" class="btn btn--accent btn--lg">Commencer à publier</a>
-          </div>
-        </div>
-      </section>
-
-      <!-- SECTION : Nouvelles publications — carrousel défilant -->
+      <!-- SECTION : Nouvelles publications -->
       <section class="section container" id="section-nouveautes">
         <div class="section__header">
           <h2 class="section__title">Nouvelles publications</h2>
@@ -272,6 +185,17 @@
         </div>
         <div class="books-carousel-wrap">
           <div class="books-carousel" id="grid-nouveautes"></div>
+        </div>
+      </section>
+
+      <!-- SECTION : CTA auteurs -->
+      <section class="section section--cta">
+        <div class="container text-center">
+          <div class="cta-box">
+            <h2 class="cta-box__title">Vous êtes auteur ?</h2>
+            <p class="cta-box__text">Publiez votre première œuvre gratuitement. Protégez votre création en quelques clics et rejoignez une communauté de lecteurs passionnés.</p>
+            <a href="/pages/login.html?mode=inscription" class="btn btn--accent btn--lg">Commencer à publier</a>
+          </div>
         </div>
       </section>
 
@@ -310,17 +234,13 @@
             </ul>
           </div>
         </div>
-        <div class="footer__bottom">
-          © 2025 Kalamundi — Tous droits réservés
-        </div>
+        <div class="footer__bottom">© 2026 Kalamundi — Tous droits réservés</div>
       </div>
     </footer>
 
-  </div><!-- .page-wrapper -->
+  </div>
 
-  <!-- Toast container -->
   <div class="toast-container" id="toast-container" aria-live="polite"></div>
-
   <script src="/assets/js/ads.js?v=20260606"></script>
   <script type="module" src="/assets/js/app.js"></script>
   <script type="module" src="/assets/js/theme-init.js"></script>
