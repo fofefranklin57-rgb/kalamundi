@@ -33,6 +33,21 @@
     </div>
   </nav>
 
+  <!-- Bannière livre partagé (affichée si ?livre_id= dans l'URL) -->
+  <div class="bv-livre-banner" id="bv-livre-banner" style="display:none">
+    <div class="container bv-livre-banner__inner">
+      <div class="bv-livre-banner__text">
+        <span class="bv-livre-banner__label">📚 Vous avez été invité à lire</span>
+        <strong class="bv-livre-banner__titre" id="bv-livre-titre">ce livre</strong>
+        <span class="bv-livre-banner__auteur" id="bv-livre-auteur"></span>
+      </div>
+      <div class="bv-livre-banner__actions">
+        <a href="#" id="bv-livre-btn" class="btn btn--accent btn--sm">Lire ce livre →</a>
+        <a href="/pages/login.html?mode=inscription" class="btn btn--outline-light btn--sm">Créer un compte</a>
+      </div>
+    </div>
+  </div>
+
   <!-- Hero -->
   <section class="bv-hero">
     <div class="bv-hero__inner container">
@@ -359,5 +374,28 @@
 
   <div class="toast-container" id="toast-container"></div>
   <script type="module" src="/assets/js/auth.js"></script>
+  <script>
+    // Bannière livre partagé
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const livreId = params.get('livre_id');
+      const titre   = params.get('titre');
+      const auteur  = params.get('auteur');
+      if (!livreId) return;
+
+      const banner = document.getElementById('bv-livre-banner');
+      if (titre) document.getElementById('bv-livre-titre').textContent = decodeURIComponent(titre);
+      if (auteur) document.getElementById('bv-livre-auteur').textContent = '— ' + decodeURIComponent(auteur);
+      document.getElementById('bv-livre-btn').href =
+        '/pages/login.html?mode=inscription&redirect=' +
+        encodeURIComponent('/pages/work.html?id=' + livreId);
+      banner.style.display = 'block';
+
+      // Scroll vers objectifs après court délai
+      setTimeout(() => {
+        document.getElementById('objectifs')?.scrollIntoView({ behavior: 'smooth' });
+      }, 800);
+    })();
+  </script>
 </body>
 </html>

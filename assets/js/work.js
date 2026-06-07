@@ -23,6 +23,15 @@ let utilisateur = null;
 
   utilisateur = await getUser();
 
+  // Visiteur non connecté arrivant via lien partagé → bienvenue.html avec contexte livre
+  if (!utilisateur && getParam('ref') === 'share') {
+    const titre  = getParam('titre') || '';
+    const auteur = getParam('auteur') || '';
+    window.location.href =
+      `/pages/bienvenue.html?livre_id=${oeuvreId}&titre=${encodeURIComponent(titre)}&auteur=${encodeURIComponent(auteur)}#objectifs`;
+    return;
+  }
+
   await Promise.all([
     chargerOeuvre(),
     chargerCommentaires(),
@@ -32,11 +41,6 @@ let utilisateur = null;
     document.getElementById('comment-form').classList.remove('hidden');
   } else {
     document.getElementById('connexion-required').classList.remove('hidden');
-  }
-
-  // Banner de bienvenue si arrivée via lien partagé
-  if (getParam('ref') === 'share' && !utilisateur) {
-    _afficherBannerPartage();
   }
 })();
 
@@ -172,14 +176,16 @@ async function rendreActions(oeuvre) {
     }
   }
 
-  // Partager — lien avec ?ref=share pour tracking
+  // Partager — lien avec titre + auteur pour URL lisible
   document.getElementById('btn-partager')?.addEventListener('click', async () => {
-    const url = `${window.location.origin}/pages/work.html?id=${oeuvreId}&ref=share`;
-    const titre = oeuvre.titre;
-    const texte = `Lis "${titre}" gratuitement sur Kalamundi — La Plume du Monde`;
+    const slug = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    const titreSlug  = slug(oeuvre.titre || '');
+    const auteurSlug = slug(oeuvre.profiles?.nom || '');
+    const url = `${window.location.origin}/pages/work.html?id=${oeuvreId}&ref=share&titre=${encodeURIComponent(oeuvre.titre)}&auteur=${encodeURIComponent(oeuvre.profiles?.nom || '')}`;
+    const texte = `Lis "${oeuvre.titre}" de ${oeuvre.profiles?.nom || 'un auteur'} gratuitement sur Kalamundi — La Plume du Monde`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: titre, text: texte, url });
+        await navigator.share({ title: oeuvre.titre, text: texte, url });
       } else {
         await navigator.clipboard.writeText(url);
         toast('Lien copié ! Partagez-le pour inviter quelqu\'un à lire.', 'success');

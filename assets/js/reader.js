@@ -9,8 +9,8 @@ import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
 import { traduire, viderCacheTraduction, rendreOptionLangues, LANGUES_LECTURE } from './translate.js';
 import { activerProtections } from './security.js';
 
-/* Nombre de chapitres gratuits pour les visiteurs non connectés */
-const LIMIT_VISITEUR = 3;
+/* Nombre de pages/chapitres gratuits pour les visiteurs non connectés */
+const LIMIT_VISITEUR = 2;
 
 /* ============================================================
    État du lecteur

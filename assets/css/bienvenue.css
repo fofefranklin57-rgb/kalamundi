@@ -2,6 +2,52 @@
    bienvenue.css — Page À propos / Présentation Kalamundi
    ============================================================ */
 
+/* ── Bannière livre partagé ──────────────────────────────── */
+
+.bv-livre-banner {
+  background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary));
+  color: #fff;
+  padding: 12px 0;
+  position: sticky;
+  top: 64px;
+  z-index: 100;
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.bv-livre-banner__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.bv-livre-banner__text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--font-size-sm);
+}
+
+.bv-livre-banner__label { opacity: 0.85; }
+
+.bv-livre-banner__titre {
+  color: var(--color-accent-light);
+  font-size: 1rem;
+}
+
+.bv-livre-banner__auteur {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.bv-livre-banner__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
 /* ── Hero ────────────────────────────────────────────────── */
 
 .bv-hero {
