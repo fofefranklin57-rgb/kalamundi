@@ -23,6 +23,14 @@ let utilisateur = null;
 
   utilisateur = await getUser();
 
+  // S'assurer que le profil existe en base (important pour les connexions Google OAuth)
+  // Sans cette ligne, l'insert dans commentaires échoue sur la FK commentaires_user_id_fkey
+  if (utilisateur) {
+    try {
+      await api.getProfil(utilisateur.id);
+    } catch { /* profil introuvable même après tentative de création → on continue quand même */ }
+  }
+
   // Visiteur non connecté arrivant via lien partagé → bienvenue.html avec contexte livre
   if (!utilisateur && getParam('ref') === 'share') {
     const titre  = getParam('titre') || '';
@@ -337,7 +345,9 @@ document.getElementById('btn-commenter')?.addEventListener('click', async () => 
   } catch (err) {
     console.error('Erreur commentaire :', err);
     // Message d'erreur lisible pour l'utilisateur
-    const msg = err?.message?.includes('violates')
+    const msg = err?.message?.includes('foreign key')
+      ? 'Ton profil est incomplet. Déconnecte-toi, reconnecte-toi et réessaie.'
+      : err?.message?.includes('violates')
       ? 'Erreur de permission. Reconnecte-toi et réessaie.'
       : (err?.message || 'Une erreur est survenue. Réessaie.');
     toastErreur(msg);
