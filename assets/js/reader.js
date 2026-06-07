@@ -333,112 +333,126 @@ function afficherPageTitreChapitre(numero) {
 
 /* ============================================================
    FORMATAGE DU TEXTE — nettoyage intelligent
-   Gère les imports PDF/Word : en-têtes répétés, double espaces,
-   séparateurs visuels, dialogues, épigraphes, ornements
+   Gere les imports PDF/Word : en-tetes repetes, double espaces,
+   separateurs visuels, dialogues, epigraphes, ornements
    ============================================================ */
 
 function formaterTexte(texte) {
-  // ── ÉTAPE 1 : Nettoyer les en-têtes de page PDF répétés ──────
-  // Pattern typique des PDF : "Titre · Auteur · N" en début de chaque page
-  // Ex : "L'Amour d'un Voyage · Fofe Nodem Franklin ·   4  [contenu...]"
-  const lignesBrutes = texte.split('\n').filter(l => l.trim());
 
-  const regexEnTetePage = /^.{4,120}·\s*\d{1,3}\s+/;
-  const nbAvecEnTete = lignesBrutes.filter(l => regexEnTetePage.test(l)).length;
-  const estImportPDF  = (nbAvecEnTete / Math.max(lignesBrutes.length, 1)) > 0.35;
-
-  const lignesSansEnTete = estImportPDF
-    ? lignesBrutes.map(l => l.replace(regexEnTetePage, '').trim())
+  /* ETAPE 1 : Supprimer les en-tetes de page PDF repetes
+     Pattern : “Titre · Auteur · N” en debut de chaque page */
+  const lignesBrutes  = texte.split('\n').filter(l => l.trim());
+  const rxEnTete      = /^.{4,120}\xb7\s*\d{1,3}\s+/;
+  const nbEnTetes     = lignesBrutes.filter(l => rxEnTete.test(l)).length;
+  const estPDF        = nbEnTetes / Math.max(lignesBrutes.length, 1) > 0.35;
+  const lignesPropres = estPDF
+    ? lignesBrutes.map(l => l.replace(rxEnTete, '').trim())
     : lignesBrutes;
 
-  // ── ÉTAPE 2 : Re-découper les paragraphes ────────────────────
-  // Dans les imports PDF, les paragraphes d'une même page sont séparés
-  // par 2+ espaces consécutifs (pas de \n). On les recoupe ici.
-  const textRecompose = lignesSansEnTete.join('\n');
+  /* ETAPE 2 : Decoupage intelligent des paragraphes
+     REGLE CLE : on coupe sur double espace SEULEMENT apres ponctuation de fin
+     On NE coupe PAS sur — au milieu d'une phrase (tiret litteraire) */
+  const txt = lignesPropres.join('\n')
+    .replace(/[—\-]{4,}/g, '\n§SEP§\n')   // separateurs longs
+    .replace(/✦|★|✶|✴/g, '\n§ORN§\n')  // ornements typographiques ✦ ★
+    .replace(/\*\s*\*\s*\*/g, '\n§ORN§\n')       // * * *
+    // Saut de para SEULEMENT apres ponctuation forte + double espace + debut de phrase
+    .replace(/([.!?\xbb])\s{2,}([A-Z\xc0-\xdc«””—])/g, '$1\n$2')
+    // Debut de dialogue reel (apres ponctuation forte)
+    .replace(/([.!?\xbb\n])\s*—\s+([A-Z\xc0-\xdc])/g, '$1\n— $2');
 
-  const blocs = textRecompose
-    // Séparateurs visuels longs (———) → marqueur de section
-    .replace(/[—\-]{4,}/g, '\n§SEP§\n')
-    // Ornement typographique ✦ → sa propre ligne
-    .replace(/✦/g, '\n§ORN§\n')
-    // Double espace = séparation de paragraphe (export PDF/Word)
-    .replace(/[ \t]{2,}/g, '\n')
-    // Dialogues collés au texte précédent (ligne commençant par —)
-    .replace(/([^\n])\n?—\s+/g, '$1\n— ')
-    // Nettoyer les sauts multiples
-    .replace(/\n{3,}/g, '\n\n')
-    .split('\n')
-    .map(l => l.trim())
-    .filter(l => l);
+  /* ETAPE 3 : Decouper et consolider les micro-blocs (artefacts OCR) */
+  const blocsRaw = txt.split('\n').map(l => l.trim()).filter(l => l);
+  const blocs = [];
+  for (const b of blocsRaw) {
+    const isMarqueur = b === '§SEP§' || b === '§ORN§';
+    const isSpecial  = isMarqueur
+      || /^[—–]\s/.test(b)
+      || /^\xa9/.test(b)
+      || /^P\.?\s*S/i.test(b)
+      || /^\xab|^”|^“/.test(b)
+      || /^(A propos|About)/i.test(b);
 
-  // ── ÉTAPE 3 : Construire le HTML ─────────────────────────────
-  let premierVrai = true; // Pour la lettrine — premier vrai paragraphe
+    // Fusionner les micro-blocs avec le precedent (artefacts OCR)
+    if (!isSpecial && b.length < 55 && blocs.length > 0) {
+      const prev = blocs[blocs.length - 1];
+      if (prev !== '§SEP§' && prev !== '§ORN§') {
+        blocs[blocs.length - 1] = prev + ' ' + b;
+        continue;
+      }
+    }
+    blocs.push(b);
+  }
+
+  /* ETAPE 4 : Detecter le paratexte de debut (couverture, copyright, epigraphe)
+     = blocs avant le premier paragraphe narratif long */
+  const idxCorps = _trouverDebutCorps(blocs);
+  const paratexte  = idxCorps > 3 ? blocs.slice(0, idxCorps) : [];
+  const blocsCorps = idxCorps > 3 ? blocs.slice(idxCorps) : blocs;
+
+  /* ETAPE 5 : Construire le HTML */
+  let premierVrai = true;
   const html = [];
 
-  for (const bloc of blocs) {
-
-    // Séparateur de section
-    if (bloc === '§SEP§') {
-      html.push('<hr class="reader-sep" />');
-      continue;
+  // Paratexte compact (couverture, copyright, epigraphe)
+  if (paratexte.length) {
+    html.push('<div class=”reader-paratexte”>');
+    for (const b of paratexte) {
+      if (b === '§SEP§') { html.push('<hr class=”reader-sep reader-sep--thin” />'); continue; }
+      if (b === '§ORN§') { html.push('<div class=”reader-ornament”>✦</div>'); continue; }
+      if (/^\xa9|Tous droits/i.test(b)) { html.push(`<p class=”reader-legal”>${b}</p>`); continue; }
+      if (/^\xab|^”|^“/.test(b) && b.length < 400) { html.push(`<blockquote class=”reader-quote”><p>${b}</p></blockquote>`); continue; }
+      if (/^.{4,80}\xb7\s*\d{1,3}$/.test(b)) continue;
+      html.push(`<p class=”reader-meta”>${b}</p>`);
     }
+    html.push('</div><hr class=”reader-sep” />');
+  }
 
-    // Ornement typographique
-    if (bloc === '§ORN§') {
-      html.push('<div class="reader-ornament" aria-hidden="true">✦</div>');
-      continue;
+  // Corps principal
+  for (const bloc of blocsCorps) {
+    if (bloc === '§SEP§') { html.push('<hr class=”reader-sep” />'); continue; }
+    if (bloc === '§ORN§') { html.push('<div class=”reader-ornament” aria-hidden=”true”>✦</div>'); continue; }
+    if (/^.{4,80}\xb7\s*\d{1,3}$/.test(bloc)) continue;
+    if (/^\xa9|Tous droits|All rights reserved/i.test(bloc)) {
+      html.push(`<p class=”reader-legal”>${bloc}</p>`); continue;
     }
-
-    // Résidus d'en-têtes de page (sécurité supplémentaire)
-    if (/^.{4,80}·\s*\d{1,3}$/.test(bloc)) continue;
-
-    // Lignes de copyright / mentions légales
-    if (/^©|Tous droits réservés|droits réservés|All rights reserved/i.test(bloc)) {
-      html.push(`<p class="reader-legal">${bloc}</p>`);
-      continue;
+    if (/^P\.?\s*S\.?\s+/i.test(bloc)) {
+      html.push(`<p class=”reader-ps”>${bloc}</p>`); continue;
     }
-
-    // P.S. ou Note de l'auteur
-    if (/^P\.?\s*S\.?\s/i.test(bloc)) {
-      html.push(`<p class="reader-ps">${bloc}</p>`);
-      continue;
+    if (/^(À propos|About the|Note de l.auteur|Biographie)/i.test(bloc) && bloc.length < 80) {
+      html.push(`<h2 class=”reader-section-title”>${bloc}</h2>`);
+      premierVrai = true; continue;
     }
-
-    // Section "À propos de l'auteur" et similaires → titre secondaire
-    if (/^(À propos|About the|Note de l'auteur|Note d'auteur|Biographie|Biography)/i.test(bloc)
-        && bloc.length < 80) {
-      html.push(`<h2 class="reader-section-title">${bloc}</h2>`);
-      premierVrai = true; // Lettrine après un titre de section
-      continue;
-    }
-
-    // Dialogue français (ligne commençant par — ou –)
     if (/^[—–]\s/.test(bloc)) {
-      html.push(`<p class="reader-dialogue">${bloc}</p>`);
-      continue;
+      html.push(`<p class=”reader-dialogue”>${bloc}</p>`); continue;
     }
-
-    // Épigraphe / Citation (ligne commençant et/ou finissant par guillemets)
-    if ((bloc.startsWith('"') || bloc.startsWith('«') || bloc.startsWith('“'))
-        && bloc.length < 400) {
-      html.push(`<blockquote class="reader-quote"><p>${bloc}</p></blockquote>`);
-      continue;
+    if ((/^\xab|^”|^“/.test(bloc)) && bloc.length < 400) {
+      html.push(`<blockquote class=”reader-quote”><p>${bloc}</p></blockquote>`); continue;
     }
-
-    // Titre de chapitre court isolé (toutes caps ou ligne très courte entre séparateurs)
-    if (bloc.length < 60 && /^[A-ZÀÁÂÄÉÈÊËÎÏÔÙÛÜ\s\d\-–—'«»]+$/.test(bloc)
-        && !/[.!?,;:]$/.test(bloc)) {
-      html.push(`<h3 class="reader-inner-title">${bloc}</h3>`);
-      continue;
+    if (bloc.length < 60 && /^[A-Z\xc0-\xdc\s]+$/.test(bloc) && !/[.!?,;:]/.test(bloc)) {
+      html.push(`<h3 class=”reader-inner-title”>${bloc}</h3>`); continue;
     }
-
-    // Paragraphe normal — avec lettrine sur le premier
     const cls = premierVrai ? 'is-first' : '';
-    html.push(`<p${cls ? ` class="${cls}"` : ''}>${bloc}</p>`);
+    html.push(`<p${cls ? ` class=”${cls}”` : ''}>${bloc}</p>`);
     if (premierVrai) premierVrai = false;
   }
 
   return html.join('');
+}
+
+/* Trouve l'index du debut du corps narratif (premier paragraphe long) */
+function _trouverDebutCorps(blocs) {
+  for (let i = 0; i < blocs.length; i++) {
+    const b = blocs[i];
+    if (b === '§SEP§' || b === '§ORN§') continue;
+    if (b.length > 100
+        && !/^\xa9/.test(b)
+        && !/^KALAMUNDI/.test(b)
+        && !/^[A-Z\xc0-\xdc\s\xb7]+$/.test(b)) {
+      return i;
+    }
+  }
+  return 0;
 }
 
 /* ============================================================

@@ -829,6 +829,46 @@ body.reader-body {
   margin-bottom: 0.5em;
 }
 
+/* ── Paratexte (couverture, copyright, épigraphe) ── */
+.reader-paratexte {
+  text-align: center;
+  padding: var(--spacing-lg) 0 var(--spacing-md);
+  max-width: 440px;
+  margin: 0 auto;
+  opacity: 0.75;
+}
+
+.reader-paratexte .reader-meta {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  line-height: 1.6;
+  margin-bottom: 0.3em;
+}
+
+.reader-paratexte .reader-legal {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  margin: 0.2em 0;
+}
+
+.reader-paratexte .reader-quote {
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-sm) 0;
+  margin: var(--spacing-sm) 0;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.reader-paratexte .reader-sep--thin {
+  width: 30%;
+  opacity: 0.25;
+  margin: 0.5em auto;
+}
+
 /* ── P.S. / Note de l'auteur ── */
 .reader-content p.reader-ps {
   font-style: italic;
