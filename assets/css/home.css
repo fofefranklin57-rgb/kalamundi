@@ -81,9 +81,16 @@
   gap: var(--spacing-md);
   animation: carousel-scroll 45s linear infinite;
   width: max-content;
+  will-change: transform;
 }
 
 .promo-carousel:hover { animation-play-state: paused; }
+
+/* S'assurer que le wrap ne casse pas le flex */
+.books-carousel-wrap {
+  overflow: hidden !important;
+  white-space: nowrap;
+}
 
 .promo-card {
   width: 200px;
