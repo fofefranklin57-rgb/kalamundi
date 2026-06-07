@@ -25,6 +25,33 @@ export const api = {
       .select('*')
       .eq('id', userId)
       .single();
+
+    // Profil inexistant (première connexion Google) → le créer
+    if (error && error.code === 'PGRST116') {
+      const { data: { user } } = await supabase.auth.getUser();
+      const nom = user?.user_metadata?.full_name
+        || user?.user_metadata?.name
+        || user?.email?.split('@')[0]
+        || 'Utilisateur';
+      const photo = user?.user_metadata?.avatar_url || null;
+
+      const { data: newProfil, error: errCreate } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          email: user.email,
+          nom,
+          photo_url: photo,
+          role: 'auteur',
+          langue_preferee: 'fr',
+        })
+        .select()
+        .single();
+
+      if (errCreate) throw errCreate;
+      return newProfil;
+    }
+
     if (error) throw error;
     return data;
   },
