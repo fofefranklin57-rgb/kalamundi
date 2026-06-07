@@ -16,7 +16,7 @@
   <!-- NAVBAR -->
   <nav class="navbar">
     <div class="navbar__inner">
-      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <a href="/index.html" class="navbar__logo">Kalamundi</a>
       <div class="navbar__nav" id="navbar-nav">
         <a href="/index.html" class="navbar__link">Accueil</a>
         <a href="/pages/library.html" class="navbar__link">Bibliothèque</a>
@@ -45,7 +45,9 @@
             </div>
           </div>
           <div class="dashboard-header__actions">
-            <a href="/pages/author-profile.html" class="btn btn--outline btn--sm">✏️ Mon profil</a>
+            <a href="/pages/author-profile.html" class="btn btn--outline btn--sm" id="lien-profil-public">
+              👤 Profil public
+            </a>
             <a href="/pages/publish.html" class="btn btn--primary btn--sm">+ Nouvelle œuvre</a>
           </div>
         </div>
@@ -72,11 +74,12 @@
 
         <!-- Tabs -->
         <div class="tabs dashboard-tabs" role="tablist">
-          <button class="tab tab--active" data-tab="oeuvres" role="tab">📖 Mes œuvres</button>
-          <button class="tab" data-tab="revenus" role="tab">💰 Revenus</button>
+          <button class="tab tab--active" data-tab="oeuvres"  role="tab">📖 Mes œuvres</button>
+          <button class="tab"             data-tab="profil"   role="tab">👤 Mon profil</button>
+          <button class="tab"             data-tab="revenus"  role="tab">💰 Revenus</button>
         </div>
 
-        <!-- Panneau : Mes œuvres -->
+        <!-- ═══ PANNEAU : Mes œuvres ══════════════════════════ -->
         <div class="dashboard-panel is-active" id="panel-oeuvres">
           <div class="section__header">
             <h2 class="section__title">Mes œuvres</h2>
@@ -85,11 +88,285 @@
           <div id="liste-oeuvres">
             <div class="skeleton-card" style="height:80px"></div>
             <div class="skeleton-card" style="height:80px"></div>
-            <div class="skeleton-card" style="height:80px"></div>
           </div>
         </div>
 
-        <!-- Panneau : Revenus -->
+        <!-- ═══ PANNEAU : Mon profil ══════════════════════════ -->
+        <div class="dashboard-panel" id="panel-profil">
+          <div class="section__header">
+            <h2 class="section__title">Mon profil</h2>
+            <button class="btn btn--primary btn--sm" id="btn-sauver-profil">
+              💾 Enregistrer
+            </button>
+          </div>
+
+          <div class="alert alert--success hidden" id="profil-saved-alert">
+            ✅ Profil mis à jour avec succès.
+          </div>
+
+          <form id="form-profil" class="profil-form" novalidate>
+
+            <!-- ── Photo de profil ── -->
+            <div class="profil-section">
+              <h3 class="profil-section__title">Photo de profil</h3>
+              <div class="profil-avatar-edit">
+                <div class="avatar avatar--xl avatar--placeholder" id="avatar-preview">?</div>
+                <div>
+                  <label class="btn btn--outline btn--sm" for="photo-upload" style="cursor:pointer">
+                    📷 Changer la photo
+                  </label>
+                  <input type="file" id="photo-upload" accept="image/*" class="hidden" />
+                  <p style="font-size:var(--font-size-xs);color:var(--text-light);margin-top:4px;">
+                    JPG, PNG — max 2 Mo
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Informations personnelles ── -->
+            <div class="profil-section">
+              <h3 class="profil-section__title">Informations personnelles</h3>
+              <div class="profil-grid">
+
+                <div class="form-group">
+                  <label class="form-label form-label--required" for="p-prenom">Prénom</label>
+                  <input class="form-input" type="text" id="p-prenom" name="prenom"
+                    placeholder="Ton prénom" maxlength="100" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label form-label--required" for="p-nom">Nom</label>
+                  <input class="form-input" type="text" id="p-nom" name="nom"
+                    placeholder="Ton nom de famille ou pseudonyme" maxlength="100" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="p-telephone">
+                    📞 Numéro de téléphone
+                  </label>
+                  <input class="form-input" type="tel" id="p-telephone" name="telephone"
+                    placeholder="Ex : +237 6XX XXX XXX" maxlength="30" />
+                  <p class="form-hint">Jamais affiché publiquement — pour les paiements Mobile Money.</p>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="p-date-naissance">Date de naissance</label>
+                  <input class="form-input" type="date" id="p-date-naissance" name="date_naissance" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="p-genre">Genre</label>
+                  <select class="form-select" id="p-genre" name="genre_identite">
+                    <option value="">— Ne pas préciser —</option>
+                    <option value="homme">Homme</option>
+                    <option value="femme">Femme</option>
+                    <option value="non_binaire">Non binaire</option>
+                    <option value="non_precise">Préfère ne pas préciser</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="p-langue">Langue d'interface préférée</label>
+                  <select class="form-select" id="p-langue" name="langue_preferee">
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="en">🇬🇧 English</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="pt">🇧🇷 Português</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="sw">🌍 Kiswahili</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                  </select>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- ── Localisation ── -->
+            <div class="profil-section">
+              <h3 class="profil-section__title">Localisation</h3>
+              <div class="profil-grid">
+
+                <div class="form-group">
+                  <label class="form-label" for="p-pays">Pays</label>
+                  <select class="form-select" id="p-pays" name="pays">
+                    <option value="">— Choisir —</option>
+                    <optgroup label="Afrique centrale">
+                      <option value="Cameroun">Cameroun</option>
+                      <option value="RDC">RD Congo</option>
+                      <option value="Congo">Congo-Brazzaville</option>
+                      <option value="Gabon">Gabon</option>
+                      <option value="Centrafrique">Centrafrique</option>
+                      <option value="Tchad">Tchad</option>
+                    </optgroup>
+                    <optgroup label="Afrique de l'Ouest">
+                      <option value="Sénégal">Sénégal</option>
+                      <option value="Côte d'Ivoire">Côte d'Ivoire</option>
+                      <option value="Mali">Mali</option>
+                      <option value="Nigeria">Nigeria</option>
+                      <option value="Ghana">Ghana</option>
+                      <option value="Burkina Faso">Burkina Faso</option>
+                      <option value="Togo">Togo</option>
+                      <option value="Bénin">Bénin</option>
+                      <option value="Niger">Niger</option>
+                      <option value="Guinée">Guinée</option>
+                    </optgroup>
+                    <optgroup label="Afrique de l'Est">
+                      <option value="Kenya">Kenya</option>
+                      <option value="Tanzania">Tanzanie</option>
+                      <option value="Rwanda">Rwanda</option>
+                      <option value="Burundi">Burundi</option>
+                      <option value="Ethiopia">Éthiopie</option>
+                      <option value="Uganda">Ouganda</option>
+                    </optgroup>
+                    <optgroup label="Afrique du Nord">
+                      <option value="Maroc">Maroc</option>
+                      <option value="Algérie">Algérie</option>
+                      <option value="Tunisie">Tunisie</option>
+                      <option value="Égypte">Égypte</option>
+                    </optgroup>
+                    <optgroup label="Afrique australe">
+                      <option value="Afrique du Sud">Afrique du Sud</option>
+                      <option value="Angola">Angola</option>
+                      <option value="Mozambique">Mozambique</option>
+                      <option value="Madagascar">Madagascar</option>
+                    </optgroup>
+                    <optgroup label="Europe">
+                      <option value="France">France</option>
+                      <option value="Belgique">Belgique</option>
+                      <option value="Suisse">Suisse</option>
+                      <option value="Canada">Canada</option>
+                      <option value="Royaume-Uni">Royaume-Uni</option>
+                    </optgroup>
+                    <optgroup label="Autres">
+                      <option value="États-Unis">États-Unis</option>
+                      <option value="Brésil">Brésil</option>
+                      <option value="Autre">Autre</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="p-ville">Ville</label>
+                  <input class="form-input" type="text" id="p-ville" name="ville"
+                    placeholder="Ex : Yaoundé, Dakar, Paris…" maxlength="100" />
+                </div>
+
+              </div>
+            </div>
+
+            <!-- ── Biographie ── -->
+            <div class="profil-section">
+              <h3 class="profil-section__title">Biographie</h3>
+              <div class="form-group">
+                <label class="form-label" for="p-bio">À propos de toi</label>
+                <textarea class="form-textarea" id="p-bio" name="bio" rows="4" maxlength="1000"
+                  placeholder="Présente-toi — qui es-tu, qu'est-ce qui t'a amené à écrire ?"></textarea>
+                <p class="form-hint" id="bio-counter">0 / 1000 caractères</p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="p-niveau">Niveau en tant qu'auteur</label>
+                <select class="form-select" id="p-niveau" name="niveau_auteur">
+                  <option value="">— Non précisé —</option>
+                  <option value="amateur">✨ Amateur — j'écris pour la première fois</option>
+                  <option value="confirme">📝 Confirmé — j'ai déjà publié</option>
+                  <option value="professionnel">🏆 Professionnel — auteur reconnu</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- ── Langues ── -->
+            <div class="profil-section">
+              <h3 class="profil-section__title">Langues</h3>
+              <div class="form-group">
+                <label class="form-label">Langues que tu parles / lis</label>
+                <div class="checkbox-grid" id="langues-parlees-grid">
+                  <!-- Rempli par JS -->
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Genres que tu écris</label>
+                <div class="checkbox-grid" id="genres-ecrits-grid">
+                  <!-- Rempli par JS -->
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Genres que tu aimes lire</label>
+                <div class="checkbox-grid" id="genres-preferes-grid">
+                  <!-- Rempli par JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Présence en ligne ── -->
+            <div class="profil-section">
+              <h3 class="profil-section__title">Présence en ligne</h3>
+              <div class="profil-grid">
+
+                <div class="form-group">
+                  <label class="form-label" for="p-site">🌐 Site web</label>
+                  <input class="form-input" type="url" id="p-site" name="site_web"
+                    placeholder="https://monsite.com" maxlength="200" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="p-facebook">Facebook</label>
+                  <input class="form-input" type="url" id="p-facebook" name="rs_facebook"
+                    placeholder="https://facebook.com/ton-profil" maxlength="200" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="p-instagram">Instagram</label>
+                  <input class="form-input" type="url" id="p-instagram" name="rs_instagram"
+                    placeholder="https://instagram.com/ton-profil" maxlength="200" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="p-twitter">X (Twitter)</label>
+                  <input class="form-input" type="url" id="p-twitter" name="rs_twitter"
+                    placeholder="https://x.com/ton-profil" maxlength="200" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="p-tiktok">TikTok</label>
+                  <input class="form-input" type="url" id="p-tiktok" name="rs_tiktok"
+                    placeholder="https://tiktok.com/@ton-profil" maxlength="200" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="p-youtube">YouTube</label>
+                  <input class="form-input" type="url" id="p-youtube" name="rs_youtube"
+                    placeholder="https://youtube.com/@ton-chaine" maxlength="200" />
+                </div>
+
+              </div>
+            </div>
+
+            <!-- ── Sécurité ── -->
+            <div class="profil-section">
+              <h3 class="profil-section__title">Compte</h3>
+              <div class="form-group">
+                <label class="form-label">Adresse email</label>
+                <input class="form-input" type="email" id="p-email" disabled
+                  style="background:var(--bg-secondary);color:var(--text-light);" />
+                <p class="form-hint">L'email ne peut pas être modifié ici.</p>
+              </div>
+              <button type="button" class="btn btn--outline btn--sm" id="btn-changer-mdp">
+                🔐 Changer mon mot de passe
+              </button>
+            </div>
+
+          </form>
+
+          <!-- Bouton sauvegarder en bas -->
+          <div style="margin-top:var(--spacing-xl);display:flex;gap:var(--spacing-sm);">
+            <button class="btn btn--primary" id="btn-sauver-profil-bas">
+              💾 Enregistrer les modifications
+            </button>
+          </div>
+        </div>
+
+        <!-- ═══ PANNEAU : Revenus ══════════════════════════════ -->
         <div class="dashboard-panel" id="panel-revenus">
           <div class="section__header">
             <h2 class="section__title">Historique des revenus</h2>
@@ -118,14 +395,14 @@
 
     <footer class="footer">
       <div class="container">
-        <div class="footer__bottom">© 2025 Kalamundi — Tous droits réservés</div>
+        <div class="footer__bottom">© 2026 Kalamundi — Tous droits réservés</div>
       </div>
     </footer>
   </div>
 
   <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
-  <!-- Modal confirmation suppression -->
+  <!-- Modal suppression œuvre -->
   <div class="modal-overlay" id="modal-supprimer" role="dialog" aria-modal="true">
     <div class="modal">
       <div class="modal__header">
@@ -146,6 +423,5 @@
   </div>
 
   <script type="module" src="/assets/js/author-dashboard.js"></script>
-  <script type="module" src="/assets/js/theme-init.js"></script>
 </body>
 </html>

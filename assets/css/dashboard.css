@@ -349,3 +349,91 @@
     gap: var(--spacing-lg);
   }
 }
+
+/* ============================================================
+   FORMULAIRE PROFIL ETENDU
+   ============================================================ */
+
+.profil-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.profil-section {
+  padding: var(--spacing-lg) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.profil-section:last-child {
+  border-bottom: none;
+}
+
+.profil-section__title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Grille 2 colonnes */
+.profil-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+/* Photo de profil */
+.profil-avatar-edit {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+/* Checkboxes genres / langues */
+.checkbox-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.checkbox-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  color: var(--text-secondary);
+  background: var(--bg-main);
+}
+
+.checkbox-option:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.checkbox-option:has(input:checked) {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.checkbox-option input[type="checkbox"] {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .profil-grid {
+    grid-template-columns: 1fr;
+  }
+  .profil-avatar-edit {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

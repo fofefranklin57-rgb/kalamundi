@@ -22,7 +22,14 @@ export const api = {
   async getProfil(userId) {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select(`
+        id, email, nom, prenom, bio, photo_url, pays, ville,
+        telephone, date_naissance, genre_identite,
+        langue_preferee, role, niveau_auteur, badge_fondateur,
+        site_web, reseaux_sociaux,
+        langues_parlees, genres_preferes, genres_ecrits,
+        compte_verifie, created_at, updated_at
+      `)
       .eq('id', userId)
       .single();
 
