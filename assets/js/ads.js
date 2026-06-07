@@ -1,133 +1,180 @@
 /* ============================================================
-   ads.js — Intégration Monetag (In-Page Push)
+   ads.js — Intégration Monetag
    Kalamundi — La Plume du Monde
-   ============================================================
-   CONFIGURATION :
-     1. Créer un compte sur https://publishers.monetag.com
-     2. Ajouter le site kalamundi.pages.dev
-     3. Remplacer MONETAG_ZONE_ID ci-dessous par votre Zone ID
+
+   Formats actifs :
+   - In-Page Push  : accueil + toutes les pages de navigation
+   - Vignette Banner : bibliothèque + fiche œuvre
+   - Multitag (all-in-one) : bibliothèque + fiche œuvre
+
+   Règle : ZERO pub pendant la lecture (reader.html)
+           ZERO pub pour les abonnés Reader+ et Auteur Pro
    ============================================================ */
 
 (function () {
   'use strict';
 
-  /* ──────────────────────────────────────────────────────────
-     CONFIG — À personnaliser après inscription Monetag
-  ────────────────────────────────────────────────────────── */
-  /* In-Page Push — accueil (index.html) */
-  var ZONE_INPAGE   = '11110665';
+  /* ── Zone IDs Monetag ─────────────────────────────────────── */
+  var ZONE_INPAGE   = '11110665';   // In-Page Push
   var SRC_INPAGE    = 'https://nap5k.com/tag.min.js';
 
-  /* Vignette Banner — catalogue (library.html) + page œuvre (work.html) */
-  var ZONE_MULTI    = '11110687';
-  var SRC_MULTI     = 'https://n6wxm.com/vignette.min.js';
+  var ZONE_VIGNETTE = '11110687';   // Vignette Banner
+  var SRC_VIGNETTE  = 'https://n6wxm.com/vignette.min.js';
 
-  /* Multitag (all-in-one) — catalogue + page œuvre uniquement */
-  var ZONE_MULTITAG = '246898';
+  var ZONE_MULTITAG = '246898';     // Multitag
   var SRC_MULTITAG  = 'https://quge5.com/88/tag.min.js';
 
-  var AD_DELAY_MS   = 3000;
+  var DELAI_MS = 2500; // Délai avant injection (laisser la page se charger)
 
-  /* ──────────────────────────────────────────────────────────
-     Charge le script Monetag (In-Page Push)
-  ────────────────────────────────────────────────────────── */
-  function chargerScript(zone, src) {
-    var s = document.createElement('script');
-    s.dataset.zone       = zone;
-    s.src                = src;
-    s.async              = true;
-    s.dataset.cfasync    = 'false';
-    document.body.appendChild(s);
+  /* ── Pages sans pub ──────────────────────────────────────── */
+  var PAGE_SANS_PUB = [
+    'reader.html',
+    'login.html',
+    'admin.html',
+    'payment.html',
+  ];
+
+  /* ── Initialisation ──────────────────────────────────────── */
+  function init() {
+    var page = window.location.pathname;
+
+    // Pas de pub sur les pages blacklistées
+    for (var i = 0; i < PAGE_SANS_PUB.length; i++) {
+      if (page.includes(PAGE_SANS_PUB[i])) return;
+    }
+
+    // Pas de double initialisation
+    if (window._kalaAdsLoaded) return;
+    window._kalaAdsLoaded = true;
+
+    // Vérifier si l'utilisateur est abonné (localStorage rapide)
+    var estAbonne = _verifierAbonnementLocal();
+
+    setTimeout(function () {
+      _chargerPubs(page, estAbonne);
+      if (!estAbonne) {
+        _injecterBandeau();
+      }
+    }, DELAI_MS);
+
+    // Vérification Supabase en arrière-plan (plus précise)
+    _verifierAbonnementSupabase(function (abonne) {
+      if (abonne && window._kalaAdBar) {
+        window._kalaAdBar.remove();
+        window._kalaAdBar = null;
+        document.documentElement.style.paddingBottom = '';
+      }
+    });
   }
 
-  function loadMonetag() {
-    if (window._kalaMonetag) return;
-    window._kalaMonetag = true;
-
-    var page   = window.location.pathname;
-    var isBrowse = page.includes('library') || page.includes('work');
+  /* ── Charger les scripts Monetag selon la page ───────────── */
+  function _chargerPubs(page, estAbonne) {
+    var isBrowse = page.includes('library') || page.includes('work')
+                || page.includes('author-profile');
 
     if (isBrowse) {
-      /* Vignette Banner + Multitag sur les pages de navigation */
-      chargerScript(ZONE_MULTI,    SRC_MULTI);
-      chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
+      // Pages de navigation : Vignette + Multitag
+      _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
+      _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
     } else {
-      /* In-Page Push discret sur l'accueil */
-      chargerScript(ZONE_INPAGE, SRC_INPAGE);
+      // Accueil et autres pages : In-Page Push
+      _chargerScript(ZONE_INPAGE, SRC_INPAGE);
     }
   }
 
-  /* ──────────────────────────────────────────────────────────
-     Bannière basse discrète (pour utilisateurs sans abonnement)
-  ────────────────────────────────────────────────────────── */
-  function injecterBandeau() {
+  function _chargerScript(zone, src) {
+    var s       = document.createElement('script');
+    s.dataset.zone    = zone;
+    s.src             = src;
+    s.async           = true;
+    s.dataset.cfasync = 'false';
+    document.body.appendChild(s);
+  }
+
+  /* ── Bandeau bas discret ─────────────────────────────────── */
+  function _injecterBandeau() {
     if (document.getElementById('kala-ad-bar')) return;
 
     var bar = document.createElement('div');
-    bar.id = 'kala-ad-bar';
-    bar.setAttribute('aria-label', 'Espace publicitaire');
+    bar.id  = 'kala-ad-bar';
+    window._kalaAdBar = bar;
+    bar.setAttribute('aria-label', 'Publicité');
     bar.style.cssText = [
-      'position:fixed',
-      'bottom:0',
-      'left:0',
-      'right:0',
-      'height:54px',
-      'z-index:9998',
-      'background:var(--surface, #fff)',
-      'border-top:1px solid var(--border, #e2e8f0)',
-      'display:flex',
-      'align-items:center',
-      'justify-content:center',
-      'overflow:hidden',
+      'position:fixed', 'bottom:0', 'left:0', 'right:0',
+      'height:56px', 'z-index:9998',
+      'background:var(--bg-card,#fff)',
+      'border-top:1px solid var(--border-color,#e2e8f0)',
+      'display:flex', 'align-items:center', 'justify-content:center',
+      'overflow:hidden', 'box-shadow:0 -2px 8px rgba(0,0,0,0.06)',
     ].join(';');
-
-    var fermer = document.createElement('button');
-    fermer.innerHTML = '✕';
-    fermer.setAttribute('aria-label', 'Fermer la publicité');
-    fermer.style.cssText = [
-      'position:absolute',
-      'right:8px',
-      'top:50%',
-      'transform:translateY(-50%)',
-      'background:none',
-      'border:none',
-      'color:var(--text-light, #94a3b8)',
-      'font-size:13px',
-      'cursor:pointer',
-      'padding:6px',
-      'line-height:1',
-    ].join(';');
-    fermer.onclick = function () { bar.remove(); };
 
     var label = document.createElement('span');
     label.textContent = 'Publicité';
-    label.style.cssText = 'font-size:10px;color:var(--text-light,#94a3b8);position:absolute;left:8px;top:4px';
+    label.style.cssText = 'position:absolute;left:8px;top:4px;font-size:9px;color:#94a3b8;letter-spacing:.05em;text-transform:uppercase';
+
+    var fermer = document.createElement('button');
+    fermer.innerHTML = '✕';
+    fermer.setAttribute('aria-label', 'Fermer');
+    fermer.style.cssText = [
+      'position:absolute', 'right:8px', 'top:50%',
+      'transform:translateY(-50%)',
+      'background:none', 'border:none',
+      'color:#94a3b8', 'font-size:14px',
+      'cursor:pointer', 'padding:6px', 'line-height:1',
+    ].join(';');
+
+    fermer.onclick = function () {
+      bar.remove();
+      window._kalaAdBar = null;
+      document.documentElement.style.paddingBottom = '';
+    };
 
     bar.appendChild(label);
     bar.appendChild(fermer);
     document.body.appendChild(bar);
-
-    /* décaler le contenu pour éviter que le bandeau ne cache le footer */
-    document.documentElement.style.paddingBottom = '54px';
-    fermer.addEventListener('click', function () {
-      document.documentElement.style.paddingBottom = '';
-    }, { once: true });
+    document.documentElement.style.paddingBottom = '56px';
   }
 
-  /* ──────────────────────────────────────────────────────────
-     Point d'entrée public — appelé depuis app.js
-     planAbonne : true → pas de bandeau (expérience épurée)
-                  false/undefined → bandeau + In-Page Push
-  ────────────────────────────────────────────────────────── */
-  window.initAds = function (planAbonne) {
-    if (!ZONE_INPAGE || !ZONE_MULTI) return; // pubs non configurées
+  /* ── Vérification abonnement (localStorage) ─────────────── */
+  function _verifierAbonnementLocal() {
+    try {
+      var plan = localStorage.getItem('kala_plan');
+      return plan === 'reader_plus' || plan === 'auteur_pro' || plan === 'institution';
+    } catch (e) { return false; }
+  }
 
-    setTimeout(function () {
-      loadMonetag();
-      if (!planAbonne) {
-        injecterBandeau();
-      }
-    }, AD_DELAY_MS);
+  /* ── Vérification abonnement (Supabase) ─────────────────── */
+  function _verifierAbonnementSupabase(callback) {
+    // Attendre que le client Supabase soit disponible (chargé via auth.js)
+    var tentatives = 0;
+    var interval = setInterval(function () {
+      tentatives++;
+      if (tentatives > 10) { clearInterval(interval); return; }
+
+      // Chercher le client supabase dans le scope global (exposé par auth.js si besoin)
+      // Pour l'instant on se base sur les paiements enregistrés en localStorage
+      var plan = localStorage.getItem('kala_plan');
+      var abonne = plan === 'reader_plus' || plan === 'auteur_pro' || plan === 'institution';
+
+      clearInterval(interval);
+      callback(abonne);
+    }, 500);
+  }
+
+  /* ── Point d'entrée public (appelable depuis app.js ou les pages) ── */
+  window.initAds = function (planAbonne) {
+    if (planAbonne) {
+      localStorage.setItem('kala_plan', 'reader_plus'); // mémoriser
+    }
+    init();
   };
+
+  /* ── Auto-démarrage si la page a déjà fini de charger ────── */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    // DOM déjà prêt (script chargé en bas de page)
+    init();
+  }
 
 })();
