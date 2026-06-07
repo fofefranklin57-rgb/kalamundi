@@ -1,6 +1,6 @@
 /* ============================================================
-   reader.js — Lecteur intégré d'œuvres
-   Kalamundi — La Plume du Monde
+   reader.js — Lecteur immersif Kalamundi
+   La Plume du Monde
    ============================================================ */
 
 import { api } from './api.js';
@@ -9,27 +9,52 @@ import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
 import { traduire, viderCacheTraduction, rendreOptionLangues, LANGUES_LECTURE } from './translate.js';
 import { activerProtections } from './security.js';
 
-/* Nombre de pages scrollées gratuites pour les visiteurs non connectés */
+/* Nombre de "pages" scrollées gratuites pour les visiteurs */
 const LIMIT_VISITEUR_PAGES = 2;
 
-/* ============================================================
-   État du lecteur
-   ============================================================ */
+/* Couleur par genre pour la couverture (doit correspondre à library.js) */
+const GENRE_COULEURS = {
+  roman:             '#2D6A4F', nouvelle: '#1B5E20', conte: '#E65100',
+  thriller:          '#B71C1C', romance:  '#AD1457', sf_fantasy: '#1565C0',
+  poesie:            '#6A1B9A', litterature_orale: '#00695C',
+  essai:             '#37474F', autobiographie: '#5D4037',
+  temoignage:        '#558B2F', philosophie: '#4527A0',
+  histoire:          '#6D4C41', jeunesse: '#2E7D32',
+};
 
-const etat = {
-  oeuvreId:    getParam('id'),
-  chapitreNum: parseInt(getParam('ch') || '1'),
-  langueAffichee: lsGet('reader_langue') || 'original',
-  fontSize:    parseInt(lsGet('reader_fontsize') || '18'),
-  lineHeight:  parseFloat(lsGet('reader_lh') || '1.9'),
-  theme:       lsGet('reader_theme') || 'light',
-  chapitres:   [],
-  oeuvre:      null,
-  utilisateur: null,
+const GENRE_EMOJIS = {
+  roman: '📗', nouvelle: '📗', conte: '📙', thriller: '🔴',
+  romance: '💗', sf_fantasy: '🚀', poesie: '✍️', litterature_orale: '🎭',
+  essai: '📝', autobiographie: '👤', temoignage: '✍️',
+  philosophie: '🧠', histoire: '🏛️', jeunesse: '🌟',
+};
+
+const LANGUES_NOMS = {
+  fr: '🇫🇷 Français', en: '🇬🇧 Anglais', ar: '🇸🇦 Arabe',
+  sw: '🌍 Swahili',   ha: '🌍 Haoussa', yo: '🌍 Yoruba',
+  es: '🇪🇸 Espagnol', pt: '🇧🇷 Portugais', de: '🇩🇪 Allemand',
 };
 
 /* ============================================================
-   Init
+   ÉTAT DU LECTEUR
+   ============================================================ */
+
+const etat = {
+  oeuvreId:       getParam('id'),
+  chapitreNum:    parseInt(getParam('ch') || '1'),
+  langueAffichee: lsGet('reader_langue') || 'original',
+  fontSize:       parseInt(lsGet('reader_fontsize') || '18'),
+  lineHeight:     parseFloat(lsGet('reader_lh') || '1.9'),
+  maxWidth:       parseInt(lsGet('reader_width') || '680'),
+  theme:          lsGet('reader_theme') || 'light',
+  chapitres:      [],
+  oeuvre:         null,
+  utilisateur:    null,
+  couvertureVisible: true,
+};
+
+/* ============================================================
+   INIT
    ============================================================ */
 
 (async () => {
@@ -50,24 +75,147 @@ const etat = {
     return;
   }
 
-  appliquerPreferences();
-  rendreInfos();
-  rendreTOC();
+  // Afficher la couverture en premier
+  afficherCouverture();
+  remplirTOC();
   _rendreOptionLangues();
-  await chargerChapitre(etat.chapitreNum);
-  restaurerProgression();
-  api.incrementerLectures(etat.oeuvreId).catch(() => {});
+
 })();
 
 /* ============================================================
-   Charger un chapitre
+   PREMIÈRE DE COUVERTURE
    ============================================================ */
 
-async function chargerChapitre(numero) {
+function afficherCouverture() {
+  const oeuvre = etat.oeuvre;
+  if (!oeuvre) return;
+
+  const genre   = (oeuvre.genre || '').toLowerCase();
+  const couleur = GENRE_COULEURS[genre] || '#1B4332';
+  const emoji   = GENRE_EMOJIS[genre]   || '📖';
+  const auteur  = oeuvre.profiles?.nom  || 'Auteur inconnu';
+  const pays    = oeuvre.profiles?.pays  || '';
+
+  // Fond dynamique : si pas de couverture → dégradé couleur genre
+  const bgEl = document.getElementById('cover-bg');
+  if (oeuvre.couverture_url) {
+    bgEl.style.backgroundImage = `url('${oeuvre.couverture_url}')`;
+    bgEl.style.background      = `url('${oeuvre.couverture_url}') center/cover no-repeat`;
+  } else {
+    bgEl.style.background = `linear-gradient(160deg, ${couleur} 0%, color-mix(in srgb, ${couleur} 50%, #000) 100%)`;
+  }
+
+  // Miniature livre
+  const bookEl = document.getElementById('cover-book-img');
+  if (oeuvre.couverture_url) {
+    bookEl.innerHTML = `<img src="${oeuvre.couverture_url}" alt="Couverture de ${oeuvre.titre}" />`;
+  } else {
+    bookEl.style.background = `linear-gradient(145deg, ${couleur}, color-mix(in srgb, ${couleur} 70%, #000))`;
+    bookEl.innerHTML = `<span style="font-size:3rem;opacity:0.4">${emoji}</span>`;
+  }
+
+  // Métadonnées
+  const genreLabel = oeuvre.genre ? oeuvre.genre.charAt(0).toUpperCase() + oeuvre.genre.slice(1) : '';
+  document.getElementById('cover-genre').textContent  = genreLabel;
+  document.getElementById('cover-title').textContent  = oeuvre.titre;
+  document.getElementById('cover-author').textContent = `par ${auteur}${pays ? ' · ' + pays : ''}`;
+
+  // Infos : langue · chapitres · accès
+  const langue  = LANGUES_NOMS[oeuvre.langue_originale] || oeuvre.langue_originale || '?';
+  const nbCh    = etat.chapitres.length;
+  const acces   = oeuvre.statut === 'premium' ? '⭐ Premium' : '🆓 Gratuit';
+  document.getElementById('cover-info').innerHTML = `
+    <span>${langue}</span>
+    <span class="dot"></span>
+    <span>📚 ${nbCh} chapitre${nbCh > 1 ? 's' : ''}</span>
+    <span class="dot"></span>
+    <span>${acces}</span>
+  `;
+
+  // Résumé
+  document.getElementById('cover-resume').textContent = oeuvre.resume || '';
+  if (!oeuvre.resume) document.getElementById('cover-resume').style.display = 'none';
+
+  // Lien retour
+  const backBtn = document.getElementById('cover-back-btn');
+  if (backBtn) backBtn.href = `/pages/work.html?id=${etat.oeuvreId}`;
+
+  // TOC : couverture miniature
+  const tocCover = document.getElementById('toc-cover');
+  if (oeuvre.couverture_url) {
+    tocCover.innerHTML = `
+      <img src="${oeuvre.couverture_url}" alt="Couverture" />
+      <div class="reader-toc__cover-overlay">
+        <div class="reader-toc__cover-title">${oeuvre.titre}</div>
+      </div>`;
+  } else {
+    tocCover.style.background = `linear-gradient(145deg, ${couleur}, color-mix(in srgb, ${couleur} 60%, #000))`;
+    tocCover.innerHTML = `
+      <span class="reader-toc__cover-placeholder">${emoji}</span>
+      <div class="reader-toc__cover-overlay">
+        <div class="reader-toc__cover-title">${oeuvre.titre}</div>
+      </div>`;
+  }
+
+  document.getElementById('toc-book-title').textContent = oeuvre.titre;
+  document.getElementById('toc-author').textContent     = `par ${auteur}`;
+  document.title = `${oeuvre.titre} — Kalamundi`;
+  document.getElementById('page-title').textContent = `${oeuvre.titre} — Kalamundi`;
+}
+
+/* Bouton "Commencer la lecture" */
+document.getElementById('btn-start-reading')?.addEventListener('click', entrerDansLecteur);
+
+/* Bouton 📚 dans la topbar (retour couverture) */
+document.getElementById('btn-show-cover')?.addEventListener('click', () => {
+  document.getElementById('reader-cover').style.display = 'flex';
+  document.getElementById('reader-page').style.display  = 'none';
+  etat.couvertureVisible = true;
+});
+
+async function entrerDansLecteur() {
+  document.getElementById('reader-cover').style.display = 'none';
+  document.getElementById('reader-page').style.display  = '';
+  etat.couvertureVisible = false;
+
+  appliquerPreferences();
+
+  // Restaurer progression si connecté
+  const prog = etat.utilisateur
+    ? await api.getProgression(etat.utilisateur.id, etat.oeuvreId).catch(() => null)
+    : null;
+
+  const chapDepart = prog?.chapitre_courant > 1 ? prog.chapitre_courant : etat.chapitreNum;
+
+  await chargerChapitre(chapDepart, true /* premier chargement — pas d'animation titre */);
+  api.incrementerLectures(etat.oeuvreId).catch(() => {});
+
+  if (prog?.chapitre_courant > 1) {
+    toast(`Reprise au chapitre ${prog.chapitre_courant}`, 'info');
+  }
+
+  // Écouter le scroll pour la progression
+  window.addEventListener('scroll', _mettreAJourScrollProgress, { passive: true });
+}
+
+/* ============================================================
+   CHARGER UN CHAPITRE
+   ============================================================ */
+
+async function chargerChapitre(numero, sansAnimation = false) {
   etat.chapitreNum = numero;
+
   const contentEl  = document.getElementById('reader-content');
   const loadingEl  = document.getElementById('reader-loading');
 
+  // Page de titre de chapitre (sauf premier chargement)
+  if (!sansAnimation && etat.chapitres.length > 1) {
+    await afficherPageTitreChapitre(numero);
+  }
+
+  // Effacer + loader
+  contentEl.classList.remove('is-visible');
+  contentEl.classList.add('is-loading');
   contentEl.innerHTML = '';
   loadingEl.style.display = 'flex';
 
@@ -78,7 +226,7 @@ async function chargerChapitre(numero) {
     return;
   }
 
-  // Charger le contenu complet du chapitre
+  // Charger le texte
   let contenu = '';
   try {
     const ch = await api.getChapitre(chapitre.id);
@@ -91,10 +239,9 @@ async function chargerChapitre(numero) {
 
   // Traduire si nécessaire
   if (etat.langueAffichee !== 'original') {
-    loadingEl.querySelector('span').textContent = 'Traduction en cours...';
+    loadingEl.querySelector('span').textContent = 'Traduction en cours…';
     try {
-      const traduit = await obtenirTraduction(chapitre.id, contenu, etat.langueAffichee);
-      contenu = traduit;
+      contenu = await obtenirTraduction(chapitre.id, contenu, etat.langueAffichee);
     } catch {
       toast('Traduction indisponible — affichage en langue originale.', 'info');
       etat.langueAffichee = 'original';
@@ -104,39 +251,76 @@ async function chargerChapitre(numero) {
   loadingEl.style.display = 'none';
   contentEl.innerHTML = formaterTexte(contenu);
 
-  // Protections sécurité + watermark
+  // Animation d'entrée
+  contentEl.classList.remove('is-loading');
+  contentEl.classList.add('is-visible');
+
+  // Appliquer la largeur max du texte
+  contentEl.style.maxWidth = `${etat.maxWidth}px`;
+  contentEl.style.fontSize  = `${etat.fontSize}px`;
+  contentEl.style.lineHeight = etat.lineHeight;
+
+  // Protections + watermark
   activerProtections(contentEl, etat.utilisateur?.id);
 
-  // Mise à jour UI
+  // UI
   mettreAJourNavigation();
-  mettreAJourProgression();
+  mettreAJourProgressionChapitre();
   mettreAJourTOC();
   sauvegarderProgression();
+  rendreInfosTopbar();
 
-  // Limite visiteur — détecter scroll bas de page pour visiteurs
+  // Scroll haut
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Visiteur — surveiller le scroll
   if (!etat.utilisateur) {
     _surveilerScrollVisiteur();
   }
-
-  // Scroll vers le haut
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ============================================================
-   Formatage du texte
+   PAGE DE TITRE DE CHAPITRE
+   ============================================================ */
+
+function afficherPageTitreChapitre(numero) {
+  return new Promise(resolve => {
+    const page   = document.getElementById('chapter-title-page');
+    const numEl  = document.getElementById('chap-title-num');
+    const titreEl = document.getElementById('chap-title-text');
+
+    const chapitre = etat.chapitres.find(c => c.numero === numero);
+    numEl.textContent  = `Chapitre ${numero}`;
+    titreEl.textContent = chapitre?.titre || '';
+
+    page.style.display = 'flex';
+
+    setTimeout(() => {
+      page.style.display = 'none';
+      resolve();
+    }, 1400);
+  });
+}
+
+/* ============================================================
+   FORMATAGE DU TEXTE
    ============================================================ */
 
 function formaterTexte(texte) {
-  return texte
+  const paragraphes = texte
     .split('\n')
-    .map(ligne => ligne.trim())
-    .filter(ligne => ligne)
-    .map(ligne => `<p>${ligne}</p>`)
-    .join('');
+    .map(l => l.trim())
+    .filter(l => l);
+
+  return paragraphes.map((ligne, i) => {
+    // Lettre ornée (lettrine) sur le premier paragraphe uniquement
+    const cls = i === 0 ? ' is-first' : '';
+    return `<p class="${cls.trim()}">${ligne}</p>`;
+  }).join('');
 }
 
 /* ============================================================
-   Traduction — délégué à translate.js
+   TRADUCTION
    ============================================================ */
 
 async function obtenirTraduction(chapitreId, contenu, langue) {
@@ -145,7 +329,7 @@ async function obtenirTraduction(chapitreId, contenu, langue) {
 }
 
 /* ============================================================
-   Panneau sélecteur de langues — 11 langues via translate.js
+   SÉLECTEUR DE LANGUES
    ============================================================ */
 
 function _rendreOptionLangues() {
@@ -163,139 +347,34 @@ function _rendreOptionLangues() {
       : (langue?.drapeau || code.toUpperCase());
 
     document.getElementById('reader-lang-panel').classList.remove('is-open');
-    await chargerChapitre(etat.chapitreNum);
+
+    if (!etat.couvertureVisible) {
+      await chargerChapitre(etat.chapitreNum, true);
+    }
   });
 }
 
 /* ============================================================
-   Navigation chapitres
+   TOPBAR — infos
    ============================================================ */
 
-function mettreAJourNavigation() {
-  const btnPrev = document.getElementById('btn-prev');
-  const btnNext = document.getElementById('btn-next');
-  btnPrev.disabled = etat.chapitreNum <= 1;
-  btnNext.disabled = etat.chapitreNum >= etat.chapitres.length;
-}
-
-document.getElementById('btn-prev')?.addEventListener('click', () => {
-  if (etat.chapitreNum > 1) chargerChapitre(etat.chapitreNum - 1);
-});
-
-document.getElementById('btn-next')?.addEventListener('click', () => {
-  if (etat.chapitreNum < etat.chapitres.length) chargerChapitre(etat.chapitreNum + 1);
-});
-
-// ── Surveillance scroll visiteur ──────────────────────────────
-let _scrollPagesLues = 0;
-let _scrollHandler   = null;
-let _modalMontree    = false;
-
-function _reinitScrollVisiteur() {
-  // Réinitialise l'état entre chapitres pour éviter le freeze persistant
-  _scrollPagesLues = 0;
-  _modalMontree    = false;
-  document.body.style.overflow = '';
-}
-
-function _surveilerScrollVisiteur() {
-  // Réinitialiser l'état au chargement de chaque chapitre
-  _reinitScrollVisiteur();
-
-  // Supprimer l'ancien handler si existant
-  if (_scrollHandler) window.removeEventListener('scroll', _scrollHandler);
-
-  const hauteurFenetre = window.innerHeight;
-  let seuilsAtteints   = new Set();
-
-  _scrollHandler = () => {
-    if (_modalMontree) return;
-    const scrollY   = window.scrollY;
-    const docHeight = document.documentElement.scrollHeight;
-
-    // Bug fix : éviter la division par zéro sur les chapitres courts
-    const scrollable = Math.max(1, docHeight - hauteurFenetre);
-    const pct        = scrollY / scrollable;
-
-    // Chaque "page" = 100% de hauteur fenêtre scrollée
-    const pageActuelle = Math.floor(scrollY / hauteurFenetre);
-
-    if (pageActuelle > 0 && !seuilsAtteints.has(pageActuelle)) {
-      seuilsAtteints.add(pageActuelle);
-      _scrollPagesLues = seuilsAtteints.size;
-    }
-
-    // Après LIMIT_VISITEUR_PAGES pages scrollées OU arrivée à 80% du contenu
-    // (pct >= 0.80 seulement si le contenu est scrollable — chapitre long)
-    const contenuScrollable = (docHeight - hauteurFenetre) > 100;
-    if (_scrollPagesLues >= LIMIT_VISITEUR_PAGES || (contenuScrollable && pct >= 0.80)) {
-      _modalMontree = true;
-      window.removeEventListener('scroll', _scrollHandler);
-      // Bloquer le scroll
-      document.body.style.overflow = 'hidden';
-      _afficherModalAbonnement();
-    }
-  };
-
-  window.addEventListener('scroll', _scrollHandler, { passive: true });
-}
-
-/* ============================================================
-   Progression
-   ============================================================ */
-
-function mettreAJourProgression() {
-  const pct = etat.chapitres.length > 0
-    ? Math.round((etat.chapitreNum / etat.chapitres.length) * 100) : 0;
-  document.getElementById('progress-fill').style.width = `${pct}%`;
-  document.getElementById('reader-position').textContent =
-    `Chapitre ${etat.chapitreNum} sur ${etat.chapitres.length} · ${pct}%`;
-}
-
-async function sauvegarderProgression() {
-  if (!etat.utilisateur) return;
-  const sessionId = lsGet('reader_session') || crypto.randomUUID();
-  lsSet('reader_session', sessionId);
-  try {
-    await api.sauvegarderProgression(
-      etat.utilisateur.id, etat.oeuvreId,
-      etat.chapitreNum, 1, sessionId
-    );
-  } catch {}
-}
-
-async function restaurerProgression() {
-  if (!etat.utilisateur || etat.chapitreNum !== 1) return;
-  try {
-    const prog = await api.getProgression(etat.utilisateur.id, etat.oeuvreId);
-    if (prog && prog.chapitre_courant > 1) {
-      toast(`Reprendre au chapitre ${prog.chapitre_courant} ?`, 'info');
-      // Ajouter bouton "Reprendre" dans le toast — simplifié ici
-    }
-  } catch {}
-}
-
-/* ============================================================
-   Infos topbar
-   ============================================================ */
-
-function rendreInfos() {
+function rendreInfosTopbar() {
   if (!etat.oeuvre) return;
-  document.getElementById('topbar-titre').textContent   = etat.oeuvre.titre;
-  document.getElementById('page-title').textContent     = `${etat.oeuvre.titre} — Kalamundi`;
-  document.title = `${etat.oeuvre.titre} — Kalamundi`;
-  document.getElementById('back-btn').href = `/pages/work.html?id=${etat.oeuvreId}`;
+  document.getElementById('topbar-titre').textContent = etat.oeuvre.titre;
+  const ch = etat.chapitres.find(c => c.numero === etat.chapitreNum);
+  document.getElementById('topbar-chapitre').textContent =
+    ch?.titre ? `Chapitre ${etat.chapitreNum} — ${ch.titre}` : `Chapitre ${etat.chapitreNum} / ${etat.chapitres.length}`;
+  document.getElementById('back-btn')?.setAttribute('href', `/pages/work.html?id=${etat.oeuvreId}`);
 }
 
 /* ============================================================
-   Table des matières
+   TABLE DES MATIÈRES
    ============================================================ */
 
-function rendreTOC() {
+function remplirTOC() {
   const listEl = document.getElementById('toc-list');
   listEl.innerHTML = etat.chapitres.map(ch => `
-    <div class="toc-item ${ch.numero === etat.chapitreNum ? 'is-current' : ''}"
-      data-num="${ch.numero}">
+    <div class="toc-item ${ch.numero === etat.chapitreNum ? 'is-current' : ''}" data-num="${ch.numero}">
       <div class="toc-item__num">${ch.numero}</div>
       <span>${ch.titre || `Chapitre ${ch.numero}`}</span>
     </div>
@@ -311,16 +390,14 @@ function rendreTOC() {
 
 function mettreAJourTOC() {
   document.querySelectorAll('.toc-item').forEach(item => {
-    item.classList.toggle('is-current', parseInt(item.dataset.num) === etat.chapitreNum);
+    const actif = parseInt(item.dataset.num) === etat.chapitreNum;
+    item.classList.toggle('is-current', actif);
+    item.querySelector('.toc-item__num')?.classList.toggle('is-current', actif);
   });
-  document.getElementById('topbar-chapitre').textContent =
-    etat.chapitres.find(c => c.numero === etat.chapitreNum)?.titre
-    || `Chapitre ${etat.chapitreNum}`;
 }
 
 document.getElementById('btn-toc')?.addEventListener('click', () => {
   document.getElementById('reader-toc').classList.toggle('is-open');
-  fermerPanneaux('toc');
 });
 
 document.getElementById('close-toc')?.addEventListener('click', fermerTOC);
@@ -331,13 +408,68 @@ function fermerTOC() {
 }
 
 /* ============================================================
-   Paramètres de lecture
+   NAVIGATION CHAPITRES
+   ============================================================ */
+
+function mettreAJourNavigation() {
+  document.getElementById('btn-prev').disabled = etat.chapitreNum <= 1;
+  document.getElementById('btn-next').disabled = etat.chapitreNum >= etat.chapitres.length;
+}
+
+document.getElementById('btn-prev')?.addEventListener('click', () => {
+  if (etat.chapitreNum > 1) chargerChapitre(etat.chapitreNum - 1);
+});
+
+document.getElementById('btn-next')?.addEventListener('click', () => {
+  if (etat.chapitreNum < etat.chapitres.length) chargerChapitre(etat.chapitreNum + 1);
+});
+
+/* ============================================================
+   PROGRESSION — scroll dans le chapitre (plus précis que X/Y)
+   ============================================================ */
+
+function mettreAJourProgressionChapitre() {
+  const pct = etat.chapitres.length > 0
+    ? Math.round((etat.chapitreNum / etat.chapitres.length) * 100) : 0;
+  document.getElementById('reader-position').innerHTML =
+    `Chapitre ${etat.chapitreNum} / ${etat.chapitres.length}<br>
+     <span style="color:var(--color-accent)">${pct}% du livre</span>`;
+}
+
+/* Barre de progression = avancement scroll dans le chapitre */
+function _mettreAJourScrollProgress() {
+  const scrollY     = window.scrollY;
+  const docHeight   = document.documentElement.scrollHeight;
+  const innerHeight = window.innerHeight;
+  const scrollable  = Math.max(1, docHeight - innerHeight);
+  const pct         = Math.min(100, Math.round((scrollY / scrollable) * 100));
+  document.getElementById('progress-fill').style.width = `${pct}%`;
+}
+
+/* ============================================================
+   PROGRESSION SUPABASE
+   ============================================================ */
+
+async function sauvegarderProgression() {
+  if (!etat.utilisateur) return;
+  const sessionId = lsGet('reader_session') || crypto.randomUUID();
+  lsSet('reader_session', sessionId);
+  try {
+    await api.sauvegarderProgression(
+      etat.utilisateur.id, etat.oeuvreId,
+      etat.chapitreNum, 1, sessionId
+    );
+  } catch {}
+}
+
+/* ============================================================
+   PARAMÈTRES DE LECTURE
    ============================================================ */
 
 document.getElementById('btn-settings')?.addEventListener('click', () => {
-  const panel = document.getElementById('reader-settings');
-  panel.classList.toggle('is-open');
-  fermerPanneaux('settings');
+  const s = document.getElementById('reader-settings');
+  s.classList.toggle('is-open');
+  document.getElementById('reader-lang-panel').classList.remove('is-open');
 });
 
 // Thèmes
@@ -367,8 +499,8 @@ document.getElementById('font-down')?.addEventListener('click', () => {
 });
 
 function appliquerFontSize() {
-  document.getElementById('reader-content').style.fontSize = `${etat.fontSize}px`;
-  document.getElementById('font-size-display').textContent = `${etat.fontSize}px`;
+  document.getElementById('reader-content').style.fontSize  = `${etat.fontSize}px`;
+  document.getElementById('font-size-display').textContent  = `${etat.fontSize}px`;
   lsSet('reader_fontsize', etat.fontSize);
 }
 
@@ -383,40 +515,44 @@ document.querySelectorAll('.line-height-btn').forEach(btn => {
   });
 });
 
+// Largeur du texte
+document.querySelectorAll('.width-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.width-btn').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    etat.maxWidth = parseInt(btn.dataset.width);
+    document.getElementById('reader-content').style.maxWidth = `${etat.maxWidth}px`;
+    lsSet('reader_width', etat.maxWidth);
+  });
+});
+
 /* ============================================================
-   Sélecteur de langue
+   SÉLECTEUR LANGUE (bouton)
    ============================================================ */
 
 document.getElementById('btn-lang')?.addEventListener('click', () => {
-  const panel = document.getElementById('reader-lang-panel');
-  panel.classList.toggle('is-open');
-  fermerPanneaux('lang');
+  const p = document.getElementById('reader-lang-panel');
+  p.classList.toggle('is-open');
+  document.getElementById('reader-settings').classList.remove('is-open');
 });
 
-/* Les listeners .lang-option sont gérés par _rendreOptionLangues() via translate.js */
-
 /* ============================================================
-   Fermer les panneaux ouverts
+   FERMER PANNEAUX AU CLIC EXTÉRIEUR
    ============================================================ */
-
-function fermerPanneaux(saufCelui) {
-  if (saufCelui !== 'settings') document.getElementById('reader-settings').classList.remove('is-open');
-  if (saufCelui !== 'lang')     document.getElementById('reader-lang-panel').classList.remove('is-open');
-}
 
 document.addEventListener('click', (e) => {
   const settings = document.getElementById('reader-settings');
   const lang     = document.getElementById('reader-lang-panel');
   if (!e.target.closest('#reader-settings') && !e.target.closest('#btn-settings')) {
-    settings.classList.remove('is-open');
+    settings?.classList.remove('is-open');
   }
   if (!e.target.closest('#reader-lang-panel') && !e.target.closest('#btn-lang')) {
-    lang.classList.remove('is-open');
+    lang?.classList.remove('is-open');
   }
 });
 
 /* ============================================================
-   Appliquer les préférences sauvegardées
+   APPLIQUER PRÉFÉRENCES SAUVEGARDÉES
    ============================================================ */
 
 function appliquerPreferences() {
@@ -427,9 +563,17 @@ function appliquerPreferences() {
     document.querySelector(`[data-theme="light"]`)?.classList.remove('is-active');
   }
 
-  // Taille police
-  document.getElementById('reader-content').style.fontSize = `${etat.fontSize}px`;
-  document.getElementById('font-size-display').textContent = `${etat.fontSize}px`;
+  // Largeur
+  document.getElementById('reader-content').style.maxWidth = `${etat.maxWidth}px`;
+  const wBtn = document.querySelector(`.width-btn[data-width="${etat.maxWidth}"]`);
+  if (wBtn) {
+    document.querySelectorAll('.width-btn').forEach(b => b.classList.remove('is-active'));
+    wBtn.classList.add('is-active');
+  }
+
+  // Font size
+  document.getElementById('reader-content').style.fontSize  = `${etat.fontSize}px`;
+  document.getElementById('font-size-display').textContent  = `${etat.fontSize}px`;
 
   // Interligne
   document.getElementById('reader-content').style.lineHeight = etat.lineHeight;
@@ -439,64 +583,111 @@ function appliquerPreferences() {
 
   // Langue
   if (etat.langueAffichee !== 'original') {
-    document.querySelectorAll('.lang-option').forEach(o => o.classList.remove('is-active'));
-    document.querySelector(`[data-lang="${etat.langueAffichee}"]`)?.classList.add('is-active');
-    document.getElementById('lang-label').textContent = etat.langueAffichee.toUpperCase();
     document.getElementById('translation-notice').style.display = 'block';
+    const l = LANGUES_LECTURE.find(x => x.code === etat.langueAffichee);
+    document.getElementById('lang-label').textContent = l?.drapeau || etat.langueAffichee.toUpperCase();
   }
 }
 
 /* ============================================================
-   Modal abonnement visiteur
+   PARTAGE
    ============================================================ */
 
-function _afficherModalAbonnement() {
-  const modal = document.getElementById('modal-abonnement');
-  if (!modal) return;
+document.getElementById('btn-partager')?.addEventListener('click', async () => {
+  const url   = `${window.location.origin}/pages/work.html?id=${etat.oeuvreId}&ref=share`;
+  const titre = etat.oeuvre?.titre || 'Un livre sur Kalamundi';
+  const texte = `Lis "${titre}" gratuitement sur Kalamundi — La Plume du Monde`;
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: titre, text: texte, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast('Lien copié !', 'success');
+    }
+  } catch { /* annulé */ }
+});
 
-  // Pré-remplir le lien de retour après inscription
-  const retour = encodeURIComponent(`/pages/reader.html?id=${etat.oeuvreId}&ch=${etat.chapitreNum}`);
+/* ============================================================
+   RACCOURCIS CLAVIER
+   ============================================================ */
 
-  const btnInscription = document.getElementById('modal-btn-inscription');
-  const btnConnexion   = document.getElementById('modal-btn-connexion');
-  if (btnInscription) btnInscription.href = `/pages/login.html?mode=inscription&next=${retour}`;
-  if (btnConnexion)   btnConnexion.href   = `/pages/login.html?next=${retour}`;
-
-  // Afficher via la classe CSS (gère l'animation opacity)
-  modal.style.display = '';     // enlever l'inline display:none du HTML
-  modal.classList.add('is-open');
-
-  // Bouton "Continuer comme visiteur" — ferme le modal + débloque le scroll
-  const btnVisiteur = document.getElementById('modal-btn-visiteur');
-  if (btnVisiteur) {
-    // Remplacer l'éventuel ancien listener avant d'en ajouter un nouveau
-    const newBtn = btnVisiteur.cloneNode(true);
-    btnVisiteur.parentNode.replaceChild(newBtn, btnVisiteur);
-    newBtn.addEventListener('click', () => {
-      modal.classList.remove('is-open');
-      document.body.style.overflow = '';
-      // Autoriser encore quelques scrolls avant le prochain déclenchement
-      _scrollPagesLues = 0;
-      _modalMontree    = false;
-      // Re-attacher le handler avec un seuil remonté (1 seule page restante)
-      if (!etat.utilisateur) _surveilerScrollVisiteurStrict();
-    });
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (etat.couvertureVisible) {
+    if (e.key === 'Enter' || e.key === ' ') entrerDansLecteur();
+    return;
   }
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+    if (etat.chapitreNum < etat.chapitres.length) chargerChapitre(etat.chapitreNum + 1);
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+    if (etat.chapitreNum > 1) chargerChapitre(etat.chapitreNum - 1);
+  }
+  if (e.key === 'Escape') {
+    fermerTOC();
+    document.getElementById('reader-settings')?.classList.remove('is-open');
+    document.getElementById('reader-lang-panel')?.classList.remove('is-open');
+  }
+  // 'c' = retour couverture
+  if (e.key === 'c' || e.key === 'C') {
+    document.getElementById('btn-show-cover')?.click();
+  }
+});
+
+/* ============================================================
+   SURVEILLANCE SCROLL VISITEUR
+   ============================================================ */
+
+let _scrollPagesLues = 0;
+let _scrollHandler   = null;
+let _modalMontree    = false;
+
+function _reinitScrollVisiteur() {
+  _scrollPagesLues = 0;
+  _modalMontree    = false;
+  document.body.style.overflow = '';
 }
 
-/* Variante stricte : re-déclenche immédiatement si le visiteur scrolle encore */
+function _surveilerScrollVisiteur() {
+  _reinitScrollVisiteur();
+  if (_scrollHandler) window.removeEventListener('scroll', _scrollHandler);
+
+  const hauteurFenetre = window.innerHeight;
+  let seuilsAtteints   = new Set();
+
+  _scrollHandler = () => {
+    if (_modalMontree) return;
+    const scrollY    = window.scrollY;
+    const docHeight  = document.documentElement.scrollHeight;
+    const scrollable = Math.max(1, docHeight - hauteurFenetre);
+    const pct        = scrollY / scrollable;
+    const page       = Math.floor(scrollY / hauteurFenetre);
+
+    if (page > 0 && !seuilsAtteints.has(page)) {
+      seuilsAtteints.add(page);
+      _scrollPagesLues = seuilsAtteints.size;
+    }
+
+    const contenuScrollable = (docHeight - hauteurFenetre) > 100;
+    if (_scrollPagesLues >= LIMIT_VISITEUR_PAGES || (contenuScrollable && pct >= 0.80)) {
+      _modalMontree = true;
+      window.removeEventListener('scroll', _scrollHandler);
+      document.body.style.overflow = 'hidden';
+      _afficherModalAbonnement();
+    }
+  };
+
+  window.addEventListener('scroll', _scrollHandler, { passive: true });
+}
+
 function _surveilerScrollVisiteurStrict() {
   if (_scrollHandler) window.removeEventListener('scroll', _scrollHandler);
   const hauteurFenetre = window.innerHeight;
 
   _scrollHandler = () => {
     if (_modalMontree) return;
-    const scrollY   = window.scrollY;
-    const docHeight = document.documentElement.scrollHeight;
-    const scrollable = Math.max(1, docHeight - hauteurFenetre);
-    const pct        = scrollY / scrollable;
-
-    if (pct >= 0.95) { // Toute tentative d'arriver en bas
+    const pct = window.scrollY / Math.max(1, document.documentElement.scrollHeight - hauteurFenetre);
+    if (pct >= 0.95) {
       _modalMontree = true;
       window.removeEventListener('scroll', _scrollHandler);
       document.body.style.overflow = 'hidden';
@@ -506,39 +697,29 @@ function _surveilerScrollVisiteurStrict() {
   window.addEventListener('scroll', _scrollHandler, { passive: true });
 }
 
-/* ============================================================
-   Bouton partager
-   ============================================================ */
+function _afficherModalAbonnement() {
+  const modal = document.getElementById('modal-abonnement');
+  if (!modal) return;
 
-document.getElementById('btn-partager')?.addEventListener('click', async () => {
-  const url = `${window.location.origin}/pages/work.html?id=${etat.oeuvreId}&ref=share`;
-  const titre = etat.oeuvre?.titre || 'Un livre sur Kalamundi';
-  const texte = `Lis "${titre}" gratuitement sur Kalamundi — La Plume du Monde`;
+  const retour = encodeURIComponent(`/pages/reader.html?id=${etat.oeuvreId}&ch=${etat.chapitreNum}`);
+  const btnI = document.getElementById('modal-btn-inscription');
+  const btnC = document.getElementById('modal-btn-connexion');
+  if (btnI) btnI.href = `/pages/login.html?mode=inscription&next=${retour}`;
+  if (btnC) btnC.href = `/pages/login.html?next=${retour}`;
 
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: titre, text: texte, url });
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast('Lien copié ! Partagez-le pour inviter quelqu\'un à lire.', 'success');
-    }
-  } catch { /* annulé par l'utilisateur */ }
-});
+  modal.style.display = '';
+  modal.classList.add('is-open');
 
-/* ============================================================
-   Raccourcis clavier
-   ============================================================ */
-
-document.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-    if (etat.chapitreNum < etat.chapitres.length) chargerChapitre(etat.chapitreNum + 1);
+  const btnV = document.getElementById('modal-btn-visiteur');
+  if (btnV) {
+    const newBtn = btnV.cloneNode(true);
+    btnV.parentNode.replaceChild(newBtn, btnV);
+    newBtn.addEventListener('click', () => {
+      modal.classList.remove('is-open');
+      document.body.style.overflow = '';
+      _scrollPagesLues = 0;
+      _modalMontree    = false;
+      if (!etat.utilisateur) _surveilerScrollVisiteurStrict();
+    });
   }
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-    if (etat.chapitreNum > 1) chargerChapitre(etat.chapitreNum - 1);
-  }
-  if (e.key === 'Escape') {
-    fermerTOC();
-    fermerPanneaux('');
-  }
-});
+}

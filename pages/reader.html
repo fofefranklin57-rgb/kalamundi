@@ -13,39 +13,94 @@
 </head>
 <body class="reader-body">
 
-<div class="reader-page">
+<!-- ═══════════════════════════════════════════════════════════
+     PREMIÈRE DE COUVERTURE
+     Affichée au premier lancement, avant le chapitre 1
+════════════════════════════════════════════════════════════ -->
+<div class="reader-cover" id="reader-cover" aria-modal="true" role="dialog">
 
-  <!-- Topbar -->
+  <!-- Image de fond (couverture du livre ou dégradé genre) -->
+  <div class="reader-cover__bg" id="cover-bg"></div>
+  <div class="reader-cover__overlay"></div>
+
+  <div class="reader-cover__content">
+
+    <!-- Couverture miniature avec ombre -->
+    <div class="reader-cover__book" id="cover-book-img">
+      <!-- Rempli par JS : <img> ou placeholder coloré -->
+    </div>
+
+    <!-- Notice bibliographique sur la couverture -->
+    <div class="reader-cover__meta" id="cover-meta">
+      <div class="reader-cover__genre" id="cover-genre">—</div>
+      <h1 class="reader-cover__title" id="cover-title">Chargement…</h1>
+      <p class="reader-cover__author" id="cover-author">—</p>
+      <div class="reader-cover__info" id="cover-info">
+        <!-- langue · chapitres · statut — rempli par JS -->
+      </div>
+    </div>
+
+    <!-- Résumé (dc:description) -->
+    <p class="reader-cover__resume" id="cover-resume"></p>
+
+    <!-- Actions -->
+    <div class="reader-cover__actions">
+      <button class="reader-cover__start" id="btn-start-reading">
+        📖 Commencer la lecture
+      </button>
+      <a href="#" class="reader-cover__back-link" id="cover-back-btn">
+        ← Retour à la fiche
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="reader-cover__scroll-hint">↓ défiler pour lire</div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     LECTEUR PRINCIPAL
+     Masqué tant que la couverture est affichée
+════════════════════════════════════════════════════════════ -->
+<div class="reader-page" id="reader-page" style="display:none;">
+
+  <!-- ── Topbar ─────────────────────────────────────────── -->
   <header>
     <div class="reader-topbar">
-      <a href="#" class="reader-topbar__back" id="back-btn">← Retour</a>
+      <button class="reader-topbar__back" id="btn-show-cover" title="Retour à la couverture" aria-label="Voir la couverture du livre">
+        📚
+      </button>
       <div class="reader-topbar__info">
-        <div class="reader-topbar__titre" id="topbar-titre">Chargement...</div>
+        <div class="reader-topbar__titre" id="topbar-titre">Chargement…</div>
         <div class="reader-topbar__chapitre" id="topbar-chapitre"></div>
       </div>
       <div class="reader-topbar__actions">
-        <button class="reader-action-btn" id="btn-toc" title="Table des matières">☰ Chapitres</button>
-        <button class="reader-action-btn" id="btn-lang" title="Changer la langue">🌐 <span id="lang-label">FR</span></button>
-        <button class="reader-action-btn" id="btn-partager" title="Partager ce livre">🔗 Partager</button>
-        <button class="reader-action-btn" id="btn-settings" title="Paramètres de lecture">⚙ Aa</button>
-        <span id="theme-slot"></span>
+        <button class="reader-action-btn" id="btn-toc"      title="Table des matières">☰</button>
+        <button class="reader-action-btn" id="btn-lang"     title="Langue de lecture">🌐 <span id="lang-label">FR</span></button>
+        <button class="reader-action-btn" id="btn-partager" title="Partager">🔗</button>
+        <button class="reader-action-btn" id="btn-settings" title="Paramètres Aa">Aa</button>
       </div>
     </div>
-    <div class="reader-progress-bar">
+
+    <!-- Barre progression chapitre (scroll %) -->
+    <div class="reader-progress-bar" title="Progression dans ce chapitre">
       <div class="reader-progress-bar__fill" id="progress-fill" style="width:0%"></div>
     </div>
   </header>
 
-  <!-- Panneau paramètres -->
+  <!-- ── Panneau paramètres ────────────────────────────── -->
   <div class="reader-settings" id="reader-settings">
     <div class="reader-settings__title">Paramètres de lecture</div>
 
     <div class="reader-settings__group">
       <div class="reader-settings__label">Thème</div>
       <div class="theme-options">
-        <button class="theme-btn theme-btn--light is-active" data-theme="light">Clair</button>
-        <button class="theme-btn theme-btn--dark" data-theme="dark">Sombre</button>
-        <button class="theme-btn theme-btn--sepia" data-theme="sepia">Sépia</button>
+        <button class="theme-btn theme-btn--light is-active" data-theme="light">☀ Clair</button>
+        <button class="theme-btn theme-btn--dark"  data-theme="dark">🌙 Sombre</button>
+        <button class="theme-btn theme-btn--sepia" data-theme="sepia">📜 Sépia</button>
       </div>
     </div>
 
@@ -61,14 +116,23 @@
     <div class="reader-settings__group">
       <div class="reader-settings__label">Interligne</div>
       <div class="line-height-options">
-        <button class="line-height-btn is-active" data-lh="1.6">Compact</button>
-        <button class="line-height-btn" data-lh="1.9">Normal</button>
+        <button class="line-height-btn" data-lh="1.6">Compact</button>
+        <button class="line-height-btn is-active" data-lh="1.9">Normal</button>
         <button class="line-height-btn" data-lh="2.4">Aéré</button>
+      </div>
+    </div>
+
+    <div class="reader-settings__group">
+      <div class="reader-settings__label">Largeur du texte</div>
+      <div class="line-height-options">
+        <button class="width-btn" data-width="580">Étroit</button>
+        <button class="width-btn is-active" data-width="680">Normal</button>
+        <button class="width-btn" data-width="820">Large</button>
       </div>
     </div>
   </div>
 
-  <!-- Panneau langues — rempli dynamiquement par translate.js -->
+  <!-- ── Sélecteur langue ──────────────────────────────── -->
   <div class="reader-lang-panel" id="reader-lang-panel">
     <div class="reader-lang-panel__title">Langue de lecture</div>
     <div id="lang-options"><!-- JS --></div>
@@ -77,46 +141,72 @@
     </div>
   </div>
 
-  <!-- Table des matières -->
+  <!-- ── Table des matières ────────────────────────────── -->
   <div class="reader-toc" id="reader-toc">
     <div class="reader-toc__overlay" id="toc-overlay"></div>
     <div class="reader-toc__panel">
+
+      <!-- Couverture miniature dans la TOC -->
+      <div class="reader-toc__cover" id="toc-cover">
+        <!-- Rempli par JS -->
+      </div>
+
       <div class="reader-toc__header">
-        <h2 class="reader-toc__title">Chapitres</h2>
+        <h2 class="reader-toc__title" id="toc-book-title">Chapitres</h2>
         <button class="btn btn--ghost btn--sm" id="close-toc">✕</button>
       </div>
+      <div class="reader-toc__author" id="toc-author"></div>
       <div id="toc-list"></div>
     </div>
   </div>
 
-  <!-- Contenu principal -->
-  <main class="reader-main">
+  <!-- ── Page de titre de chapitre ────────────────────── -->
+  <!-- Affichée pendant 1,5s à chaque changement de chapitre -->
+  <div class="chapter-title-page" id="chapter-title-page" style="display:none;" aria-live="polite">
+    <div class="chapter-title-page__inner">
+      <div class="chapter-title-page__num" id="chap-title-num">Chapitre 1</div>
+      <div class="chapter-title-page__sep"></div>
+      <div class="chapter-title-page__title" id="chap-title-text"></div>
+    </div>
+  </div>
+
+  <!-- ── Contenu de lecture ────────────────────────────── -->
+  <main class="reader-main" id="reader-main">
     <div id="reader-loading" class="reader-translating">
       <div class="spinner"></div>
-      <span>Chargement...</span>
+      <span>Chargement…</span>
     </div>
-    <div class="reader-content" id="reader-content" aria-live="polite"></div>
+    <article class="reader-content" id="reader-content" aria-live="polite" lang="fr"></article>
   </main>
 
-  <!-- Bottombar navigation -->
+  <!-- ── Pied de page chapitres ────────────────────────── -->
   <footer class="reader-bottombar">
-    <button class="reader-nav-btn" id="btn-prev" disabled>← Chapitre précédent</button>
+    <button class="reader-nav-btn" id="btn-prev" disabled>
+      <span class="reader-nav-btn__arrow">←</span>
+      <span class="reader-nav-btn__label">Précédent</span>
+    </button>
     <div class="reader-position" id="reader-position">—</div>
-    <button class="reader-nav-btn" id="btn-next">Chapitre suivant →</button>
+    <button class="reader-nav-btn" id="btn-next">
+      <span class="reader-nav-btn__label">Suivant</span>
+      <span class="reader-nav-btn__arrow">→</span>
+    </button>
   </footer>
 
 </div>
 
-<!-- Modal abonnement visiteur -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL ABONNEMENT (visiteur)
+════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-abonnement" role="dialog" aria-modal="true" aria-labelledby="modal-titre">
-  <div class="modal" style="max-width:420px;text-align:center;padding:var(--spacing-2xl)">
+  <div class="modal" style="max-width:440px;text-align:center;padding:var(--spacing-2xl)">
     <div style="font-size:2.5rem;margin-bottom:var(--spacing-md)">📚</div>
     <h2 id="modal-titre" style="font-size:var(--font-size-xl);color:var(--color-primary);margin-bottom:var(--spacing-sm)">
       Continuez votre lecture
     </h2>
     <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg);line-height:1.6">
-      Vous avez lu <strong>3 chapitres gratuits</strong> en mode visiteur.<br>
-      Créez un compte gratuit pour accéder à <strong>tous les chapitres</strong> et sauvegarder votre progression.
+      Vous avez lu <strong>les premiers chapitres</strong> en mode visiteur.<br>
+      Créez un compte <strong>gratuit</strong> pour accéder à tout le catalogue et sauvegarder votre progression.
     </p>
     <div style="display:flex;flex-direction:column;gap:var(--spacing-sm)">
       <a href="/pages/login.html?mode=inscription" class="btn btn--accent btn--lg" id="modal-btn-inscription">
@@ -125,7 +215,8 @@
       <a href="/pages/login.html" class="btn btn--outline btn--lg" id="modal-btn-connexion">
         Se connecter
       </a>
-      <button class="btn btn--ghost btn--sm" id="modal-btn-visiteur" style="color:var(--text-light);margin-top:var(--spacing-xs)">
+      <button class="btn btn--ghost btn--sm" id="modal-btn-visiteur"
+        style="color:var(--text-light);margin-top:var(--spacing-xs)">
         Continuer comme visiteur (lecture limitée)
       </button>
     </div>
@@ -134,6 +225,5 @@
 
 <div class="toast-container" id="toast-container"></div>
 <script type="module" src="/assets/js/reader.js"></script>
-<!-- theme-init.js est déjà chargé en <head> — ne pas le dupliquer -->
 </body>
 </html>
