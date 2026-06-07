@@ -8,6 +8,12 @@ import { getUser } from './auth.js';
 import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
 import { traduire, viderCacheTraduction, rendreOptionLangues, LANGUES_LECTURE } from './translate.js';
 import { activerProtections } from './security.js';
+import {
+  initAnnotations, mettreAJourChapitre,
+  initToolbarAnnotation, appliquerSurlignagesSurDOM,
+  afficherPanneauAnnotations, toggleMarquePage,
+  _rafraichirBoutonMarquePage,
+} from './annotations.js';
 
 /* Nombre de "pages" scrollées gratuites pour les visiteurs */
 const LIMIT_VISITEUR_PAGES = 2;
@@ -180,6 +186,19 @@ async function entrerDansLecteur() {
 
   appliquerPreferences();
 
+  // Init annotations (localStorage + Supabase sync)
+  const chapDepart0 = etat.chapitreNum;
+  await initAnnotations({
+    oeuvreId:    etat.oeuvreId,
+    userId:      etat.utilisateur?.id || null,
+    chapitreNum: chapDepart0,
+    chapitreId:  etat.chapitres.find(c => c.numero === chapDepart0)?.id || null,
+    onChange:    () => _rafraichirBoutonMarquePage(),
+  });
+
+  // Init toolbar de sélection
+  initToolbarAnnotation(document.getElementById('reader-content'));
+
   // Restaurer progression si connecté
   const prog = etat.utilisateur
     ? await api.getProgression(etat.utilisateur.id, etat.oeuvreId).catch(() => null)
@@ -256,12 +275,22 @@ async function chargerChapitre(numero, sansAnimation = false) {
   contentEl.classList.add('is-visible');
 
   // Appliquer la largeur max du texte
-  contentEl.style.maxWidth = `${etat.maxWidth}px`;
+  contentEl.style.maxWidth  = `${etat.maxWidth}px`;
   contentEl.style.fontSize  = `${etat.fontSize}px`;
   contentEl.style.lineHeight = etat.lineHeight;
 
+  // Style paratextuel selon le type d'élément du chapitre
+  _appliquerStyleParatextuel(contentEl, chapitre);
+
   // Protections + watermark
   activerProtections(contentEl, etat.utilisateur?.id);
+
+  // Appliquer les surlignages sauvegardés
+  appliquerSurlignagesSurDOM(contentEl, numero);
+
+  // Mettre à jour le contexte d'annotations pour ce chapitre
+  mettreAJourChapitre(numero, chapitre.id);
+  _rafraichirBoutonMarquePage();
 
   // UI
   mettreAJourNavigation();
@@ -371,14 +400,64 @@ function rendreInfosTopbar() {
    TABLE DES MATIÈRES
    ============================================================ */
 
+/* Types paratextuels par zone du livre */
+const LIMMINAIRES = ['dedicace','epigraphe','avant_propos','preface','introduction','prologue','sommaire'];
+const TERMINAUX   = ['epilogue','conclusion','postface','remerciements','bibliographie','annexe','index','glossaire'];
+
+const LABELS_TYPE = {
+  dedicace:'Dédicace', epigraphe:'Épigraphe', avant_propos:'Avant-propos',
+  preface:'Préface', introduction:'Introduction', prologue:'Prologue',
+  sommaire:'Sommaire', chapitre:'Chapitre', partie:'Partie',
+  interlude:'Interlude', epilogue:'Épilogue', conclusion:'Conclusion',
+  postface:'Postface', remerciements:'Remerciements',
+  bibliographie:'Bibliographie', annexe:'Annexe', index:'Index', glossaire:'Glossaire',
+};
+
 function remplirTOC() {
   const listEl = document.getElementById('toc-list');
-  listEl.innerHTML = etat.chapitres.map(ch => `
-    <div class="toc-item ${ch.numero === etat.chapitreNum ? 'is-current' : ''}" data-num="${ch.numero}">
-      <div class="toc-item__num">${ch.numero}</div>
-      <span>${ch.titre || `Chapitre ${ch.numero}`}</span>
-    </div>
-  `).join('');
+
+  let html = '';
+  let afficheCorps    = false;
+  let afficheTerminal = false;
+  let numChapitre     = 0;
+
+  etat.chapitres.forEach(ch => {
+    const type   = ch.type_element || 'chapitre';
+    const estLim = LIMMINAIRES.includes(type);
+    const estTer = TERMINAUX.includes(type);
+    const estCh  = !estLim && !estTer;
+
+    // Séparateur "Corps du livre"
+    if (estCh && !afficheCorps) {
+      afficheCorps = true;
+      if (etat.chapitres.some(c => LIMMINAIRES.includes(c.type_element || ''))) {
+        html += `<div class="toc-separator">Corps du livre</div>`;
+      }
+    }
+
+    // Séparateur "En fin de livre"
+    if (estTer && !afficheTerminal) {
+      afficheTerminal = true;
+      html += `<div class="toc-separator">En fin de livre</div>`;
+    }
+
+    // Numérotation uniquement pour les chapitres du corps
+    const num = type === 'chapitre' ? ++numChapitre : null;
+
+    const estParatexte = estLim || estTer;
+    const label = estParatexte
+      ? (ch.titre || LABELS_TYPE[type] || type)
+      : (ch.titre || `Chapitre ${num}`);
+
+    html += `
+      <div class="toc-item ${ch.numero === etat.chapitreNum ? 'is-current' : ''} ${estParatexte ? 'toc-item--paratexte' : ''}"
+        data-num="${ch.numero}">
+        <div class="toc-item__num">${num || '—'}</div>
+        <span>${label}</span>
+      </div>`;
+  });
+
+  listEl.innerHTML = html;
 
   listEl.querySelectorAll('.toc-item').forEach(item => {
     item.addEventListener('click', () => {
@@ -588,6 +667,55 @@ function appliquerPreferences() {
     document.getElementById('lang-label').textContent = l?.drapeau || etat.langueAffichee.toUpperCase();
   }
 }
+
+/* ============================================================
+   STYLE PARATEXTUEL — structure du livre
+   Applique des classes CSS selon le type_element du chapitre
+   ============================================================ */
+
+const TYPE_CLASSES = {
+  dedicace:     'is-dedicace',
+  epigraphe:    'is-epigraphe',
+  partie:       'is-partie',
+  bibliographie:'is-bibliographie',
+  index:        'is-index',
+  glossaire:    'is-index',
+};
+
+function _appliquerStyleParatextuel(contentEl, chapitre) {
+  // Retirer les anciennes classes paratextuelles
+  Object.values(TYPE_CLASSES).forEach(cls => contentEl.classList.remove(cls));
+
+  const type = chapitre?.type_element || 'chapitre';
+  const cls  = TYPE_CLASSES[type];
+  if (cls) contentEl.classList.add(cls);
+
+  // Supprimer la lettrine pour les éléments non-chapitre
+  const SANS_LETTRINE = ['dedicace', 'epigraphe', 'partie', 'sommaire', 'bibliographie', 'index', 'glossaire'];
+  const premier = contentEl.querySelector('p.is-first');
+  if (premier && SANS_LETTRINE.includes(type)) {
+    premier.classList.remove('is-first');
+  }
+}
+
+/* ============================================================
+   BOUTONS ANNOTATIONS
+   ============================================================ */
+
+// Marque-page
+document.getElementById('btn-marque-page')?.addEventListener('click', async () => {
+  const chapitre = etat.chapitres.find(c => c.numero === etat.chapitreNum);
+  const label    = chapitre?.titre ? `${chapitre.titre}` : `Chapitre ${etat.chapitreNum}`;
+  await toggleMarquePage(label);
+  _rafraichirBoutonMarquePage();
+});
+
+// Panneau annotations
+document.getElementById('btn-annotations')?.addEventListener('click', () => {
+  afficherPanneauAnnotations((chapitreNum) => {
+    chargerChapitre(chapitreNum);
+  });
+});
 
 /* ============================================================
    PARTAGE

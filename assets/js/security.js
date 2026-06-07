@@ -10,6 +10,16 @@
    Appeler après injection du contenu dans le DOM
    ============================================================ */
 
+/* ============================================================
+   Mode annotation — levée temporaire de la protection sélection
+   Activé par annotations.js quand l'utilisateur annote
+   ============================================================ */
+let _modeAnnotation = false;
+
+export function activerModeAnnotation()   { _modeAnnotation = true;  }
+export function desactiverModeAnnotation(){ _modeAnnotation = false; }
+export function estModeAnnotation()       { return _modeAnnotation;  }
+
 export function activerProtections(conteneur, userId = null) {
   if (!conteneur) return;
 
@@ -29,9 +39,13 @@ export function activerProtections(conteneur, userId = null) {
    ============================================================ */
 
 function _bloquerSelection(conteneur) {
-  conteneur.addEventListener('selectstart', e => e.preventDefault());
+  conteneur.addEventListener('selectstart', e => {
+    // Autoriser la sélection en mode annotation (surlignage, notes)
+    if (_modeAnnotation) return;
+    e.preventDefault();
+  });
   conteneur.addEventListener('mousedown', e => {
-    /* Autoriser les clics simples (navigation), bloquer le drag-select */
+    if (_modeAnnotation) return;
     if (e.detail > 1) e.preventDefault();
   });
 }

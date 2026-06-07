@@ -574,6 +574,66 @@ export const api = {
     if (error) throw error;
   },
 
+  /* ---- Annotations (marque-pages, notes, surlignages) -- */
+
+  async getAnnotations(userId, oeuvreId) {
+    const { data, error } = await supabase
+      .from('annotations')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('oeuvre_id', oeuvreId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async creerAnnotation(champs) {
+    const { data, error } = await supabase
+      .from('annotations')
+      .insert(champs)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateAnnotation(id, champs) {
+    const { data, error } = await supabase
+      .from('annotations')
+      .update({ ...champs, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async supprimerAnnotation(id) {
+    const { error } = await supabase
+      .from('annotations')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  async upsertMarquePage(userId, oeuvreId, chapitreId, chapitreNum, label = null) {
+    const { data, error } = await supabase
+      .from('annotations')
+      .upsert({
+        user_id:     userId,
+        oeuvre_id:   oeuvreId,
+        chapitre_id: chapitreId,
+        chapitre_num: chapitreNum,
+        type:        'marque_page',
+        label,
+        updated_at:  new Date().toISOString(),
+      }, { onConflict: 'user_id,chapitre_id', ignoreDuplicates: false })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
   /* ---- Stats dashboard auteur --------------------------- */
 
   async getStatsAuteur(auteurId) {

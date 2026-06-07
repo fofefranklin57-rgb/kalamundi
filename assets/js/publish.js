@@ -251,7 +251,7 @@ qs('#editor-content')?.addEventListener('input', () => {
    ============================================================ */
 
 qs('#par-chapitres')?.addEventListener('change', (e) => {
-  qs('#groupe-titre-chapitre').classList.toggle('hidden', !e.target.checked);
+  qs('#groupe-chapitres-details').classList.toggle('hidden', !e.target.checked);
 });
 
 /* ============================================================
@@ -370,8 +370,13 @@ qs('#btn-publier')?.addEventListener('click', async () => {
     }
 
     // 6. Découper et enregistrer les chapitres
-    const parChapitres = qs('#par-chapitres').checked;
-    const chapitres    = parChapitres ? decouперEnChapitres(contenu) : [{ numero: 1, titre: qs('#titre-chapitre').value || null, contenu }];
+    const parChapitres  = qs('#par-chapitres').checked;
+    const typeElement   = qs('#type-element-chapitre')?.value || 'chapitre';
+    const titreChapitre = qs('#titre-chapitre')?.value?.trim() || null;
+
+    const chapitres = parChapitres
+      ? decouперEnChapitres(contenu)
+      : [{ numero: 1, titre: titreChapitre, contenu }];
 
     for (const ch of chapitres) {
       await api.creerChapitre({
@@ -379,6 +384,7 @@ qs('#btn-publier')?.addEventListener('click', async () => {
         numero:        ch.numero,
         titre:         ch.titre,
         contenu_texte: ch.contenu,
+        type_element:  parChapitres ? (ch.type_element || 'chapitre') : typeElement,
       });
     }
 

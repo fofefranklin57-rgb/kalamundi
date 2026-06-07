@@ -274,10 +274,47 @@
           </div>
         </div>
 
-        <div class="form-group hidden" id="groupe-titre-chapitre">
-          <label class="form-label" for="titre-chapitre">Titre du premier chapitre (optionnel)</label>
-          <input class="form-input" type="text" id="titre-chapitre"
-            placeholder="Ex : Prologue, Chapitre 1, L'Enfance..." maxlength="200" />
+        <div class="hidden" id="groupe-chapitres-details">
+
+          <div class="form-group">
+            <label class="form-label" for="type-element-chapitre">Type de cet élément</label>
+            <select class="form-select" id="type-element-chapitre">
+              <optgroup label="Éléments liminaires (avant le corps)">
+                <option value="dedicace">Dédicace</option>
+                <option value="epigraphe">Épigraphe (citation en exergue)</option>
+                <option value="avant_propos">Avant-propos</option>
+                <option value="preface">Préface</option>
+                <option value="introduction">Introduction</option>
+                <option value="prologue">Prologue</option>
+                <option value="sommaire">Sommaire</option>
+              </optgroup>
+              <optgroup label="Corps du livre">
+                <option value="chapitre" selected>Chapitre (corps principal)</option>
+                <option value="partie">Titre de partie</option>
+                <option value="interlude">Interlude</option>
+              </optgroup>
+              <optgroup label="Éléments terminaux (après le corps)">
+                <option value="epilogue">Épilogue</option>
+                <option value="conclusion">Conclusion</option>
+                <option value="postface">Postface</option>
+                <option value="remerciements">Remerciements</option>
+                <option value="bibliographie">Bibliographie / Sources</option>
+                <option value="annexe">Annexe</option>
+                <option value="index">Index</option>
+                <option value="glossaire">Glossaire</option>
+              </optgroup>
+            </select>
+            <p class="form-hint">
+              Permet au lecteur de naviguer dans la structure de ton livre (dédicace, prologue, etc.).
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="titre-chapitre">Titre de cet élément (optionnel)</label>
+            <input class="form-input" type="text" id="titre-chapitre"
+              placeholder="Ex : Prologue, Chapitre 1 — L'Enfance..." maxlength="200" />
+          </div>
+
         </div>
 
         <div class="publish-nav">
