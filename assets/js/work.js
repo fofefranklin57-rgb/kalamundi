@@ -297,28 +297,85 @@ document.getElementById('star-rating')?.addEventListener('mouseleave', () => {
    ============================================================ */
 
 document.getElementById('btn-commenter')?.addEventListener('click', async () => {
-  if (!utilisateur) return;
+  if (!utilisateur) {
+    toastErreur('Tu dois être connecté pour publier un avis.');
+    return;
+  }
+
   const texte = document.getElementById('comment-texte').value.trim();
-  if (!texte) return toastErreur('Écris un commentaire avant de publier.');
+  if (!texte) {
+    toastErreur('Écris un commentaire avant de publier.');
+    document.getElementById('comment-texte').focus();
+    return;
+  }
 
   const btn = document.getElementById('btn-commenter');
+  const original = btn.textContent;
   btn.classList.add('btn--loading');
+  btn.textContent = 'Publication…';
   btn.disabled = true;
 
   try {
-    await api.ajouterCommentaire(utilisateur.id, oeuvreId, texte, noteSelectionnee || null);
+    const nouveau = await api.ajouterCommentaire(
+      utilisateur.id, oeuvreId, texte, noteSelectionnee || null
+    );
+
+    // Réinitialiser le formulaire
     document.getElementById('comment-texte').value = '';
     noteSelectionnee = 0;
     document.querySelectorAll('.star-rating__star').forEach(s => s.classList.remove('is-active'));
-    toastSucces('Commentaire publié !');
-    await chargerCommentaires();
+
+    toastSucces('Avis publié ✓ Merci !');
+
+    // Insérer le nouveau commentaire en tête de liste sans rechargement
+    if (nouveau) {
+      _prependerCommentaire(nouveau);
+    } else {
+      await chargerCommentaires();
+    }
+
   } catch (err) {
-    toastErreur(err.message);
+    console.error('Erreur commentaire :', err);
+    // Message d'erreur lisible pour l'utilisateur
+    const msg = err?.message?.includes('violates')
+      ? 'Erreur de permission. Reconnecte-toi et réessaie.'
+      : (err?.message || 'Une erreur est survenue. Réessaie.');
+    toastErreur(msg);
   } finally {
     btn.classList.remove('btn--loading');
+    btn.textContent = original;
     btn.disabled = false;
   }
 });
+
+/* Ajouter un commentaire en tête sans rechargement complet */
+function _prependerCommentaire(c) {
+  const listEl = document.getElementById('comments-list');
+
+  // Retirer le "empty state" si présent
+  const empty = listEl.querySelector('.empty-state');
+  if (empty) empty.remove();
+
+  const div = document.createElement('div');
+  div.className = 'comment-item comment-item--new';
+  div.innerHTML = `
+    <div class="avatar avatar--sm avatar--placeholder">
+      ${c.profiles?.nom?.charAt(0).toUpperCase() || utilisateur?.email?.charAt(0).toUpperCase() || '?'}
+    </div>
+    <div class="comment-item__body">
+      <div class="comment-item__header">
+        <span class="comment-item__nom">${c.profiles?.nom || 'Moi'}</span>
+        <span class="comment-item__date">À l'instant</span>
+      </div>
+      ${c.note ? `<div class="stars" style="margin-bottom:4px;color:var(--color-accent)">${'★'.repeat(c.note)}<span style="color:var(--border-color)">${'★'.repeat(5 - c.note)}</span></div>` : ''}
+      <p class="comment-item__texte">${c.contenu}</p>
+    </div>`;
+
+  listEl.prepend(div);
+
+  // Animation d'apparition
+  requestAnimationFrame(() => div.style.animation = 'fadeIn 0.3s ease');
+}
 
 /* ============================================================
    Signalement

@@ -295,32 +295,24 @@ export const api = {
     const { data, error } = await supabase
       .from('commentaires')
       .insert({ user_id: userId, oeuvre_id: oeuvreId, contenu, note })
-      .select()
+      .select(`id, contenu, note, created_at,
+               profiles!commentaires_user_id_fkey(nom, photo_url)`)
       .single();
     if (error) throw error;
 
-    // Recalculer la note moyenne
-    if (note) await api._recalculerNote(oeuvreId);
+    // Recalculer la note moyenne via RPC (SECURITY DEFINER — bypass RLS)
+    // Ne pas bloquer le retour si la mise à jour échoue
+    if (note) {
+      supabase.rpc('recalculer_note_oeuvre', { p_oeuvre_id: oeuvreId })
+        .then(() => {})
+        .catch(() => {}); // Silencieux — ne bloque pas
+    }
     return data;
   },
 
   async supprimerCommentaire(id) {
     const { error } = await supabase.from('commentaires').delete().eq('id', id);
     if (error) throw error;
-  },
-
-  async _recalculerNote(oeuvreId) {
-    const { data } = await supabase
-      .from('commentaires')
-      .select('note')
-      .eq('oeuvre_id', oeuvreId)
-      .not('note', 'is', null);
-    if (!data?.length) return;
-    const moyenne = data.reduce((s, c) => s + c.note, 0) / data.length;
-    await supabase
-      .from('oeuvres')
-      .update({ note_moyenne: Math.round(moyenne * 10) / 10 })
-      .eq('id', oeuvreId);
   },
 
   /* ---- Revenus ------------------------------------------ */
