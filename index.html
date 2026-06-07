@@ -50,20 +50,36 @@
 
   <div class="page-wrapper">
 
-    <!-- HERO -->
-    <section class="hero hero--home" id="hero">
-      <div class="container">
-        <div class="hero__badge">✨ La littérature africaine et mondiale</div>
-        <h1 class="hero__title">La Plume du Monde</h1>
-        <p class="hero__subtitle">
-          Découvrez des œuvres d'auteurs du monde entier. Publiez vos textes, protégés par horodatage blockchain. Lisez dans votre langue.
-        </p>
-        <div class="hero__actions" id="hero-actions">
-          <!-- JS injecte les boutons selon l'état de connexion -->
+    <!-- BANDEAU DÉFILANT -->
+    <div class="ticker-wrap">
+      <div class="ticker">
+        <span class="ticker__item">📚 <strong>Kalamundi</strong> — La Plume du Monde</span>
+        <span class="ticker__item">✍️ Publiez gratuitement — votre œuvre protégée par horodatage</span>
+        <span class="ticker__item">🌍 Lisez dans votre langue — 30 langues disponibles</span>
+        <span class="ticker__item">🆓 <span id="ticker-oeuvres">118</span> œuvres gratuites dans la bibliothèque</span>
+        <span class="ticker__item">⭐ Devenez <strong>Auteur Fondateur</strong> — parmi les 500 premiers</span>
+        <span class="ticker__item">📱 PWA installable — fonctionne hors ligne</span>
+        <span class="ticker__item">🔐 Droits d'auteur protégés dès la publication</span>
+        <!-- Duplication pour boucle infinie -->
+        <span class="ticker__item">📚 <strong>Kalamundi</strong> — La Plume du Monde</span>
+        <span class="ticker__item">✍️ Publiez gratuitement — votre œuvre protégée par horodatage</span>
+        <span class="ticker__item">🌍 Lisez dans votre langue — 30 langues disponibles</span>
+        <span class="ticker__item">🆓 <span id="ticker-oeuvres2">118</span> œuvres gratuites dans la bibliothèque</span>
+        <span class="ticker__item">⭐ Devenez <strong>Auteur Fondateur</strong> — parmi les 500 premiers</span>
+        <span class="ticker__item">📱 PWA installable — fonctionne hors ligne</span>
+        <span class="ticker__item">🔐 Droits d'auteur protégés dès la publication</span>
+      </div>
+    </div>
+
+    <!-- HERO COMPACT -->
+    <section class="hero-compact" id="hero">
+      <div class="container hero-compact__inner">
+        <div class="hero-compact__text">
+          <h1 class="hero-compact__title">La bibliothèque littéraire mondiale</h1>
+          <p class="hero-compact__sub">Lire, écrire, partager — en Afrique et dans le monde.</p>
         </div>
-        <div class="hero__stats" id="hero-stats">
-          <!-- JS injecte les stats -->
-        </div>
+        <div class="hero-compact__actions" id="hero-actions"></div>
+        <div class="hero-compact__stats" id="hero-stats"></div>
       </div>
     </section>
 
