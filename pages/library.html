@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Bibliothèque — Kalamundi, La Plume du Monde" />
+  <meta name="description" content="Bibliothèque Kalamundi — Romans, poésie, essais, contes africains et du monde entier" />
   <title>Bibliothèque — Kalamundi</title>
   <link rel="icon" href="/assets/img/favicon.ico" />
   <link rel="manifest" href="/manifest.json" />
@@ -32,144 +32,198 @@
     </div>
   </nav>
 
-  <!-- Header bibliothèque -->
-  <div class="library-header">
+  <!-- En-tête bibliothèque -->
+  <div class="lib-header">
     <div class="container">
-      <h1 class="library-header__title">📚 Bibliothèque</h1>
-      <p class="library-header__sub">Des milliers d'œuvres à lire, dans toutes les langues</p>
-      <div class="library-search">
-        <div class="search-bar" id="search-bar">
-          <span>🔍</span>
-          <input class="search-bar__input" type="search" id="search-input"
-            placeholder="Chercher un titre, un auteur, un genre..." autocomplete="off" />
+      <div class="lib-header__inner">
+        <div>
+          <h1 class="lib-header__title">Bibliothèque</h1>
+          <p class="lib-header__sub">
+            Littérature mondiale · Patrimoine africain · Domaine public
+          </p>
         </div>
-        <button class="btn btn--accent" id="search-btn">Rechercher</button>
+        <div class="lib-header__search">
+          <div class="search-bar" id="search-bar">
+            <span>🔍</span>
+            <input class="search-bar__input" type="search" id="search-input"
+              placeholder="Titre, auteur, pays, mot-clé…" autocomplete="off" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglets BISAC — classification thématique -->
+    <div class="lib-tabs-bar">
+      <div class="container">
+        <div class="lib-tabs" role="tablist" aria-label="Catégories bibliothèque">
+          <button class="lib-tab is-active" data-cat="" role="tab" aria-selected="true">
+            Tout le catalogue
+          </button>
+          <button class="lib-tab" data-cat="fiction" role="tab" aria-selected="false">
+            📗 Fiction
+          </button>
+          <button class="lib-tab" data-cat="nonfiction" role="tab" aria-selected="false">
+            📝 Non-fiction
+          </button>
+          <button class="lib-tab" data-cat="poesie" role="tab" aria-selected="false">
+            ✍️ Poésie &amp; Oralité
+          </button>
+          <button class="lib-tab" data-cat="jeunesse" role="tab" aria-selected="false">
+            🌟 Jeunesse
+          </button>
+          <button class="lib-tab lib-tab--africa" data-cat="afrique" role="tab" aria-selected="false">
+            🌍 Littératures africaines
+          </button>
+          <button class="lib-tab lib-tab--heritage" data-cat="patrimoine" role="tab" aria-selected="false">
+            📜 Domaine public
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Filtres rapides -->
-  <div class="filters-bar">
-    <div class="container">
-      <div class="filters-bar__inner">
-        <button class="filter-chip is-active" data-genre="">Tout</button>
-        <button class="filter-chip" data-genre="roman">Roman</button>
-        <button class="filter-chip" data-genre="nouvelle">Nouvelle</button>
-        <button class="filter-chip" data-genre="poesie">Poésie</button>
-        <button class="filter-chip" data-genre="conte">Conte</button>
-        <button class="filter-chip" data-genre="autobiographie">Autobiographie</button>
-        <button class="filter-chip" data-genre="thriller">Thriller</button>
-        <button class="filter-chip" data-genre="romance">Romance</button>
-        <button class="filter-chip" data-genre="sf_fantasy">SF / Fantasy</button>
-        <button class="filter-chip" data-genre="jeunesse">Jeunesse</button>
-        <button class="filter-chip" data-genre="essai">Essai</button>
-        <select class="filter-select" id="filter-langue">
-          <option value="">Toutes les langues</option>
-          <option value="fr">Français</option>
-          <option value="en">Anglais</option>
-          <option value="sw">Swahili</option>
-          <option value="ha">Haoussa</option>
-          <option value="yo">Yoruba</option>
-          <option value="ar">Arabe</option>
-          <option value="es">Espagnol</option>
-          <option value="pt">Portugais</option>
-        </select>
-        <select class="filter-select" id="filter-statut">
-          <option value="">Gratuit + Premium</option>
-          <option value="gratuit">Gratuit uniquement</option>
-          <option value="premium">Premium uniquement</option>
-        </select>
-      </div>
-    </div>
-  </div>
+  <!-- Description de catégorie (masquée par défaut, visible si onglet actif) -->
+  <div class="lib-cat-desc container" id="lib-cat-desc" style="display:none;"></div>
 
   <main class="main-content">
     <div class="container">
-      <div class="library-layout">
+      <div class="lib-layout">
 
-        <!-- Sidebar filtres avancés -->
-        <aside class="library-sidebar">
+        <!-- Sidebar filtres bibliothéconomiques -->
+        <aside class="lib-sidebar" id="lib-sidebar">
 
-          <div class="filter-group">
-            <div class="filter-group__title">Genre</div>
-            <div class="filter-group__options" id="sidebar-genres">
-              <div class="filter-option is-active" data-genre="">Tous les genres</div>
-              <div class="filter-option" data-genre="roman">Roman</div>
-              <div class="filter-option" data-genre="nouvelle">Nouvelle</div>
-              <div class="filter-option" data-genre="poesie">Poésie</div>
-              <div class="filter-option" data-genre="conte">Conte traditionnel</div>
-              <div class="filter-option" data-genre="autobiographie">Autobiographie</div>
-              <div class="filter-option" data-genre="temoignage">Témoignage</div>
-              <div class="filter-option" data-genre="thriller">Thriller / Policier</div>
-              <div class="filter-option" data-genre="romance">Romance</div>
-              <div class="filter-option" data-genre="sf_fantasy">SF / Fantasy</div>
-              <div class="filter-option" data-genre="jeunesse">Jeunesse</div>
-              <div class="filter-option" data-genre="essai">Essai</div>
-              <div class="filter-option" data-genre="philosophie">Philosophie</div>
+          <!-- Tri -->
+          <div class="lib-filter-group">
+            <div class="lib-filter-group__title">Trier par</div>
+            <div class="lib-filter-options" id="filter-tri">
+              <label class="lib-radio is-active">
+                <input type="radio" name="tri" value="recent" checked />
+                Plus récents
+              </label>
+              <label class="lib-radio">
+                <input type="radio" name="tri" value="lectures" />
+                Plus lus
+              </label>
+              <label class="lib-radio">
+                <input type="radio" name="tri" value="note" />
+                Mieux notés
+              </label>
             </div>
           </div>
 
-          <div class="filter-group">
-            <div class="filter-group__title">Public</div>
-            <div class="filter-group__options" id="sidebar-public">
-              <div class="filter-option is-active" data-public="">Tout public</div>
-              <div class="filter-option" data-public="adultes">Adultes</div>
-              <div class="filter-option" data-public="jeunesse">Jeunesse</div>
-              <div class="filter-option" data-public="enfants">Enfants</div>
+          <!-- Langue originale (Dublin Core : dc:language) -->
+          <div class="lib-filter-group">
+            <div class="lib-filter-group__title">Langue originale</div>
+            <select class="lib-select" id="filter-langue">
+              <option value="">Toutes les langues</option>
+              <optgroup label="Langues africaines">
+                <option value="fr">🇫🇷 Français</option>
+                <option value="sw">🌍 Swahili</option>
+                <option value="ha">🌍 Haoussa</option>
+                <option value="yo">🌍 Yoruba</option>
+                <option value="ln">🌍 Lingala</option>
+                <option value="ar">🇸🇦 Arabe</option>
+              </optgroup>
+              <optgroup label="Langues internationales">
+                <option value="en">🇬🇧 Anglais</option>
+                <option value="es">🇪🇸 Espagnol</option>
+                <option value="pt">🇧🇷 Portugais</option>
+                <option value="de">🇩🇪 Allemand</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Sous-genre (affiché selon l'onglet actif) -->
+          <div class="lib-filter-group" id="filter-genre-group">
+            <div class="lib-filter-group__title">Genre littéraire</div>
+            <div class="lib-filter-options" id="sidebar-genres">
+              <!-- Rempli dynamiquement par library.js selon l'onglet -->
             </div>
           </div>
 
-          <div class="filter-group">
-            <div class="filter-group__title">Accès</div>
-            <div class="filter-group__options" id="sidebar-statut">
-              <div class="filter-option is-active" data-statut="">Tout</div>
-              <div class="filter-option" data-statut="gratuit">🆓 Gratuit</div>
-              <div class="filter-option" data-statut="premium">⭐ Premium</div>
+          <!-- Accès (dc:rights) -->
+          <div class="lib-filter-group">
+            <div class="lib-filter-group__title">Accès</div>
+            <div class="lib-filter-options">
+              <label class="lib-radio is-active">
+                <input type="radio" name="statut" value="" checked />
+                Tout
+              </label>
+              <label class="lib-radio">
+                <input type="radio" name="statut" value="gratuit" />
+                🆓 Gratuit
+              </label>
+              <label class="lib-radio">
+                <input type="radio" name="statut" value="premium" />
+                ⭐ Premium
+              </label>
             </div>
+          </div>
+
+          <!-- Pays / origine -->
+          <div class="lib-filter-group">
+            <div class="lib-filter-group__title">Pays d'origine</div>
+            <select class="lib-select" id="filter-pays">
+              <option value="">Tous les pays</option>
+              <optgroup label="Afrique centrale">
+                <option value="Cameroun">Cameroun</option>
+                <option value="RDC">RD Congo</option>
+                <option value="Congo">Congo-Brazzaville</option>
+                <option value="Gabon">Gabon</option>
+              </optgroup>
+              <optgroup label="Afrique de l'Ouest">
+                <option value="Sénégal">Sénégal</option>
+                <option value="Côte d'Ivoire">Côte d'Ivoire</option>
+                <option value="Mali">Mali</option>
+                <option value="Nigeria">Nigeria</option>
+                <option value="Ghana">Ghana</option>
+                <option value="Burkina Faso">Burkina Faso</option>
+              </optgroup>
+              <optgroup label="Afrique de l'Est">
+                <option value="Kenya">Kenya</option>
+                <option value="Tanzania">Tanzanie</option>
+                <option value="Rwanda">Rwanda</option>
+                <option value="Ethiopia">Éthiopie</option>
+              </optgroup>
+              <optgroup label="Afrique du Nord">
+                <option value="Maroc">Maroc</option>
+                <option value="Algérie">Algérie</option>
+                <option value="Tunisie">Tunisie</option>
+                <option value="Égypte">Égypte</option>
+              </optgroup>
+              <optgroup label="International">
+                <option value="France">France</option>
+                <option value="États-Unis">États-Unis</option>
+                <option value="Royaume-Uni">Royaume-Uni</option>
+              </optgroup>
+            </select>
           </div>
 
           <button class="btn btn--ghost btn--sm btn--full" id="reset-filters">
-            Réinitialiser les filtres
+            ↺ Réinitialiser les filtres
           </button>
+
         </aside>
 
         <!-- Contenu principal -->
-        <div class="library-main">
+        <div class="lib-main">
 
-          <!-- Section Premiers textes -->
-          <div class="premiers-textes" id="premiers-textes">
-            <div class="premiers-textes__header">
-              <h2 class="premiers-textes__title">✨ Premiers textes</h2>
-              <span class="premiers-textes__badge">À encourager</span>
-            </div>
-            <p style="color:var(--text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--spacing-md);">
-              Ces auteurs publient pour la première fois. Un commentaire, un like — ça change tout.
-            </p>
-            <div class="grid--cards" id="premiers-textes-grid">
-              <div class="empty-state">
-                <div class="spinner"></div>
-              </div>
-            </div>
+          <!-- Toolbar résultats -->
+          <div class="lib-toolbar">
+            <span class="lib-count" id="library-count">Chargement…</span>
+            <button class="lib-mobile-filter-btn" id="btn-mobile-filters">
+              ⚙ Filtres
+            </button>
           </div>
 
-          <!-- Toolbar tri -->
-          <div class="library-toolbar">
-            <span class="library-count" id="library-count">Chargement...</span>
-            <div class="library-sort">
-              <span>Trier par</span>
-              <select id="sort-select">
-                <option value="recent">Plus récents</option>
-                <option value="lectures">Plus lus</option>
-                <option value="note">Mieux notés</option>
-              </select>
-            </div>
-          </div>
+          <!-- Alerte filtre actif -->
+          <div class="lib-active-filters" id="active-filters" style="display:none;"></div>
 
-          <!-- Grille œuvres -->
-          <div id="works-grid" style="display:flex;flex-direction:column;gap:var(--spacing-sm);">
-            <div class="empty-state">
+          <!-- Grille livres -->
+          <div class="books-grid" id="works-grid">
+            <div class="empty-state" style="grid-column:1/-1">
               <div class="spinner spinner--lg"></div>
-              <p class="empty-state__text" style="margin-top:var(--spacing-md);">Chargement des œuvres...</p>
+              <p class="empty-state__text">Chargement de la bibliothèque…</p>
             </div>
           </div>
 
@@ -203,16 +257,16 @@
         <div>
           <div class="footer__heading">Légal</div>
           <div class="footer__links">
-            <a href="#" class="footer__link">CGU</a>
-            <a href="#" class="footer__link">Confidentialité</a>
-            <a href="#" class="footer__link">Droits d'auteur</a>
+            <a href="/pages/cgu.html" class="footer__link">CGU</a>
+            <a href="/pages/confidentialite.html" class="footer__link">Confidentialité</a>
+            <a href="/pages/contrat-auteur.html" class="footer__link">Droits d'auteur</a>
           </div>
         </div>
         <div>
           <div class="footer__heading">Contact</div>
           <div class="footer__links">
             <a href="#" class="footer__link">À propos</a>
-            <a href="#" class="footer__link">Partenariats ONG</a>
+            <a href="/pages/institution.html" class="footer__link">Partenariats ONG</a>
             <a href="#" class="footer__link">Support</a>
           </div>
         </div>
@@ -224,8 +278,7 @@
   </footer>
 
   <div class="toast-container" id="toast-container"></div>
-  <script src="/assets/js/ads.js?v=20260606"></script>
+  <script src="/assets/js/ads.js?v=20260607"></script>
   <script type="module" src="/assets/js/library.js"></script>
-  <script type="module" src="/assets/js/theme-init.js"></script>
 </body>
 </html>

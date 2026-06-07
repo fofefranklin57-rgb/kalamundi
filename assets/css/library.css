@@ -1,338 +1,525 @@
 /* ============================================================
-   library.css — Bibliothèque et page détail œuvre
+   library.css — Bibliothèque & Détail œuvre
    Kalamundi — La Plume du Monde
+   Normes : BISAC (catégories), Dublin Core (métadonnées), Dewey 896 (Afrique)
    ============================================================ */
 
 /* ============================================================
-   Barre de recherche et filtres
+   EN-TÊTE BIBLIOTHÈQUE
    ============================================================ */
 
-.library-header {
-  background-color: var(--color-primary);
-  padding: var(--spacing-lg) 0;
+.lib-header {
+  background: linear-gradient(160deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+  padding-top: var(--spacing-xl);
+  padding-bottom: 0;
   color: var(--text-inverse);
 }
 
-.library-header__title {
+.lib-header__inner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+  padding-bottom: var(--spacing-lg);
+}
+
+.lib-header__title {
   font-size: var(--font-size-2xl);
   color: var(--text-inverse);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
-.library-header__sub {
-  color: rgba(255,255,255,0.75);
+.lib-header__sub {
   font-size: var(--font-size-sm);
-  margin-bottom: var(--spacing-lg);
+  color: rgba(255,255,255,0.65);
+  letter-spacing: 0.03em;
 }
 
-.library-search {
-  display: flex;
-  gap: var(--spacing-sm);
-  max-width: 640px;
+.lib-header__search {
+  flex: 0 1 420px;
 }
 
-.library-search .search-bar {
-  flex: 1;
-  background-color: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.3);
+.lib-header__search .search-bar {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.25);
 }
 
-.library-search .search-bar__input {
+.lib-header__search .search-bar__input {
   color: var(--text-inverse);
 }
 
-.library-search .search-bar__input::placeholder {
-  color: rgba(255,255,255,0.6);
+.lib-header__search .search-bar__input::placeholder {
+  color: rgba(255,255,255,0.5);
 }
 
 /* ============================================================
-   Filtres
+   ONGLETS CATÉGORIES — classification BISAC
    ============================================================ */
 
-.filters-bar {
-  background-color: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
-  padding: var(--spacing-sm) 0;
-  position: sticky;
-  top: 60px;
-  z-index: var(--z-sticky);
+.lib-tabs-bar {
+  background: rgba(0,0,0,0.18);
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
-.filters-bar__inner {
+.lib-tabs {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+  gap: 2px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  scrollbar-width: none;
+  padding: 0;
 }
 
-.filter-chip {
+.lib-tabs::-webkit-scrollbar { display: none; }
+
+.lib-tab {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 12px;
-  border: 1.5px solid var(--border-color);
-  border-radius: var(--border-radius-full);
-  font-size: var(--font-size-xs);
+  gap: 5px;
+  padding: 12px 18px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
-  background-color: var(--bg-main);
+  color: rgba(255,255,255,0.65);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
   cursor: pointer;
   white-space: nowrap;
-  transition: all var(--transition-fast);
   font-family: inherit;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
 }
 
-.filter-chip:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+.lib-tab:hover {
+  color: rgba(255,255,255,0.9);
 }
 
-.filter-chip.is-active {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary);
+.lib-tab.is-active {
   color: var(--text-inverse);
+  border-bottom-color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
 }
 
-.filter-select {
-  padding: 5px 12px;
-  border: 1.5px solid var(--border-color);
-  border-radius: var(--border-radius-full);
-  font-size: var(--font-size-xs);
-  font-family: inherit;
+.lib-tab--africa.is-active  { border-bottom-color: #FF8F00; }
+.lib-tab--heritage.is-active { border-bottom-color: #A1887F; }
+
+/* ============================================================
+   BANNIÈRE DESCRIPTION CATÉGORIE
+   ============================================================ */
+
+.lib-cat-desc {
+  padding: var(--spacing-sm) 0;
+}
+
+.lib-cat-banner {
+  background: var(--bg-secondary);
+  border-left: 4px solid var(--color-primary);
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  background-color: var(--bg-main);
-  cursor: pointer;
-  outline: none;
+  margin-block: var(--spacing-sm);
 }
 
-.filter-select:focus {
-  border-color: var(--color-primary);
+.lib-cat-banner strong {
+  color: var(--text-primary);
 }
 
 /* ============================================================
-   Layout bibliothèque
+   LAYOUT PRINCIPAL
    ============================================================ */
 
-.library-layout {
+.lib-layout {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: var(--spacing-lg);
+  grid-template-columns: 200px 1fr;
+  gap: var(--spacing-xl);
   padding-block: var(--spacing-lg);
+  align-items: start;
 }
 
-/* Sidebar filtres avancés */
-.library-sidebar {
+/* ============================================================
+   SIDEBAR FILTRES
+   ============================================================ */
+
+.lib-sidebar {
   position: sticky;
-  top: 110px;
-  align-self: start;
+  top: 72px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: var(--spacing-xs);
 }
 
-.filter-group {
+.lib-filter-group {
   margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.filter-group__title {
+.lib-filter-group:last-of-type {
+  border-bottom: none;
+}
+
+.lib-filter-group__title {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   color: var(--text-light);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   margin-bottom: var(--spacing-sm);
 }
 
-.filter-group__options {
+.lib-filter-options {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
-.filter-option {
+.lib-radio {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 5px var(--spacing-sm);
+  gap: 8px;
+  padding: 5px 8px;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   transition: background-color var(--transition-fast), color var(--transition-fast);
+  user-select: none;
 }
 
-.filter-option:hover { background-color: var(--bg-secondary); color: var(--text-primary); }
-.filter-option.is-active { background-color: var(--bg-secondary); color: var(--color-primary); font-weight: var(--font-weight-medium); }
+.lib-radio input[type="radio"] {
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+}
 
-.filter-option__count {
-  font-size: var(--font-size-xs);
-  color: var(--text-light);
+.lib-radio:hover {
   background-color: var(--bg-secondary);
-  padding: 1px 6px;
-  border-radius: var(--border-radius-full);
+  color: var(--text-primary);
 }
 
-/* ============================================================
-   Grille des œuvres
-   ============================================================ */
-
-.library-main {}
-
-.library-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-md);
+.lib-radio.is-active {
+  background-color: var(--bg-secondary);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
 }
 
-.library-count {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-.library-sort {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-.library-sort select {
-  border: 1px solid var(--border-color);
+.lib-select {
+  width: 100%;
+  padding: 7px var(--spacing-sm);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--border-radius-sm);
-  padding: 4px 8px;
   font-size: var(--font-size-sm);
   font-family: inherit;
   color: var(--text-primary);
   background-color: var(--bg-main);
-  outline: none;
   cursor: pointer;
+  outline: none;
+}
+
+.lib-select:focus {
+  border-color: var(--color-primary);
 }
 
 /* ============================================================
-   Carte œuvre enrichie
+   TOOLBAR RÉSULTATS
    ============================================================ */
 
-.work-card {
+.lib-main {}
+
+.lib-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.lib-count {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.lib-mobile-filter-btn {
+  display: none;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 6px 12px;
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   FILTRES ACTIFS — chips
+   ============================================================ */
+
+.lib-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+}
+
+.active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.active-filter-chip:hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* ============================================================
+   GRILLE LIVRES — layout façon bibliothèque (3 colonnes)
+   ============================================================ */
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+/* ============================================================
+   CARTE LIVRE — notice bibliographique
+   Dublin Core : titre, auteur, langue, genre, date, droits
+   ============================================================ */
+
+.book-card {
+  display: flex;
+  flex-direction: column;
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--border-radius-md);
   overflow: hidden;
-  display: flex;
-  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
   text-decoration: none;
   color: inherit;
+  transition: box-shadow var(--transition-normal), transform var(--transition-fast);
+  cursor: pointer;
 }
 
-.work-card:hover {
+.book-card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
-.work-card__cover {
-  width: 90px;
-  min-height: 130px;
-  object-fit: cover;
-  flex-shrink: 0;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+/* Couverture — ratio 2:3 comme un vrai livre */
+.book-card__cover {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  background: linear-gradient(
+    160deg,
+    var(--genre-color, var(--color-primary)) 0%,
+    color-mix(in srgb, var(--genre-color, var(--color-primary)) 60%, #000) 100%
+  );
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  color: rgba(255,255,255,0.3);
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-.work-card__cover img {
+.book-card__cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-.work-card__body {
-  padding: var(--spacing-md);
+.book-card__cover-icon {
+  font-size: 2.8rem;
+  opacity: 0.35;
+  user-select: none;
+}
+
+/* Badges superposés sur la couverture */
+.book-card__cover-badges {
+  position: absolute;
+  top: var(--spacing-xs);
+  left: var(--spacing-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Corps notice bibliographique */
+.book-card__body {
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
   flex: 1;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.work-card__genre {
-  font-size: var(--font-size-xs);
+/* Genre (BISAC) */
+.book-card__genre {
+  font-size: 10px;
   font-weight: var(--font-weight-bold);
-  color: var(--color-accent-dark);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
+  letter-spacing: 0.07em;
+  margin-bottom: 2px;
 }
 
-.work-card__title {
-  font-size: var(--font-size-md);
+/* Titre (dc:title) */
+.book-card__title {
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
-  margin-bottom: 4px;
-  white-space: nowrap;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0;
 }
 
-.work-card__author {
-  font-size: var(--font-size-sm);
+/* Auteur + pays (dc:creator) */
+.book-card__author {
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  line-height: 1.4;
 }
 
-.work-card__resume {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
+.book-card__pays {
+  color: var(--text-light);
+}
+
+/* Résumé (dc:description) */
+.book-card__resume {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin-bottom: var(--spacing-sm);
+  margin: 2px 0 0;
+  flex: 1;
 }
 
-.work-card__meta {
+/* Métadonnées en bas (dc:language, lectures, note, date) */
+.book-card__meta {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-xs);
+  gap: 8px;
+  font-size: 10px;
   color: var(--text-light);
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: var(--spacing-xs);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Langue ISO (dc:language) — mise en valeur */
+.book-card__langue {
+  font-weight: var(--font-weight-bold);
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+}
+
+.book-card__annee {
+  color: var(--text-light);
+  margin-left: auto;
+}
+
+/* ============================================================
+   BADGES sur couverture
+   ============================================================ */
+
+.book-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  padding: 2px 6px;
+  border-radius: 3px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.book-badge--free {
+  background: rgba(45, 158, 95, 0.9);
+  color: #fff;
+}
+
+.book-badge--premium {
+  background: rgba(212, 160, 23, 0.95);
+  color: #1A1A1A;
+}
+
+.book-badge--africa {
+  background: rgba(230, 81, 0, 0.9);
+  color: #fff;
+  font-size: 9px;
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding-block: var(--spacing-xl);
   flex-wrap: wrap;
 }
 
-/* ============================================================
-   Section "Premiers textes"
-   ============================================================ */
-
-.premiers-textes {
-  background: linear-gradient(135deg, #FFF8DC 0%, #FFFBEE 100%);
-  border: 1px solid var(--color-accent-light);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-xl);
-}
-
-.premiers-textes__header {
+.pagination__btn {
+  min-width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  justify-content: center;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: var(--bg-main);
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.premiers-textes__title {
-  font-size: var(--font-size-lg);
+.pagination__btn:hover {
+  border-color: var(--color-primary);
   color: var(--color-primary);
 }
 
-.premiers-textes__badge {
-  background-color: var(--color-accent);
-  color: white;
-  font-size: var(--font-size-xs);
+.pagination__btn--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-inverse);
   font-weight: var(--font-weight-bold);
-  padding: 2px 8px;
-  border-radius: var(--border-radius-full);
+  cursor: default;
+}
+
+.pagination__ellipsis {
+  color: var(--text-light);
+  padding: 0 4px;
 }
 
 /* ============================================================
-   Page détail œuvre (work.html)
+   PAGE DÉTAIL ŒUVRE (work.html) — inchangé
    ============================================================ */
 
 .work-hero {
@@ -364,6 +551,7 @@
   font-size: 56px;
   color: rgba(255,255,255,0.3);
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .work-cover img {
@@ -431,10 +619,6 @@
   flex-wrap: wrap;
 }
 
-/* ============================================================
-   Contenu détail œuvre
-   ============================================================ */
-
 .work-body {
   max-width: var(--container-lg);
   margin-inline: auto;
@@ -453,9 +637,7 @@
   white-space: pre-line;
 }
 
-.work-chapitres {
-  margin-bottom: var(--spacing-xl);
-}
+.work-chapitres { margin-bottom: var(--spacing-xl); }
 
 .chapitre-item {
   display: flex;
@@ -495,7 +677,6 @@
   color: var(--text-primary);
 }
 
-/* Sidebar infos auteur */
 .work-sidebar-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -523,31 +704,24 @@
   color: inherit;
 }
 
-.author-mini__info {}
 .author-mini__nom {
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-sm);
   color: var(--text-primary);
 }
+
 .author-mini__pays {
   font-size: var(--font-size-xs);
   color: var(--text-light);
 }
 
-/* Signalement */
 .work-report {
   margin-top: var(--spacing-lg);
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--border-color);
 }
 
-/* ============================================================
-   Commentaires
-   ============================================================ */
-
-.comments-section {
-  margin-top: var(--spacing-xl);
-}
+.comments-section { margin-top: var(--spacing-xl); }
 
 .comment-item {
   display: flex;
@@ -581,7 +755,6 @@
   line-height: var(--line-height-normal);
 }
 
-/* Form commentaire */
 .comment-form {
   background-color: var(--bg-secondary);
   border-radius: var(--border-radius-lg);
@@ -607,24 +780,52 @@
 }
 
 .star-rating__star.is-active,
-.star-rating__star:hover {
-  color: var(--color-accent);
-}
+.star-rating__star:hover { color: var(--color-accent); }
 
 /* ============================================================
-   Responsive
+   RESPONSIVE
    ============================================================ */
 
-@media (max-width: 900px) {
-  .work-body { grid-template-columns: 1fr; }
-  .work-sidebar-card { position: static; }
+/* Tablette : 2 colonnes livres */
+@media (max-width: 1024px) {
+  .books-grid { grid-template-columns: repeat(2, 1fr); }
+  .lib-layout  { grid-template-columns: 180px 1fr; }
 }
 
+/* Tablette portrait */
 @media (max-width: 768px) {
-  .library-layout { grid-template-columns: 1fr; }
-  .library-sidebar { display: none; }
-  .work-hero__inner { grid-template-columns: 120px 1fr; gap: var(--spacing-md); }
-  .work-cover { width: 120px; }
-  .work-card { flex-direction: column; }
-  .work-card__cover { width: 100%; min-height: 160px; }
+  .lib-layout { grid-template-columns: 1fr; }
+
+  .lib-sidebar {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    background: var(--bg-main);
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    max-height: 100vh;
+    top: unset;
+  }
+
+  .lib-sidebar.is-open { display: block; }
+
+  .lib-mobile-filter-btn { display: inline-flex; }
+
+  .lib-header__inner { flex-direction: column; align-items: flex-start; }
+  .lib-header__search { flex: 1; width: 100%; }
+
+  /* 2 colonnes livres sur mobile large */
+  .books-grid { grid-template-columns: repeat(2, 1fr); gap: var(--spacing-sm); }
+
+  .work-body { grid-template-columns: 1fr; }
+  .work-sidebar-card { position: static; }
+  .work-hero__inner { grid-template-columns: 100px 1fr; gap: var(--spacing-md); }
+  .work-cover { width: 100px; }
+}
+
+/* Mobile petit : 1 colonne livres */
+@media (max-width: 400px) {
+  .books-grid { grid-template-columns: repeat(2, 1fr); }
+  .book-card__resume { display: none; }
 }

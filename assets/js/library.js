@@ -1,163 +1,322 @@
 /* ============================================================
-   library.js — Bibliothèque : catalogue, filtres, pagination
-   Kalamundi — La Plume du Monde
+   library.js — Bibliothèque Kalamundi
+   Organisation : BISAC + Dublin Core + Dewey 896 (littératures africaines)
    ============================================================ */
 
 import { api } from './api.js';
-import { getUser } from './auth.js';
-import { debounce, getParam, navigateAvecParams, formatNombre, truncate, toast } from './utils.js';
+import { debounce, getParam, formatNombre, truncate } from './utils.js';
 
 /* ============================================================
-   État des filtres
+   RÉFÉRENTIEL GENRE — adapté BISAC
+   Chaque genre a : label affiché, couleur de code, emoji couverture
+   ============================================================ */
+
+const GENRES = {
+  roman:             { label: 'Roman',               couleur: '#2D6A4F', emoji: '📗' },
+  nouvelle:          { label: 'Nouvelle',             couleur: '#1B5E20', emoji: '📗' },
+  conte:             { label: 'Conte',                couleur: '#E65100', emoji: '📙' },
+  thriller:          { label: 'Thriller / Policier',  couleur: '#B71C1C', emoji: '🔴' },
+  romance:           { label: 'Romance',              couleur: '#AD1457', emoji: '💗' },
+  sf_fantasy:        { label: 'SF / Fantasy',         couleur: '#1565C0', emoji: '🚀' },
+  poesie:            { label: 'Poésie',               couleur: '#6A1B9A', emoji: '✍️' },
+  litterature_orale: { label: 'Littérature orale',    couleur: '#00695C', emoji: '🎭' },
+  essai:             { label: 'Essai',                couleur: '#37474F', emoji: '📝' },
+  autobiographie:    { label: 'Autobiographie',       couleur: '#5D4037', emoji: '👤' },
+  temoignage:        { label: 'Témoignage',           couleur: '#558B2F', emoji: '✍️' },
+  philosophie:       { label: 'Philosophie',          couleur: '#4527A0', emoji: '🧠' },
+  histoire:          { label: 'Récit historique',     couleur: '#6D4C41', emoji: '🏛️' },
+  jeunesse:          { label: 'Jeunesse',             couleur: '#2E7D32', emoji: '🌟' },
+  developpement:     { label: 'Développement perso',  couleur: '#00838F', emoji: '💡' },
+};
+
+/* ============================================================
+   CATÉGORIES BISAC — regroupements thématiques
+   ============================================================ */
+
+const CATEGORIES = {
+  fiction: {
+    label:       'Fiction',
+    desc:        'Romans, nouvelles, contes, thrillers, romances et littérature d\'imagination',
+    genres:      ['roman', 'nouvelle', 'conte', 'thriller', 'romance', 'sf_fantasy'],
+    couleur:     '#2D6A4F',
+  },
+  nonfiction: {
+    label:       'Non-fiction',
+    desc:        'Essais, autobiographies, témoignages, philosophie et récits historiques',
+    genres:      ['essai', 'autobiographie', 'temoignage', 'philosophie', 'histoire', 'developpement'],
+    couleur:     '#37474F',
+  },
+  poesie: {
+    label:       'Poésie & Oralité',
+    desc:        'Poésie du monde entier et littérature orale transcrite — patrimoine vivant',
+    genres:      ['poesie', 'litterature_orale'],
+    couleur:     '#6A1B9A',
+  },
+  jeunesse: {
+    label:       'Jeunesse',
+    desc:        'Contes, récits et histoires pour enfants et adolescents',
+    genres:      ['jeunesse'],
+    couleur:     '#2E7D32',
+  },
+  afrique: {
+    label:       'Littératures africaines',
+    desc:        'Dewey 896 · Œuvres d\'auteurs africains — romans, contes, poésies, essais de tout le continent',
+    genres:      [],   // filtre par pays, pas par genre
+    filtreAfrique: true,
+    couleur:     '#E65100',
+  },
+  patrimoine: {
+    label:       'Domaine public',
+    desc:        'Œuvres libres de droits — Project Gutenberg, African Storybook, Standard Ebooks',
+    genres:      [],
+    filtreStatut: 'gratuit',
+    couleur:     '#5D4037',
+  },
+};
+
+/* ============================================================
+   LANGUES — affichage avec drapeau (Dublin Core dc:language ISO 639-1)
+   ============================================================ */
+
+const LANGUES = {
+  fr: { nom: 'Français',   drapeau: '🇫🇷' },
+  en: { nom: 'Anglais',    drapeau: '🇬🇧' },
+  ar: { nom: 'Arabe',      drapeau: '🇸🇦' },
+  sw: { nom: 'Swahili',    drapeau: '🌍' },
+  ha: { nom: 'Haoussa',    drapeau: '🌍' },
+  yo: { nom: 'Yoruba',     drapeau: '🌍' },
+  ln: { nom: 'Lingala',    drapeau: '🌍' },
+  es: { nom: 'Espagnol',   drapeau: '🇪🇸' },
+  pt: { nom: 'Portugais',  drapeau: '🇧🇷' },
+  de: { nom: 'Allemand',   drapeau: '🇩🇪' },
+  it: { nom: 'Italien',    drapeau: '🇮🇹' },
+  zh: { nom: 'Chinois',    drapeau: '🇨🇳' },
+};
+
+/* Pays du continent africain — pour détecter les littératures africaines */
+const PAYS_AFRICAINS = new Set([
+  'Cameroun','Sénégal','Mali','Côte d\'Ivoire','RDC','Congo','Gabon','Burkina Faso',
+  'Niger','Tchad','Togo','Bénin','Guinée','Madagascar','Mauritanie','Rwanda','Burundi',
+  'Comores','Djibouti','Nigeria','Ghana','Kenya','Tanzania','Tanzanie','Uganda','Ouganda',
+  'Ethiopia','Éthiopie','South Africa','Afrique du Sud','Egypt','Égypte','Morocco','Maroc',
+  'Algeria','Algérie','Tunisia','Tunisie','Libya','Libye','Angola','Mozambique','Zambia',
+  'Zambie','Zimbabwe','Botswana','Namibia','Namibie','Malawi','Lesotho','Swaziland',
+  'Sierra Leone','Liberia','Libéria','Gambia','Gambie','Guinea-Bissau','Guinée-Bissau',
+  'Eritrea','Érythrée','Somalia','Somalie','Sudan','Soudan','Central African Republic',
+  'Centrafrique','Équateur','Guinée équatoriale',
+]);
+
+/* ============================================================
+   ÉTAT DES FILTRES
    ============================================================ */
 
 const filtres = {
-  genre:    getParam('genre')   || '',
-  langue:   getParam('langue')  || '',
-  statut:   getParam('statut')  || '',
-  public:   getParam('public')  || '',
-  tri:      getParam('tri')     || 'recent',
-  page:     parseInt(getParam('page') || '1'),
+  categorie: getParam('cat')    || '',
+  genre:     getParam('genre')  || '',
+  langue:    getParam('langue') || '',
+  statut:    getParam('statut') || '',
+  pays:      getParam('pays')   || '',
+  tri:       getParam('tri')    || 'recent',
+  page:      parseInt(getParam('page') || '1'),
   recherche: getParam('q')      || '',
 };
 
-const LIMIT = 20;
+const LIMIT = 24; // Multiple de 3 colonnes
 
 /* ============================================================
-   Init
+   INIT
    ============================================================ */
 
 (async () => {
-  await Promise.all([
-    chargerPremierTextes(),
-    chargerOeuvres(),
-  ]);
   syncUI();
+  await chargerOeuvres();
 })();
 
 /* ============================================================
-   Charger les œuvres
+   CHARGEMENT DES ŒUVRES
    ============================================================ */
 
 async function chargerOeuvres() {
   const grid = document.getElementById('works-grid');
-  grid.innerHTML = '<div class="empty-state"><div class="spinner spinner--lg"></div></div>';
+  grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="spinner spinner--lg"></div><p class="empty-state__text" style="margin-top:12px">Chargement…</p></div>';
+
+  // Déterminer les genres à filtrer selon la catégorie BISAC active
+  let genreFiltre = filtres.genre || undefined;
+  let paysFiltre  = filtres.pays  || undefined;
+
+  const cat = CATEGORIES[filtres.categorie];
+  if (cat && !filtres.genre) {
+    if (cat.filtreAfrique) {
+      // Filtre par pays africain — géré côté client sur les résultats
+      paysFiltre = '__afrique__';
+    } else if (cat.filtreStatut && !filtres.statut) {
+      filtres.statut = cat.filtreStatut;
+    } else if (cat.genres?.length) {
+      // On ne peut filtrer que sur 1 genre via api.getOeuvres pour l'instant
+      // On charge tout et on filtre côté client pour la catégorie
+    }
+  }
 
   try {
-    const { data, total } = await api.getOeuvres({
+    const { data: tous, total } = await api.getOeuvres({
       page:      filtres.page,
       limit:     LIMIT,
-      genre:     filtres.genre   || undefined,
       langue:    filtres.langue  || undefined,
       statut:    filtres.statut  || undefined,
+      genre:     genreFiltre,
       recherche: filtres.recherche || undefined,
+      tri:       filtres.tri,
     });
 
-    document.getElementById('library-count').textContent =
-      `${total} œuvre${total !== 1 ? 's' : ''} trouvée${total !== 1 ? 's' : ''}`;
+    // Filtrage client pour catégories multi-genres et pays africains
+    let data = tous;
+
+    if (cat?.genres?.length && !filtres.genre) {
+      data = tous.filter(o => cat.genres.includes(o.genre?.toLowerCase()));
+    }
+
+    if (paysFiltre === '__afrique__') {
+      data = tous.filter(o => o.profiles?.pays && PAYS_AFRICAINS.has(o.profiles.pays));
+    }
+
+    if (filtres.pays && filtres.pays !== '') {
+      data = data.filter(o => o.profiles?.pays === filtres.pays);
+    }
+
+    // Compte affiché
+    const nbAffiches = data.length;
+    const countEl = document.getElementById('library-count');
+    countEl.textContent = nbAffiches === 0
+      ? 'Aucune œuvre trouvée'
+      : `${total} œuvre${total > 1 ? 's' : ''} — ${nbAffiches} affichée${nbAffiches > 1 ? 's' : ''}`;
 
     if (!data.length) {
       grid.innerHTML = `
-        <div class="empty-state">
+        <div class="empty-state" style="grid-column:1/-1">
           <div class="empty-state__icon">📭</div>
-          <div class="empty-state__title">Aucune œuvre trouvée</div>
-          <p class="empty-state__text">Essaie d'autres filtres ou sois le premier à publier dans cette catégorie !</p>
-          <a href="/pages/publish.html" class="btn btn--primary">Publier une œuvre</a>
+          <div class="empty-state__title">Aucune œuvre dans cette catégorie</div>
+          <p class="empty-state__text">Sois le premier à publier dans cette catégorie !</p>
+          <a href="/pages/publish.html" class="btn btn--primary" style="margin-top:var(--spacing-md)">
+            Publier une œuvre
+          </a>
         </div>`;
+      document.getElementById('pagination').innerHTML = '';
       return;
     }
 
     grid.innerHTML = data.map(o => carteOeuvre(o)).join('');
     rendrePagination(total);
+    afficherFiltresActifs();
 
   } catch (err) {
-    grid.innerHTML = `<div class="alert alert--error">Erreur de chargement : ${err.message}</div>`;
+    grid.innerHTML = `<div class="alert alert--error" style="grid-column:1/-1">Erreur de chargement : ${err.message}</div>`;
   }
 }
 
 /* ============================================================
-   Premiers textes (amateurs)
-   ============================================================ */
-
-async function chargerPremierTextes() {
-  const grid = document.getElementById('premiers-textes-grid');
-  try {
-    const { data } = await api.getOeuvres({ limit: 4, statut: 'gratuit' });
-    // Dans une vraie app : filtrer les auteurs avec badge_fondateur ou premier texte
-    if (!data.length) {
-      document.getElementById('premiers-textes').style.display = 'none';
-      return;
-    }
-    grid.innerHTML = data.slice(0, 4).map(o => `
-      <a href="/pages/work.html?id=${o.id}" class="card" style="text-decoration:none;">
-        <div class="card__cover card__cover--placeholder" style="font-size:36px;">📖</div>
-        <div class="card__body">
-          <div class="card__genre">${o.genre}</div>
-          <div class="card__title">${o.titre}</div>
-          <div class="card__author">par ${o.profiles?.nom || 'Auteur anonyme'}</div>
-        </div>
-      </a>
-    `).join('');
-  } catch {
-    document.getElementById('premiers-textes').style.display = 'none';
-  }
-}
-
-/* ============================================================
-   Template carte œuvre
+   CARTE ŒUVRE — notice bibliographique complète
+   Champs Dublin Core affichés : titre, auteur, langue, genre, date, droits
    ============================================================ */
 
 function carteOeuvre(o) {
-  const auteur = o.profiles?.nom || 'Auteur anonyme';
-  const pays   = o.profiles?.pays ? `· ${o.profiles.pays}` : '';
-  const couv   = o.couverture_url
-    ? `<img src="${o.couverture_url}" alt="Couverture" />`
-    : '📖';
+  const auteur  = o.profiles?.nom  || 'Auteur anonyme';
+  const pays    = o.profiles?.pays || '';
+  const genre   = o.genre?.toLowerCase() || '';
+  const cfg     = GENRES[genre] || { label: o.genre || 'Œuvre', couleur: '#2D6A4F', emoji: '📖' };
+  const langue  = LANGUES[o.langue_originale] || { nom: o.langue_originale || '?', drapeau: '🌐' };
+  const estAfricain = pays && PAYS_AFRICAINS.has(pays);
+  const annee   = o.created_at ? new Date(o.created_at).getFullYear() : '';
+  const note    = o.note_moyenne ? `⭐ ${Number(o.note_moyenne).toFixed(1)}` : '';
+  const lectures = o.nb_lectures ? `👁 ${formatNombre(o.nb_lectures)}` : '';
+
+  // Couverture : image réelle ou placeholder coloré par genre
+  const couverture = o.couverture_url
+    ? `<img src="${o.couverture_url}" alt="Couverture — ${o.titre}" loading="lazy" />`
+    : `<span class="book-card__cover-icon">${cfg.emoji}</span>`;
+
+  // Badge licence (dc:rights)
+  const badgeLicence = o.statut === 'premium'
+    ? '<span class="book-badge book-badge--premium">⭐ Premium</span>'
+    : '<span class="book-badge book-badge--free">🆓 Gratuit</span>';
+
+  // Badge auteur africain (Dewey 896)
+  const badgeAfrique = estAfricain
+    ? '<span class="book-badge book-badge--africa">🌍 Afrique</span>'
+    : '';
 
   return `
-    <a href="/pages/work.html?id=${o.id}" class="work-card">
-      <div class="work-card__cover">${couv}</div>
-      <div class="work-card__body">
-        <div class="work-card__genre">${o.genre}</div>
-        <div class="work-card__title">${o.titre}</div>
-        <div class="work-card__author">par ${auteur} ${pays}</div>
-        ${o.resume ? `<p class="work-card__resume">${truncate(o.resume, 120)}</p>` : ''}
-        <div class="work-card__meta">
-          <span>👁 ${formatNombre(o.nb_lectures)} lectures</span>
-          ${o.note_moyenne ? `<span>⭐ ${o.note_moyenne}</span>` : ''}
-          <span class="badge ${o.statut === 'premium' ? 'badge--premium' : 'badge--gratuit'}">
-            ${o.statut === 'premium' ? '⭐ Premium' : '🆓 Gratuit'}
-          </span>
+    <a href="/pages/work.html?id=${o.id}" class="book-card" aria-label="${o.titre} par ${auteur}">
+
+      <!-- Couverture avec couleur genre -->
+      <div class="book-card__cover" style="--genre-color:${cfg.couleur}">
+        ${couverture}
+        <div class="book-card__cover-badges">
+          ${badgeLicence}
         </div>
+      </div>
+
+      <!-- Notice bibliographique -->
+      <div class="book-card__body">
+
+        <!-- Genre (BISAC) -->
+        <div class="book-card__genre" style="color:${cfg.couleur}">${cfg.label}</div>
+
+        <!-- Titre principal (dc:title) -->
+        <h3 class="book-card__title">${o.titre}</h3>
+
+        <!-- Auteur + pays (dc:creator) -->
+        <div class="book-card__author">
+          ${auteur}${pays ? ` · <span class="book-card__pays">${pays}</span>` : ''}
+          ${estAfricain ? badgeAfrique : ''}
+        </div>
+
+        <!-- Résumé (dc:description) -->
+        ${o.resume ? `<p class="book-card__resume">${truncate(o.resume, 100)}</p>` : ''}
+
+        <!-- Métadonnées bibliographiques -->
+        <div class="book-card__meta">
+          <!-- Langue originale (dc:language ISO 639-1) -->
+          <span class="book-card__langue" title="Langue originale : ${langue.nom}">
+            ${langue.drapeau} ${o.langue_originale?.toUpperCase() || '?'}
+          </span>
+          ${lectures ? `<span>${lectures}</span>` : ''}
+          ${note    ? `<span>${note}</span>`    : ''}
+          ${annee   ? `<span class="book-card__annee">${annee}</span>` : ''}
+        </div>
+
       </div>
     </a>`;
 }
 
 /* ============================================================
-   Pagination
+   PAGINATION
    ============================================================ */
 
 function rendrePagination(total) {
   const totalPages = Math.ceil(total / LIMIT);
-  if (totalPages <= 1) return;
-  const el = document.getElementById('pagination');
-
-  let html = '';
-  if (filtres.page > 1) {
-    html += `<button class="pagination__btn" data-page="${filtres.page - 1}">←</button>`;
+  if (totalPages <= 1) {
+    document.getElementById('pagination').innerHTML = '';
+    return;
   }
+  const el = document.getElementById('pagination');
+  let html = '';
+
+  if (filtres.page > 1)
+    html += `<button class="pagination__btn" data-page="${filtres.page - 1}" aria-label="Page précédente">←</button>`;
+
   for (let i = 1; i <= totalPages; i++) {
     if (i === 1 || i === totalPages || Math.abs(i - filtres.page) <= 2) {
-      html += `<button class="pagination__btn ${i === filtres.page ? 'pagination__btn--active' : ''}" data-page="${i}">${i}</button>`;
+      html += `<button class="pagination__btn ${i === filtres.page ? 'pagination__btn--active' : ''}"
+        data-page="${i}" aria-label="Page ${i}"${i === filtres.page ? ' aria-current="page"' : ''}>${i}</button>`;
     } else if (Math.abs(i - filtres.page) === 3) {
-      html += `<span style="color:var(--text-light)">…</span>`;
+      html += `<span class="pagination__ellipsis">…</span>`;
     }
   }
-  if (filtres.page < totalPages) {
-    html += `<button class="pagination__btn" data-page="${filtres.page + 1}">→</button>`;
-  }
-  el.innerHTML = html;
 
+  if (filtres.page < totalPages)
+    html += `<button class="pagination__btn" data-page="${filtres.page + 1}" aria-label="Page suivante">→</button>`;
+
+  el.innerHTML = html;
   el.querySelectorAll('[data-page]').forEach(btn => {
     btn.addEventListener('click', () => {
       filtres.page = parseInt(btn.dataset.page);
@@ -168,115 +327,220 @@ function rendrePagination(total) {
 }
 
 /* ============================================================
-   Sync UI avec filtres actifs
+   DESCRIPTION CATÉGORIE
    ============================================================ */
 
-function syncUI() {
-  if (filtres.recherche) {
-    document.getElementById('search-input').value = filtres.recherche;
-  }
-  if (filtres.langue) {
-    document.getElementById('filter-langue').value = filtres.langue;
-  }
-  if (filtres.statut) {
-    document.getElementById('filter-statut').value = filtres.statut;
-  }
-  if (filtres.genre) {
-    document.querySelectorAll('.filter-chip[data-genre]').forEach(c => {
-      c.classList.toggle('is-active', c.dataset.genre === filtres.genre);
-    });
-    document.querySelectorAll('#sidebar-genres .filter-option').forEach(o => {
-      o.classList.toggle('is-active', o.dataset.genre === filtres.genre);
-    });
-  }
-  document.getElementById('sort-select').value = filtres.tri;
+function afficherDescCategorie() {
+  const descEl = document.getElementById('lib-cat-desc');
+  const cat    = CATEGORIES[filtres.categorie];
+  if (!cat) { descEl.style.display = 'none'; return; }
+  descEl.style.display = 'block';
+  descEl.innerHTML = `
+    <div class="lib-cat-banner" style="border-left-color:${cat.couleur}">
+      <strong>${cat.label}</strong> — ${cat.desc}
+    </div>`;
 }
 
 /* ============================================================
-   Événements — filtres chips
+   FILTRES ACTIFS — affichage des chips de filtre actifs
    ============================================================ */
 
-document.querySelectorAll('.filter-chip[data-genre]').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('.filter-chip[data-genre]').forEach(c => c.classList.remove('is-active'));
-    chip.classList.add('is-active');
-    filtres.genre = chip.dataset.genre;
-    filtres.page  = 1;
+function afficherFiltresActifs() {
+  const el = document.getElementById('active-filters');
+  const chips = [];
+
+  if (filtres.langue) {
+    const l = LANGUES[filtres.langue];
+    chips.push({ label: `Langue : ${l ? l.drapeau + ' ' + l.nom : filtres.langue}`, key: 'langue' });
+  }
+  if (filtres.genre) {
+    const g = GENRES[filtres.genre];
+    chips.push({ label: `Genre : ${g ? g.label : filtres.genre}`, key: 'genre' });
+  }
+  if (filtres.statut) {
+    chips.push({ label: filtres.statut === 'gratuit' ? '🆓 Gratuit' : '⭐ Premium', key: 'statut' });
+  }
+  if (filtres.pays) {
+    chips.push({ label: `Pays : ${filtres.pays}`, key: 'pays' });
+  }
+  if (filtres.recherche) {
+    chips.push({ label: `"${filtres.recherche}"`, key: 'recherche' });
+  }
+
+  if (!chips.length) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = chips.map(c => `
+    <button class="active-filter-chip" data-key="${c.key}" aria-label="Retirer le filtre : ${c.label}">
+      ${c.label} ✕
+    </button>`).join('');
+
+  el.querySelectorAll('.active-filter-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.key;
+      filtres[key] = '';
+      if (key === 'langue') document.getElementById('filter-langue').value = '';
+      if (key === 'pays')   document.getElementById('filter-pays').value   = '';
+      if (key === 'statut') document.querySelector('input[name="statut"][value=""]').checked = true;
+      if (key === 'recherche') document.getElementById('search-input').value = '';
+      filtres.page = 1;
+      chargerOeuvres();
+    });
+  });
+}
+
+/* ============================================================
+   GENRES SIDEBAR — mis à jour selon onglet actif
+   ============================================================ */
+
+function mettreAJourSidebarGenres() {
+  const conteneur = document.getElementById('sidebar-genres');
+  const cat       = CATEGORIES[filtres.categorie];
+  const genres    = cat?.genres?.length ? cat.genres : Object.keys(GENRES);
+
+  conteneur.innerHTML = `
+    <label class="lib-radio ${!filtres.genre ? 'is-active' : ''}">
+      <input type="radio" name="genre" value="" ${!filtres.genre ? 'checked' : ''} />
+      Tous
+    </label>
+    ${genres.map(g => {
+      const cfg = GENRES[g];
+      if (!cfg) return '';
+      return `
+        <label class="lib-radio ${filtres.genre === g ? 'is-active' : ''}">
+          <input type="radio" name="genre" value="${g}" ${filtres.genre === g ? 'checked' : ''} />
+          <span style="color:${cfg.couleur}">${cfg.emoji}</span> ${cfg.label}
+        </label>`;
+    }).join('')}`;
+
+  conteneur.querySelectorAll('input[name="genre"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      filtres.genre = radio.value;
+      filtres.page  = 1;
+      conteneur.querySelectorAll('.lib-radio').forEach(l => l.classList.remove('is-active'));
+      radio.closest('.lib-radio')?.classList.add('is-active');
+      chargerOeuvres();
+    });
+  });
+}
+
+/* ============================================================
+   SYNC UI — remplir les contrôles depuis l'état des filtres
+   ============================================================ */
+
+function syncUI() {
+  // Onglets catégorie
+  document.querySelectorAll('.lib-tab').forEach(tab => {
+    tab.classList.toggle('is-active', tab.dataset.cat === filtres.categorie);
+    tab.setAttribute('aria-selected', tab.dataset.cat === filtres.categorie ? 'true' : 'false');
+  });
+
+  // Champs
+  if (filtres.recherche) document.getElementById('search-input').value = filtres.recherche;
+  if (filtres.langue)    document.getElementById('filter-langue').value  = filtres.langue;
+  if (filtres.pays)      document.getElementById('filter-pays').value    = filtres.pays;
+
+  // Tri
+  const triRadio = document.querySelector(`input[name="tri"][value="${filtres.tri}"]`);
+  if (triRadio) {
+    triRadio.checked = true;
+    triRadio.closest('.lib-radio')?.classList.add('is-active');
+  }
+
+  // Statut
+  const statutRadio = document.querySelector(`input[name="statut"][value="${filtres.statut}"]`);
+  if (statutRadio) {
+    statutRadio.checked = true;
+    statutRadio.closest('.lib-radio')?.classList.add('is-active');
+  }
+
+  afficherDescCategorie();
+  mettreAJourSidebarGenres();
+}
+
+/* ============================================================
+   ÉVÉNEMENTS
+   ============================================================ */
+
+// Onglets BISAC
+document.querySelectorAll('.lib-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    filtres.categorie = tab.dataset.cat;
+    filtres.genre     = '';
+    filtres.page      = 1;
+    // Réinitialiser le filtre statut si on quittait "patrimoine"
+    if (filtres.statut === 'gratuit' && tab.dataset.cat !== 'patrimoine') {
+      filtres.statut = '';
+      document.querySelector('input[name="statut"][value=""]').checked = true;
+    }
+    syncUI();
     chargerOeuvres();
   });
 });
 
-document.querySelectorAll('#sidebar-genres .filter-option').forEach(opt => {
-  opt.addEventListener('click', () => {
-    document.querySelectorAll('#sidebar-genres .filter-option').forEach(o => o.classList.remove('is-active'));
-    opt.classList.add('is-active');
-    filtres.genre = opt.dataset.genre;
-    filtres.page  = 1;
+// Tri
+document.querySelectorAll('input[name="tri"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    filtres.tri  = radio.value;
+    filtres.page = 1;
+    document.querySelectorAll('input[name="tri"]').forEach(r =>
+      r.closest('.lib-radio')?.classList.toggle('is-active', r === radio));
     chargerOeuvres();
   });
 });
 
-document.querySelectorAll('#sidebar-statut .filter-option').forEach(opt => {
-  opt.addEventListener('click', () => {
-    document.querySelectorAll('#sidebar-statut .filter-option').forEach(o => o.classList.remove('is-active'));
-    opt.classList.add('is-active');
-    filtres.statut = opt.dataset.statut;
+// Statut
+document.querySelectorAll('input[name="statut"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    filtres.statut = radio.value;
     filtres.page   = 1;
+    document.querySelectorAll('input[name="statut"]').forEach(r =>
+      r.closest('.lib-radio')?.classList.toggle('is-active', r === radio));
     chargerOeuvres();
   });
 });
 
-document.getElementById('filter-langue')?.addEventListener('change', (e) => {
+// Langue
+document.getElementById('filter-langue')?.addEventListener('change', e => {
   filtres.langue = e.target.value;
   filtres.page   = 1;
   chargerOeuvres();
 });
 
-document.getElementById('filter-statut')?.addEventListener('change', (e) => {
-  filtres.statut = e.target.value;
-  filtres.page   = 1;
-  chargerOeuvres();
-});
-
-document.getElementById('sort-select')?.addEventListener('change', (e) => {
-  filtres.tri  = e.target.value;
+// Pays
+document.getElementById('filter-pays')?.addEventListener('change', e => {
+  filtres.pays = e.target.value;
   filtres.page = 1;
   chargerOeuvres();
 });
 
-/* ============================================================
-   Recherche
-   ============================================================ */
-
+// Recherche (debounce 400ms)
 const rechercheDebounce = debounce(() => {
   filtres.recherche = document.getElementById('search-input').value.trim();
   filtres.page      = 1;
   chargerOeuvres();
 }, 400);
-
 document.getElementById('search-input')?.addEventListener('input', rechercheDebounce);
-document.getElementById('search-btn')?.addEventListener('click', () => {
-  filtres.recherche = document.getElementById('search-input').value.trim();
-  filtres.page      = 1;
-  chargerOeuvres();
-});
 
-/* ============================================================
-   Reset filtres
-   ============================================================ */
-
+// Reset
 document.getElementById('reset-filters')?.addEventListener('click', () => {
+  filtres.categorie = '';
   filtres.genre     = '';
   filtres.langue    = '';
   filtres.statut    = '';
-  filtres.public    = '';
+  filtres.pays      = '';
   filtres.tri       = 'recent';
   filtres.page      = 1;
   filtres.recherche = '';
-  document.getElementById('search-input').value = '';
-  document.getElementById('filter-langue').value = '';
-  document.getElementById('filter-statut').value = '';
-  document.getElementById('sort-select').value   = 'recent';
-  document.querySelectorAll('.filter-chip[data-genre]')[0]?.click();
+  document.getElementById('search-input').value  = '';
+  document.getElementById('filter-langue').value  = '';
+  document.getElementById('filter-pays').value    = '';
+  document.querySelector('input[name="tri"][value="recent"]').checked  = true;
+  document.querySelector('input[name="statut"][value=""]').checked     = true;
+  syncUI();
   chargerOeuvres();
+});
+
+// Bouton mobile filtres
+document.getElementById('btn-mobile-filters')?.addEventListener('click', () => {
+  document.getElementById('lib-sidebar').classList.toggle('is-open');
 });
