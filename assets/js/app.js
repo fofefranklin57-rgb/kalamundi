@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([
     chargerVedettes(),
     chargerNouveautes(),
+    chargerNouveauxTalents(),
   ]);
   initHamburger();
   /* Pubs Monetag — chargées après le contenu, respecte les abonnés */
@@ -175,6 +176,125 @@ async function chargerNouveautes() {
     grid.innerHTML = videState('Impossible de charger les nouveautés.');
     console.error(err);
   }
+}
+
+/* ============================================================
+   Nouveaux talents — spotlight + premiers pas
+   ============================================================ */
+
+async function chargerNouveauxTalents() {
+  const [auteurs, oeuvres] = await Promise.all([
+    api.getNouveauxAuteurs({ limit: 6 }).catch(() => []),
+    api.getOeuvresPremiersPas({ limit: 12 }).catch(() => []),
+  ]);
+
+  renderSpotlight(auteurs);
+  renderPremiersPas(oeuvres);
+}
+
+/* ── Spotlight tournant (un auteur toutes les 5s) ───────── */
+function renderSpotlight(auteurs) {
+  const wrap = document.getElementById('spotlight-auteur');
+  if (!wrap) return;
+  if (!auteurs.length) {
+    wrap.innerHTML = `<p style="color:var(--text-light);font-size:var(--font-size-sm);text-align:center;padding:var(--spacing-lg)">
+      Aucun auteur trouvé. <a href="/pages/login.html?mode=inscription" class="lien-vert">Soyez le premier !</a>
+    </p>`;
+    return;
+  }
+
+  let idx = 0;
+
+  function afficher(i) {
+    const a = auteurs[i];
+    if (!a) return;
+    const oeuvre = a.derniere_oeuvre;
+    const couleurs = ['#1B4332','#2D6A4F','#A97C0E','#1a3a5c','#5c1a1a','#2c4a1a'];
+    const couleur  = couleurs[(a.nom || '').charCodeAt(0) % couleurs.length];
+    const initiale = (a.nom || '?').charAt(0).toUpperCase();
+
+    const avatar = a.photo_url
+      ? `<img src="${a.photo_url}" alt="${a.nom}" class="spotlight__avatar-img" />`
+      : `<div class="spotlight__avatar-fallback" style="background:${couleur}">${initiale}</div>`;
+
+    const coverOeuvre = oeuvre?.couverture_url
+      ? `<img src="${oeuvre.couverture_url}" alt="${oeuvre.titre}" class="spotlight__cover-img" />`
+      : `<div class="spotlight__cover-fallback" style="background:${couleur}"><span>${(oeuvre?.titre || '?').charAt(0)}</span></div>`;
+
+    const badges = [
+      a.badge_fondateur ? '<span class="badge badge--premium">🏅 Fondateur</span>' : '',
+      a.niveau_auteur   ? `<span class="badge badge--primary">${a.niveau_auteur}</span>` : '',
+      a.pays            ? `<span class="badge badge--muted">📍 ${a.pays}</span>` : '',
+    ].filter(Boolean).join('');
+
+    const dots = auteurs.map((_, j) =>
+      `<button class="spotlight__dot ${j === i ? 'is-active' : ''}" data-idx="${j}" aria-label="Auteur ${j + 1}"></button>`
+    ).join('');
+
+    wrap.innerHTML = `
+      <div class="spotlight-card">
+        <div class="spotlight__auteur">
+          <a href="/pages/author-profile.html?id=${a.id}" class="spotlight__avatar-link">
+            ${avatar}
+          </a>
+          <div class="spotlight__info">
+            <a href="/pages/author-profile.html?id=${a.id}" class="spotlight__nom">${a.nom || 'Auteur'}</a>
+            <div class="spotlight__badges">${badges}</div>
+            ${a.bio ? `<p class="spotlight__bio">${a.bio.slice(0, 140)}${a.bio.length > 140 ? '…' : ''}</p>` : ''}
+            <a href="/pages/author-profile.html?id=${a.id}" class="btn btn--outline btn--sm" style="margin-top:var(--spacing-sm)">
+              Voir le profil →
+            </a>
+          </div>
+        </div>
+        ${oeuvre ? `
+        <a href="/pages/work.html?id=${oeuvre.id}" class="spotlight__oeuvre">
+          <div class="spotlight__cover">${coverOeuvre}</div>
+          <div class="spotlight__oeuvre-info">
+            <div class="spotlight__oeuvre-label">Dernière œuvre</div>
+            <div class="spotlight__oeuvre-titre">${oeuvre.titre}</div>
+            <div class="spotlight__oeuvre-genre">${oeuvre.genre || ''}</div>
+          </div>
+        </a>` : ''}
+        <div class="spotlight__nav">
+          ${dots}
+        </div>
+      </div>`;
+
+    // Dots cliquables
+    wrap.querySelectorAll('.spotlight__dot').forEach(btn => {
+      btn.addEventListener('click', () => {
+        idx = parseInt(btn.dataset.idx);
+        afficher(idx);
+        resetTimer();
+      });
+    });
+  }
+
+  let timer;
+  function resetTimer() {
+    clearInterval(timer);
+    timer = setInterval(() => {
+      idx = (idx + 1) % auteurs.length;
+      afficher(idx);
+    }, 5000);
+  }
+
+  afficher(0);
+  if (auteurs.length > 1) resetTimer();
+}
+
+/* ── Grille "Premiers pas" ─────────────────────────────── */
+function renderPremiersPas(oeuvres) {
+  const grid = document.getElementById('grid-premiers-pas');
+  if (!grid) return;
+  if (!oeuvres.length) {
+    grid.innerHTML = videState('Aucune œuvre pour le moment.');
+    return;
+  }
+  const html = oeuvres.map(renderBookMini).join('');
+  grid.innerHTML = html + html;
+  grid.addEventListener('click', () => grid.classList.toggle('paused'));
+  gererErreurImages(grid);
 }
 
 function gererErreurImages(container) {

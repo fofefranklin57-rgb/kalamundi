@@ -660,6 +660,55 @@ export const api = {
     return data;
   },
 
+  /* ---- Nouveaux auteurs (accueil) ----------------------- */
+
+  async getNouveauxAuteurs({ limit = 6 } = {}) {
+    // Auteurs ayant au moins 1 œuvre visible, triés par date d'inscription
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(`
+        id, nom, photo_url, pays, bio, niveau_auteur, badge_fondateur, created_at,
+        oeuvres!oeuvres_auteur_id_fkey(id, titre, genre, couverture_url, nb_lectures, created_at)
+      `)
+      .neq('id', '00000000-0000-0000-0000-000000000001')
+      .order('created_at', { ascending: false })
+      .limit(limit * 3); // surcharger pour filtrer ceux sans œuvre
+
+    if (error) throw error;
+
+    // Garder uniquement les auteurs avec au moins 1 œuvre visible
+    const avec_oeuvres = (data || [])
+      .filter(p => p.oeuvres?.length > 0)
+      .slice(0, limit)
+      .map(p => ({
+        ...p,
+        // Garder la dernière œuvre publiée
+        derniere_oeuvre: p.oeuvres.sort((a, b) =>
+          new Date(b.created_at) - new Date(a.created_at)
+        )[0],
+      }));
+
+    return avec_oeuvres;
+  },
+
+  async getOeuvresPremiersPas({ limit = 8 } = {}) {
+    // Œuvres récentes gratuites d'auteurs ayant peu de publications
+    const { data, error } = await supabase
+      .from('oeuvres')
+      .select(`
+        id, titre, genre, couverture_url, nb_lectures, created_at, langue_originale,
+        profiles!oeuvres_auteur_id_fkey(id, nom, photo_url, pays, niveau_auteur)
+      `)
+      .eq('visible', true)
+      .eq('statut', 'gratuit')
+      .neq('auteur_id', '00000000-0000-0000-0000-000000000001')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  },
+
   /* ---- Stats dashboard auteur --------------------------- */
 
   async getStatsAuteur(auteurId) {

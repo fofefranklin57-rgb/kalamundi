@@ -353,6 +353,195 @@
 }
 
 /* ============================================================
+   Nouveaux talents — Spotlight + Premiers pas
+   ============================================================ */
+
+.spotlight-skeleton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+}
+
+.spotlight-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  border: 1px solid var(--border-color);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: var(--spacing-lg);
+  align-items: start;
+  animation: fadeIn 0.4s ease;
+}
+
+/* Colonne auteur */
+.spotlight__auteur {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+}
+
+.spotlight__avatar-link { flex-shrink: 0; }
+
+.spotlight__avatar-img,
+.spotlight__avatar-fallback {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.spotlight__nom {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  text-decoration: none;
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.spotlight__nom:hover { text-decoration: underline; }
+
+.spotlight__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.badge--muted {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.spotlight__bio {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Colonne œuvre */
+.spotlight__oeuvre {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  text-decoration: none;
+  width: 130px;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.spotlight__oeuvre:hover { transform: translateY(-3px); }
+
+.spotlight__cover {
+  width: 130px;
+  aspect-ratio: 2/3;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+}
+
+.spotlight__cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.spotlight__cover-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+}
+
+.spotlight__oeuvre-info { padding: 2px 0; }
+
+.spotlight__oeuvre-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+
+.spotlight__oeuvre-titre {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.spotlight__oeuvre-genre {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 3px;
+  font-style: italic;
+}
+
+/* Dots navigation */
+.spotlight__nav {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: calc(-1 * var(--spacing-sm));
+}
+
+.spotlight__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: var(--border-color);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  padding: 0;
+}
+
+.spotlight__dot.is-active {
+  background: var(--color-primary);
+  transform: scale(1.3);
+}
+
+/* Titre "Premiers pas" */
+.premiers-pas__titre {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+  margin-top: var(--spacing-xl);
+  margin-bottom: 0;
+}
+
+.lien-vert {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ============================================================
    Responsive
    ============================================================ */
 
@@ -362,4 +551,19 @@
   .hero__stats { gap: var(--spacing-lg); }
   .genres-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
   .cta-box { padding: var(--spacing-lg); }
+
+  .spotlight-card {
+    grid-template-columns: 1fr;
+  }
+
+  .spotlight__oeuvre {
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+  }
+
+  .spotlight__cover {
+    width: 80px;
+    flex-shrink: 0;
+  }
 }
