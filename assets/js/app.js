@@ -105,12 +105,15 @@ async function chargerStats() {
 async function chargerVedettes() {
   const grid = document.getElementById('grid-vedettes');
   try {
-    const { data } = await api.getOeuvres({ limit: 6, tri: 'lectures' });
+    const { data } = await api.getOeuvres({ limit: 12, tri: 'lectures' });
     if (!data?.length) {
       grid.innerHTML = videState('Aucune œuvre disponible pour l\'instant.');
       return;
     }
-    grid.innerHTML = data.map(renderCard).join('');
+    // Dupliquer pour boucle infinie
+    const html = data.map(renderBookMini).join('');
+    grid.innerHTML = html + html;
+    grid.addEventListener('click', () => grid.classList.toggle('paused'));
   } catch (err) {
     grid.innerHTML = videState('Impossible de charger les œuvres.');
     console.error(err);
@@ -124,16 +127,14 @@ async function chargerVedettes() {
 async function chargerNouveautes() {
   const grid = document.getElementById('grid-nouveautes');
   try {
-    const { data } = await api.getOeuvres({ limit: 8, tri: 'recent' });
+    const { data } = await api.getOeuvres({ limit: 12, tri: 'recent' });
     if (!data?.length) {
       grid.innerHTML = videState('Aucune nouveauté pour l\'instant.');
       return;
     }
-    // Exclure celles déjà en vedette (nb_lectures élevé)
-    const nouveautes = data.filter(o => o.nb_lectures < 1000).slice(0, 4);
-    grid.innerHTML = nouveautes.length
-      ? nouveautes.map(renderCard).join('')
-      : videState('Toutes les œuvres sont déjà en vedette !');
+    const html = data.map(renderBookMini).join('');
+    grid.innerHTML = html + html;
+    grid.addEventListener('click', () => grid.classList.toggle('paused'));
   } catch (err) {
     grid.innerHTML = videState('Impossible de charger les nouveautés.');
     console.error(err);
@@ -143,6 +144,24 @@ async function chargerNouveautes() {
 /* ============================================================
    Rendu carte œuvre
    ============================================================ */
+
+function renderBookMini(oeuvre) {
+  const titre  = oeuvre.titre || 'Sans titre';
+  const auteur = oeuvre.profiles?.nom || 'Auteur inconnu';
+  const genre  = oeuvre.genre || '';
+  const cover  = oeuvre.couverture_url
+    ? `<img src="${oeuvre.couverture_url}" alt="${titre}" loading="lazy">`
+    : '📖';
+  return `
+    <a href="/pages/work.html?id=${oeuvre.id}" class="book-mini">
+      <div class="book-mini__cover">${cover}</div>
+      <div class="book-mini__body">
+        ${genre ? `<div class="book-mini__genre">${genre}</div>` : ''}
+        <div class="book-mini__title">${titre}</div>
+        <div class="book-mini__author">${auteur}</div>
+      </div>
+    </a>`;
+}
 
 function renderCard(oeuvre) {
   const auteur  = oeuvre.profiles?.nom || 'Auteur inconnu';
