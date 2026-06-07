@@ -1,0 +1,18 @@
+{
+  "date": "2026-06-06T22:28:45.561Z",
+  "sources": {
+    "african_storybook": {
+      "count": 20,
+      "licence": "CC BY 4.0"
+    },
+    "standard_ebooks": {
+      "count": 20,
+      "licence": "CC0 / Domaine public"
+    }
+  },
+  "total_catalogue": 40,
+  "importees": 40,
+  "ignorees": 0,
+  "echecs": 0,
+  "auteur_systeme_id": "b7fa60cd-243c-4411-934e-db199b9d0b02"
+}

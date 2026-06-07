@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Kalamundi — La Plume du Monde. Plateforme littéraire numérique multilingue pour lire, écrire et partager des œuvres du monde entier." />
+  <title>À propos — Kalamundi, La Plume du Monde</title>
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/bienvenue.css" />
+  <script src="/assets/js/theme-init.js"></script>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">Kalamundi</a>
+      <div class="navbar__nav" id="navbar-nav">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/library.html" class="navbar__link">Bibliothèque</a>
+        <a href="/pages/publish.html" class="navbar__link">Publier</a>
+        <a href="/pages/bienvenue.html" class="navbar__link navbar__link--active">À propos</a>
+      </div>
+      <span id="theme-slot"></span>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="navbar-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="bv-hero">
+    <div class="bv-hero__inner container">
+      <div class="bv-hero__kicker">La Plume du Monde · The World's Pen · Kalamu ya Dunia</div>
+      <h1 class="bv-hero__title">Kalamundi</h1>
+      <p class="bv-hero__sub">
+        Une bibliothèque numérique mondiale née en Afrique, ouverte à tous les auteurs,
+        lisible dans toutes les langues, gratuite pour tous les lecteurs.
+      </p>
+      <div class="bv-hero__ctas">
+        <a href="/pages/library.html" class="btn btn--accent btn--lg">Explorer la bibliothèque</a>
+        <a href="/pages/login.html?mode=inscription" class="btn btn--outline-light btn--lg">Devenir auteur</a>
+      </div>
+    </div>
+    <div class="bv-hero__scroll" aria-hidden="true">↓</div>
+  </section>
+
+  <main>
+
+    <!-- Le nom -->
+    <section class="bv-section container">
+      <div class="bv-name">
+        <div class="bv-name__text">
+          <h2 class="bv-section__title">D'où vient ce nom ?</h2>
+          <p class="bv-name__intro">
+            <strong>Kalamundi</strong> est la contraction de deux mots venus de deux mondes :
+          </p>
+          <div class="bv-etymology">
+            <div class="bv-etymology__word">
+              <div class="bv-etymology__term">Kalamu</div>
+              <div class="bv-etymology__lang">Swahili — langue la plus parlée d'Afrique</div>
+              <div class="bv-etymology__meaning">"Plume" — l'ancre africaine du projet</div>
+            </div>
+            <div class="bv-etymology__plus">+</div>
+            <div class="bv-etymology__word">
+              <div class="bv-etymology__term">Mundi</div>
+              <div class="bv-etymology__lang">Latin — compris dans toutes les langues romanes</div>
+              <div class="bv-etymology__meaning">"Du monde" — l'ouverture internationale</div>
+            </div>
+            <div class="bv-etymology__result">
+              <div class="bv-etymology__equals">=</div>
+              <div class="bv-etymology__final">"La Plume du Monde"</div>
+              <div class="bv-etymology__vision">Une plume africaine qui écrit pour et avec le monde entier.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ce qu'est Kalamundi -->
+    <section class="bv-section bv-section--alt">
+      <div class="container">
+        <h2 class="bv-section__title text-center">Qu'est-ce que Kalamundi ?</h2>
+        <p class="bv-section__lead text-center">
+          Kalamundi est une plateforme numérique internationale de publication et de lecture littéraire.
+          Elle permet à tout individu — amateur ou professionnel, quel que soit son pays ou sa langue —
+          de publier ses œuvres et à tout lecteur d'y accéder gratuitement dans la langue de son choix.
+        </p>
+        <div class="bv-pillars">
+          <div class="bv-pillar">
+            <div class="bv-pillar__icon">📖</div>
+            <h3 class="bv-pillar__title">Lire</h3>
+            <p class="bv-pillar__text">
+              Plus de 100 œuvres disponibles dès maintenant. Des classiques du domaine public,
+              des histoires pour enfants, des romans du monde entier. Tout est gratuit.
+              Lisez dans votre langue grâce à la traduction automatique intégrée.
+            </p>
+          </div>
+          <div class="bv-pillar">
+            <div class="bv-pillar__icon">✍️</div>
+            <h3 class="bv-pillar__title">Écrire</h3>
+            <p class="bv-pillar__text">
+              Publiez votre première œuvre en quelques clics. Amateur ou professionnel,
+              votre texte mérite d'exister. Un certificat d'horodatage SHA-256 protège
+              votre paternité dès la publication.
+            </p>
+          </div>
+          <div class="bv-pillar">
+            <div class="bv-pillar__icon">🌍</div>
+            <h3 class="bv-pillar__title">Partager</h3>
+            <p class="bv-pillar__text">
+              Votre œuvre accessible dans 30 langues, sur mobile, tablette et ordinateur,
+              même sans connexion internet. La littérature sans frontières ni barrières.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Objectifs -->
+    <section class="bv-section container">
+      <h2 class="bv-section__title text-center">Nos objectifs</h2>
+
+      <div class="bv-objectives">
+
+        <div class="bv-obj-group">
+          <div class="bv-obj-group__badge bv-obj-group__badge--primary">Principaux</div>
+          <ul class="bv-obj-list">
+            <li class="bv-obj-item">
+              <span class="bv-obj-item__icon">🔓</span>
+              <span>Offrir un espace de publication <strong>ouvert, gratuit et sécurisé</strong> à tous les auteurs, amateurs comme professionnels</span>
+            </li>
+            <li class="bv-obj-item">
+              <span class="bv-obj-item__icon">✏️</span>
+              <span><strong>Démocratiser l'écriture</strong> — encourager ceux qui n'ont jamais osé écrire</span>
+            </li>
+            <li class="bv-obj-item">
+              <span class="bv-obj-item__icon">🗣️</span>
+              <span>Permettre la lecture dans <strong>toutes les langues</strong> sans barrière linguistique</span>
+            </li>
+            <li class="bv-obj-item">
+              <span class="bv-obj-item__icon">🔐</span>
+              <span><strong>Protéger les droits d'auteur</strong> dès la première publication, gratuitement</span>
+            </li>
+            <li class="bv-obj-item">
+              <span class="bv-obj-item__icon">🌍</span>
+              <span><strong>Promouvoir la littérature africaine</strong> à l'international</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="bv-obj-group">
+          <div class="bv-obj-group__badge bv-obj-group__badge--social">Sociaux &amp; éducatifs</div>
+          <ul class="bv-obj-list">
+            <li class="bv-obj-item">
+              <span class="bv-obj-item__icon">📚</span>
+              <span>Promouvoir la <strong>lecture</strong> comme pratique culturelle accessible à tous</span>
+            </li>
+            <li class="bv-obj-item">
+              <span class="bv-obj-item__icon">🧒</span>
+              <span>Encourager l'<strong>écriture créative</strong> chez les jeunes et les personnes peu scolarisées</span>
+            </li>
+            <li class="bv-obj-item">
+              <span class="bv-obj-item__icon">🔤</span>
+              <span>Soutenir l'<strong>alphabétisation</strong> via des contenus en langues africaines</span>
+            </li>
+            <li class="bv-obj-item">
+              <span class="bv-obj-item__icon">🥁</span>
+              <span>Préserver les <strong>récits traditionnels et la mémoire collective</strong> africaine</span>
+            </li>
+            <li class="bv-obj-item">
+              <span class="bv-obj-item__icon">🏫</span>
+              <span>Être un outil pour les <strong>ONG, écoles, bibliothèques et institutions culturelles</strong></span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Pour qui -->
+    <section class="bv-section bv-section--alt">
+      <div class="container">
+        <h2 class="bv-section__title text-center">Pour qui ?</h2>
+        <div class="bv-audience">
+
+          <div class="bv-audience__card">
+            <div class="bv-audience__icon">✍️</div>
+            <h3 class="bv-audience__title">Les auteurs</h3>
+            <ul class="bv-audience__list">
+              <li>Amateurs qui écrivent pour la première fois</li>
+              <li>Auteurs confirmés cherchant une visibilité internationale</li>
+              <li>Jeunes auteurs — lycéens, étudiants</li>
+              <li>Conteurs traditionnels souhaitant numériser leurs récits</li>
+              <li>Témoins de l'histoire voulant partager leurs mémoires</li>
+            </ul>
+            <a href="/pages/login.html?mode=inscription" class="btn btn--primary btn--sm">Publier gratuitement</a>
+          </div>
+
+          <div class="bv-audience__card bv-audience__card--accent">
+            <div class="bv-audience__icon">📖</div>
+            <h3 class="bv-audience__title">Les lecteurs</h3>
+            <ul class="bv-audience__list">
+              <li>Amateurs de littérature de tous âges (dès 10 ans)</li>
+              <li>Personnes ne maîtrisant pas la langue originale d'une œuvre</li>
+              <li>Étudiants, enseignants, chercheurs, bibliothécaires</li>
+              <li>Public international sans restriction géographique</li>
+            </ul>
+            <a href="/pages/library.html" class="btn btn--accent btn--sm">Explorer la bibliothèque</a>
+          </div>
+
+          <div class="bv-audience__card">
+            <div class="bv-audience__icon">🏛️</div>
+            <h3 class="bv-audience__title">Les institutions</h3>
+            <ul class="bv-audience__list">
+              <li>ONG de promotion de la lecture et de l'alphabétisation</li>
+              <li>Ministères de l'Éducation et de la Culture</li>
+              <li>Bibliothèques nationales et municipales</li>
+              <li>Universités et établissements scolaires</li>
+              <li>Fondations et bailleurs (UNESCO, AFD, UNICEF…)</li>
+            </ul>
+            <a href="/pages/institution.html" class="btn btn--primary btn--sm">Espace institutions</a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Valeurs clés -->
+    <section class="bv-section container">
+      <h2 class="bv-section__title text-center">Ce qui nous distingue</h2>
+      <div class="bv-values">
+        <div class="bv-value">
+          <div class="bv-value__num">01</div>
+          <h3 class="bv-value__title">Protection immédiate</h3>
+          <p class="bv-value__text">Chaque œuvre publiée reçoit automatiquement une empreinte numérique SHA-256 horodatée. Votre paternité est prouvable devant tout tribunal, sans frais, dès le premier mot publié.</p>
+        </div>
+        <div class="bv-value">
+          <div class="bv-value__num">02</div>
+          <h3 class="bv-value__title">Multilingue par nature</h3>
+          <p class="bv-value__text">Publiez en français, en swahili, en haoussa ou en anglais. Vos lecteurs peuvent lire dans leur propre langue grâce à la traduction automatique intégrée — 30 langues disponibles.</p>
+        </div>
+        <div class="bv-value">
+          <div class="bv-value__num">03</div>
+          <h3 class="bv-value__title">Gratuit pour toujours</h3>
+          <p class="bv-value__text">La publication est gratuite. La lecture du catalogue gratuit est gratuite. Aucune carte bancaire, aucun engagement. La littérature appartient à tout le monde.</p>
+        </div>
+        <div class="bv-value">
+          <div class="bv-value__num">04</div>
+          <h3 class="bv-value__title">Conçu pour l'Afrique</h3>
+          <p class="bv-value__text">Optimisé pour les connexions lentes et les mobiles Android bas de gamme. Fonctionne hors ligne. Paiements Mobile Money (MTN MoMo, Orange Money). L'Afrique n'est pas un marché secondaire — c'est notre point de départ.</p>
+        </div>
+        <div class="bv-value">
+          <div class="bv-value__num">05</div>
+          <h3 class="bv-value__title">Les auteurs gardent leurs droits</h3>
+          <p class="bv-value__text">Vous conservez 100 % de vos droits d'auteur. Kalamundi obtient uniquement une licence non exclusive d'affichage et de traduction, révocable à tout moment.</p>
+        </div>
+        <div class="bv-value">
+          <div class="bv-value__num">06</div>
+          <h3 class="bv-value__title">Revenus pour les auteurs</h3>
+          <p class="bv-value__text">Les œuvres premium reversent 50 % des ventes à l'auteur. Les revenus publicitaires sont partagés. Vous pouvez vivre de votre plume, même depuis Yaoundé, Dakar ou Abidjan.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Langues africaines -->
+    <section class="bv-section bv-section--dark">
+      <div class="container text-center">
+        <h2 class="bv-section__title bv-section__title--light">Langues africaines prioritaires</h2>
+        <p class="bv-section__lead bv-section__lead--light">
+          Kalamundi soutient activement la littérature dans les grandes langues africaines.
+        </p>
+        <div class="bv-langs">
+          <span class="bv-lang">Swahili</span>
+          <span class="bv-lang">Haoussa</span>
+          <span class="bv-lang">Yoruba</span>
+          <span class="bv-lang">Igbo</span>
+          <span class="bv-lang">Zulu</span>
+          <span class="bv-lang">Amharique</span>
+          <span class="bv-lang">Lingala</span>
+          <span class="bv-lang">Twi</span>
+          <span class="bv-lang">Wolof</span>
+          <span class="bv-lang">Bambara</span>
+          <span class="bv-lang">Fula</span>
+          <span class="bv-lang">Shona</span>
+          <span class="bv-lang">Kinyarwanda</span>
+          <span class="bv-lang">Somali</span>
+          <span class="bv-lang">Kirundi</span>
+        </div>
+        <p class="bv-langs__note">+ Français, Anglais, Espagnol, Portugais, Arabe et 14 autres langues mondiales</p>
+      </div>
+    </section>
+
+    <!-- CTA final -->
+    <section class="bv-section container text-center">
+      <div class="bv-cta-final">
+        <h2 class="bv-cta-final__title">Rejoignez Kalamundi aujourd'hui</h2>
+        <p class="bv-cta-final__text">
+          Que vous souhaitiez lire, écrire ou partager — votre place est ici.
+          La littérature mondiale vous attend.
+        </p>
+        <div class="bv-cta-final__actions">
+          <a href="/pages/login.html?mode=inscription" class="btn btn--accent btn--lg">Créer mon compte gratuitement</a>
+          <a href="/pages/library.html" class="btn btn--ghost btn--lg">Parcourir la bibliothèque</a>
+        </div>
+        <p class="bv-cta-final__note">
+          Déjà membre des 500 premiers ? Vous êtes un <strong>Auteur Fondateur</strong> — votre badge vous attend.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <div class="footer__logo">Kalamundi</div>
+          <p class="footer__tagline">La Plume du Monde</p>
+          <p style="font-size:var(--font-size-xs);color:rgba(255,255,255,0.4);">
+            © 2026 Kalamundi — Tous droits réservés
+          </p>
+        </div>
+        <div>
+          <div class="footer__heading">Plateforme</div>
+          <div class="footer__links">
+            <a href="/pages/library.html" class="footer__link">Bibliothèque</a>
+            <a href="/pages/publish.html" class="footer__link">Publier</a>
+            <a href="/pages/institution.html" class="footer__link">Institutions</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer__heading">Légal</div>
+          <div class="footer__links">
+            <a href="/pages/cgu.html" class="footer__link">CGU</a>
+            <a href="/pages/confidentialite.html" class="footer__link">Confidentialité</a>
+            <a href="/pages/contrat-auteur.html" class="footer__link">Contrat auteur</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer__heading">À propos</div>
+          <div class="footer__links">
+            <a href="/pages/bienvenue.html" class="footer__link">Notre mission</a>
+            <a href="/pages/institution.html" class="footer__link">Partenariats ONG</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        Kalamundi — La Plume du Monde · Kalamu ya Dunia · The World's Pen
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script type="module" src="/assets/js/auth.js"></script>
+</body>
+</html>
