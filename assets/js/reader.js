@@ -84,6 +84,7 @@ const etat = {
   // Afficher la couverture en premier
   afficherCouverture();
   remplirTOC();
+  remplirNavPanelChapitres();
   _rendreOptionLangues();
 
 })();
@@ -296,6 +297,8 @@ async function chargerChapitre(numero, sansAnimation = false) {
   mettreAJourNavigation();
   mettreAJourProgressionChapitre();
   mettreAJourTOC();
+  mettreAJourNavPanelChapitres();
+  remplirNavPanelTitres();
   sauvegarderProgression();
   rendreInfosTopbar();
 
@@ -591,6 +594,155 @@ document.getElementById('toc-overlay')?.addEventListener('click', fermerTOC);
 
 function fermerTOC() {
   document.getElementById('reader-toc').classList.remove('is-open');
+}
+
+/* ============================================================
+   VOLET DE NAVIGATION (Word-style)
+   ============================================================ */
+
+const _navPanel    = document.getElementById('reader-nav-panel');
+const _navOverlay  = document.getElementById('nav-panel-overlay');
+const _navBtnOpen  = document.getElementById('btn-nav-panel');
+const _navPage     = document.getElementById('reader-page');
+
+function ouvrirNavPanel() {
+  _navPanel?.classList.add('is-open');
+  _navPage?.classList.add('nav-panel-open');
+  _navOverlay?.classList.add('is-visible');
+  _navBtnOpen?.setAttribute('aria-expanded', 'true');
+  _navBtnOpen?.classList.add('is-active');
+}
+
+function fermerNavPanel() {
+  _navPanel?.classList.remove('is-open');
+  _navPage?.classList.remove('nav-panel-open');
+  _navOverlay?.classList.remove('is-visible');
+  _navBtnOpen?.setAttribute('aria-expanded', 'false');
+  _navBtnOpen?.classList.remove('is-active');
+}
+
+function toggleNavPanel() {
+  _navPanel?.classList.contains('is-open') ? fermerNavPanel() : ouvrirNavPanel();
+}
+
+_navBtnOpen?.addEventListener('click', toggleNavPanel);
+document.getElementById('btn-close-nav-panel')?.addEventListener('click', fermerNavPanel);
+_navOverlay?.addEventListener('click', fermerNavPanel);
+
+/* Onglets Chapitres / Titres */
+document.getElementById('nav-tab-chapitres')?.addEventListener('click', () => {
+  _activerOngletNav('chapitres');
+});
+document.getElementById('nav-tab-titres')?.addEventListener('click', () => {
+  _activerOngletNav('titres');
+  remplirNavPanelTitres(); // rafraîchit à la demande
+});
+
+function _activerOngletNav(onglet) {
+  ['chapitres', 'titres'].forEach(o => {
+    document.getElementById(`nav-tab-${o}`)?.classList.toggle('is-active', o === onglet);
+    document.getElementById(`nav-tab-${o}`)?.setAttribute('aria-selected', o === onglet ? 'true' : 'false');
+    document.getElementById(`nav-pane-${o}`)?.classList.toggle('is-active', o === onglet);
+  });
+}
+
+/* ── Liste des chapitres dans le volet ─────────────────── */
+function remplirNavPanelChapitres() {
+  const listEl = document.getElementById('nav-chapters-list');
+  if (!listEl) return;
+
+  let html = '';
+  let afficheCorps    = false;
+  let afficheTerminal = false;
+  let numChapitre     = 0;
+
+  etat.chapitres.forEach(ch => {
+    const type   = ch.type_element || 'chapitre';
+    const estLim = LIMMINAIRES.includes(type);
+    const estTer = TERMINAUX.includes(type);
+    const estCh  = !estLim && !estTer;
+
+    if (estCh && !afficheCorps) {
+      afficheCorps = true;
+      if (etat.chapitres.some(c => LIMMINAIRES.includes(c.type_element || ''))) {
+        html += `<div class="nav-ch-separator">Corps du livre</div>`;
+      }
+    }
+    if (estTer && !afficheTerminal) {
+      afficheTerminal = true;
+      html += `<div class="nav-ch-separator">En fin de livre</div>`;
+    }
+
+    const num   = type === 'chapitre' ? ++numChapitre : null;
+    const estPt = estLim || estTer;
+    const label = estPt
+      ? (ch.titre || LABELS_TYPE[type] || type)
+      : (ch.titre || `Chapitre ${num}`);
+
+    html += `
+      <div class="nav-ch-item ${ch.numero === etat.chapitreNum ? 'is-current' : ''} ${estPt ? 'nav-ch-item--paratexte' : ''}"
+        data-num="${ch.numero}" title="${label}">
+        <div class="nav-ch-item__num">${num !== null ? num : '·'}</div>
+        <span class="nav-ch-item__label">${label}</span>
+      </div>`;
+  });
+
+  listEl.innerHTML = html;
+
+  listEl.querySelectorAll('.nav-ch-item').forEach(item => {
+    item.addEventListener('click', () => {
+      chargerChapitre(parseInt(item.dataset.num));
+      // Sur mobile, fermer après navigation
+      if (window.innerWidth <= 900) fermerNavPanel();
+    });
+  });
+}
+
+function mettreAJourNavPanelChapitres() {
+  document.querySelectorAll('#nav-chapters-list .nav-ch-item').forEach(item => {
+    item.classList.toggle('is-current', parseInt(item.dataset.num) === etat.chapitreNum);
+  });
+  // Scroll automatique vers l'item courant
+  const courant = document.querySelector('#nav-chapters-list .nav-ch-item.is-current');
+  courant?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+/* ── Titres du chapitre courant ─────────────────────────── */
+function remplirNavPanelTitres() {
+  const listEl    = document.getElementById('nav-headings-list');
+  const contentEl = document.getElementById('reader-content');
+  if (!listEl || !contentEl) return;
+
+  const headings = contentEl.querySelectorAll('h2, h3');
+  if (!headings.length) {
+    listEl.innerHTML = '<p class="nav-panel__empty">Aucun titre dans ce chapitre.</p>';
+    return;
+  }
+
+  // Injecter des ancres uniques dans le DOM si nécessaire
+  headings.forEach((el, i) => {
+    if (!el.id) el.id = `nav-h-${i}`;
+  });
+
+  let html = '';
+  headings.forEach(el => {
+    const niveau = el.tagName.toLowerCase(); // h2 ou h3
+    const texte  = el.textContent.trim();
+    html += `
+      <div class="nav-heading-item nav-heading-item--${niveau}" data-target="${el.id}" title="${texte}">
+        <span class="nav-heading-item__bar"></span>
+        <span>${texte}</span>
+      </div>`;
+  });
+
+  listEl.innerHTML = html;
+
+  listEl.querySelectorAll('.nav-heading-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const target = document.getElementById(item.dataset.target);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
 }
 
 /* ============================================================

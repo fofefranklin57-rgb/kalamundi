@@ -87,7 +87,7 @@
 
       <div class="reader-topbar__actions">
         <button class="reader-action-btn" id="btn-show-cover"  title="Voir la couverture">📚</button>
-        <button class="reader-action-btn" id="btn-toc"         title="Chapitres">☰</button>
+        <button class="reader-action-btn reader-action-btn--nav" id="btn-nav-panel" title="Volet de navigation" aria-expanded="false" aria-controls="reader-nav-panel">☰</button>
         <button class="reader-action-btn" id="btn-marque-page" title="Marque-page" aria-pressed="false">🔖</button>
         <button class="reader-action-btn" id="btn-annotations" title="Mes annotations">📋</button>
         <button class="reader-action-btn" id="btn-lang"        title="Langue de lecture">🌐 <span id="lang-label">FR</span></button>
@@ -151,6 +151,29 @@
       ⚠ Traduction automatique — la version originale fait foi.
     </div>
   </div>
+
+  <!-- ── Volet de navigation (Word-style) ─────────────── -->
+  <div class="reader-nav-panel" id="reader-nav-panel" aria-label="Volet de navigation">
+    <div class="nav-panel__header">
+      <span class="nav-panel__title">Navigation</span>
+      <button class="nav-panel__close" id="btn-close-nav-panel" aria-label="Fermer le volet">✕</button>
+    </div>
+    <div class="nav-panel__tabs" role="tablist">
+      <button class="nav-panel__tab is-active" id="nav-tab-chapitres" role="tab" aria-selected="true" aria-controls="nav-pane-chapitres">Chapitres</button>
+      <button class="nav-panel__tab" id="nav-tab-titres" role="tab" aria-selected="false" aria-controls="nav-pane-titres">Titres</button>
+    </div>
+    <div class="nav-panel__body">
+      <div class="nav-panel__pane is-active" id="nav-pane-chapitres" role="tabpanel">
+        <div id="nav-chapters-list"></div>
+      </div>
+      <div class="nav-panel__pane" id="nav-pane-titres" role="tabpanel">
+        <div id="nav-headings-list">
+          <p class="nav-panel__empty">Aucun titre dans ce chapitre.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nav-panel__overlay" id="nav-panel-overlay"></div>
 
   <!-- ── Table des matières ────────────────────────────── -->
   <div class="reader-toc" id="reader-toc">
