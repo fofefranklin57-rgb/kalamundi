@@ -332,20 +332,113 @@ function afficherPageTitreChapitre(numero) {
 }
 
 /* ============================================================
-   FORMATAGE DU TEXTE
+   FORMATAGE DU TEXTE — nettoyage intelligent
+   Gère les imports PDF/Word : en-têtes répétés, double espaces,
+   séparateurs visuels, dialogues, épigraphes, ornements
    ============================================================ */
 
 function formaterTexte(texte) {
-  const paragraphes = texte
+  // ── ÉTAPE 1 : Nettoyer les en-têtes de page PDF répétés ──────
+  // Pattern typique des PDF : "Titre · Auteur · N" en début de chaque page
+  // Ex : "L'Amour d'un Voyage · Fofe Nodem Franklin ·   4  [contenu...]"
+  const lignesBrutes = texte.split('\n').filter(l => l.trim());
+
+  const regexEnTetePage = /^.{4,120}·\s*\d{1,3}\s+/;
+  const nbAvecEnTete = lignesBrutes.filter(l => regexEnTetePage.test(l)).length;
+  const estImportPDF  = (nbAvecEnTete / Math.max(lignesBrutes.length, 1)) > 0.35;
+
+  const lignesSansEnTete = estImportPDF
+    ? lignesBrutes.map(l => l.replace(regexEnTetePage, '').trim())
+    : lignesBrutes;
+
+  // ── ÉTAPE 2 : Re-découper les paragraphes ────────────────────
+  // Dans les imports PDF, les paragraphes d'une même page sont séparés
+  // par 2+ espaces consécutifs (pas de \n). On les recoupe ici.
+  const textRecompose = lignesSansEnTete.join('\n');
+
+  const blocs = textRecompose
+    // Séparateurs visuels longs (———) → marqueur de section
+    .replace(/[—\-]{4,}/g, '\n§SEP§\n')
+    // Ornement typographique ✦ → sa propre ligne
+    .replace(/✦/g, '\n§ORN§\n')
+    // Double espace = séparation de paragraphe (export PDF/Word)
+    .replace(/[ \t]{2,}/g, '\n')
+    // Dialogues collés au texte précédent (ligne commençant par —)
+    .replace(/([^\n])\n?—\s+/g, '$1\n— ')
+    // Nettoyer les sauts multiples
+    .replace(/\n{3,}/g, '\n\n')
     .split('\n')
     .map(l => l.trim())
     .filter(l => l);
 
-  return paragraphes.map((ligne, i) => {
-    // Lettre ornée (lettrine) sur le premier paragraphe uniquement
-    const cls = i === 0 ? ' is-first' : '';
-    return `<p class="${cls.trim()}">${ligne}</p>`;
-  }).join('');
+  // ── ÉTAPE 3 : Construire le HTML ─────────────────────────────
+  let premierVrai = true; // Pour la lettrine — premier vrai paragraphe
+  const html = [];
+
+  for (const bloc of blocs) {
+
+    // Séparateur de section
+    if (bloc === '§SEP§') {
+      html.push('<hr class="reader-sep" />');
+      continue;
+    }
+
+    // Ornement typographique
+    if (bloc === '§ORN§') {
+      html.push('<div class="reader-ornament" aria-hidden="true">✦</div>');
+      continue;
+    }
+
+    // Résidus d'en-têtes de page (sécurité supplémentaire)
+    if (/^.{4,80}·\s*\d{1,3}$/.test(bloc)) continue;
+
+    // Lignes de copyright / mentions légales
+    if (/^©|Tous droits réservés|droits réservés|All rights reserved/i.test(bloc)) {
+      html.push(`<p class="reader-legal">${bloc}</p>`);
+      continue;
+    }
+
+    // P.S. ou Note de l'auteur
+    if (/^P\.?\s*S\.?\s/i.test(bloc)) {
+      html.push(`<p class="reader-ps">${bloc}</p>`);
+      continue;
+    }
+
+    // Section "À propos de l'auteur" et similaires → titre secondaire
+    if (/^(À propos|About the|Note de l'auteur|Note d'auteur|Biographie|Biography)/i.test(bloc)
+        && bloc.length < 80) {
+      html.push(`<h2 class="reader-section-title">${bloc}</h2>`);
+      premierVrai = true; // Lettrine après un titre de section
+      continue;
+    }
+
+    // Dialogue français (ligne commençant par — ou –)
+    if (/^[—–]\s/.test(bloc)) {
+      html.push(`<p class="reader-dialogue">${bloc}</p>`);
+      continue;
+    }
+
+    // Épigraphe / Citation (ligne commençant et/ou finissant par guillemets)
+    if ((bloc.startsWith('"') || bloc.startsWith('«') || bloc.startsWith('“'))
+        && bloc.length < 400) {
+      html.push(`<blockquote class="reader-quote"><p>${bloc}</p></blockquote>`);
+      continue;
+    }
+
+    // Titre de chapitre court isolé (toutes caps ou ligne très courte entre séparateurs)
+    if (bloc.length < 60 && /^[A-ZÀÁÂÄÉÈÊËÎÏÔÙÛÜ\s\d\-–—'«»]+$/.test(bloc)
+        && !/[.!?,;:]$/.test(bloc)) {
+      html.push(`<h3 class="reader-inner-title">${bloc}</h3>`);
+      continue;
+    }
+
+    // Paragraphe normal — avec lettrine sur le premier
+    const cls = premierVrai ? 'is-first' : '';
+    html.push(`<p${cls ? ` class="${cls}"` : ''}>${bloc}</p>`);
+    if (premierVrai) premierVrai = false;
+  }
+
+  return html.join('');
 }
 
 /* ============================================================
