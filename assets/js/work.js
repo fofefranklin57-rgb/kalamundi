@@ -88,6 +88,10 @@ async function chargerOeuvre() {
     document.getElementById('page-title').textContent = `${oeuvre.titre} — Kalamundi`;
     document.title = `${oeuvre.titre} — Kalamundi`;
 
+    // Breadcrumb
+    const bc = document.getElementById('breadcrumb-titre');
+    if (bc) bc.textContent = oeuvre.titre;
+
     // Hero
     document.getElementById('work-genre').textContent = oeuvre.genre;
     document.getElementById('work-titre').textContent = oeuvre.titre;

@@ -376,3 +376,47 @@
     padding-block: var(--spacing-lg);
   }
 }
+
+/* ============================================================
+   BREADCRUMB — fil d'Ariane universel
+   ============================================================ */
+
+.breadcrumb-bar {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 0;
+}
+
+.breadcrumb-bar .container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-link {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.breadcrumb-link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.breadcrumb-sep {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+}
+
+.breadcrumb-current {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}

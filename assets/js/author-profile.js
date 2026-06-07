@@ -97,6 +97,8 @@ function getGenresCoches() {
    ============================================================ */
 
 function remplirFormulaire(p) {
+  const bc = document.getElementById('breadcrumb-auteur');
+  if (bc && p.nom) bc.textContent = p.nom;
   document.getElementById('champ-nom').value     = p.nom     || '';
   document.getElementById('champ-bio').value     = p.bio     || '';
   document.getElementById('champ-pays').value    = p.pays    || '';

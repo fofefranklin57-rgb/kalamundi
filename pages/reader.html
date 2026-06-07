@@ -70,15 +70,24 @@
   <!-- ── Topbar ─────────────────────────────────────────── -->
   <header>
     <div class="reader-topbar">
-      <button class="reader-topbar__back" id="btn-show-cover" title="Retour à la couverture" aria-label="Voir la couverture du livre">
-        📚
-      </button>
+      <!-- Navigation retour -->
+      <div class="reader-topbar__nav">
+        <a href="/index.html" class="reader-nav-back" title="Accueil" aria-label="Retour à l'accueil">
+          🏠
+        </a>
+        <a href="#" class="reader-nav-back" id="back-btn" title="Retour à la fiche du livre" aria-label="Retour à la fiche">
+          ← Fiche
+        </a>
+      </div>
+
       <div class="reader-topbar__info">
         <div class="reader-topbar__titre" id="topbar-titre">Chargement…</div>
         <div class="reader-topbar__chapitre" id="topbar-chapitre"></div>
       </div>
+
       <div class="reader-topbar__actions">
-        <button class="reader-action-btn" id="btn-toc"         title="Table des matières">☰</button>
+        <button class="reader-action-btn" id="btn-show-cover"  title="Voir la couverture">📚</button>
+        <button class="reader-action-btn" id="btn-toc"         title="Chapitres">☰</button>
         <button class="reader-action-btn" id="btn-marque-page" title="Marque-page" aria-pressed="false">🔖</button>
         <button class="reader-action-btn" id="btn-annotations" title="Mes annotations">📋</button>
         <button class="reader-action-btn" id="btn-lang"        title="Langue de lecture">🌐 <span id="lang-label">FR</span></button>

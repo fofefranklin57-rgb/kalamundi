@@ -79,6 +79,22 @@
   max-width: 420px;
 }
 
+.login-back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  margin-bottom: var(--spacing-lg);
+  padding: 6px 0;
+  transition: color var(--transition-fast);
+}
+
+.login-back-home:hover {
+  color: var(--color-primary);
+}
+
 .login-tabs {
   margin-bottom: var(--spacing-lg);
 }

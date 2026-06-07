@@ -242,6 +242,35 @@ body.reader-body {
   box-shadow: var(--shadow-md);
 }
 
+/* Navigation retour (🏠 + ← Fiche) */
+.reader-topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.reader-nav-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: none;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+
+.reader-nav-back:hover {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border-color: rgba(255,255,255,0.4);
+}
+
 /* Bouton couverture */
 .reader-topbar__back {
   font-size: 1.2rem;
