@@ -756,3 +756,100 @@
   margin-inline: auto;
   margin-bottom: var(--spacing-lg);
 }
+
+/* ============================================================
+   Avatar navbar — menu profil connecté
+   ============================================================ */
+
+.nav-avatar {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.3);
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+}
+
+.nav-avatar:hover { border-color: var(--color-accent-light); }
+
+.nav-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.nav-avatar__initiale {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  line-height: 1;
+}
+
+.nav-avatar__menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 200px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.nav-avatar__menu.is-open { display: block; }
+
+.nav-avatar__name {
+  padding: 12px var(--spacing-md);
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-avatar__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  text-decoration: none;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.nav-avatar__item:hover { background: var(--bg-secondary); }
+
+.nav-avatar__item--danger { color: var(--color-error); }
+.nav-avatar__item--danger:hover { background: #ffeaea; }
+
+.nav-avatar__sep {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+[data-theme="dark"] .nav-avatar__menu { background: var(--dark-card); border-color: var(--dark-border); }
+[data-theme="dark"] .nav-avatar__name { background: var(--dark-surface); color: var(--color-accent-light); border-color: var(--dark-border); }
+[data-theme="dark"] .nav-avatar__item { color: var(--dark-text); }
+[data-theme="dark"] .nav-avatar__item:hover { background: var(--dark-surface); }
+[data-theme="dark"] .nav-avatar__sep { background: var(--dark-border); }

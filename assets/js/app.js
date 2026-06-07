@@ -57,10 +57,45 @@ async function initNavbar() {
   const heroStats     = document.getElementById('hero-stats');
 
   if (session) {
+    const user = session.user;
+    const nom = user.user_metadata?.nom || user.email?.split('@')[0] || 'Mon compte';
+    const initiale = nom.charAt(0).toUpperCase();
+    const photo = user.user_metadata?.avatar_url || user.user_metadata?.photo_url || null;
+    const avatarHtml = photo
+      ? `<img src="${photo}" alt="${nom}" class="nav-avatar__img">`
+      : `<span class="nav-avatar__initiale">${initiale}</span>`;
+
     navbarActions.innerHTML = `
-      <a href="/pages/library.html" class="btn btn--outline btn--sm" style="color:white;border-color:rgba(255,255,255,0.5)">Ma bibliothèque</a>
       <a href="/pages/publish.html" class="btn btn--accent btn--sm">Publier</a>
+      <div class="nav-avatar" id="nav-avatar-btn" title="${nom}">
+        ${avatarHtml}
+        <div class="nav-avatar__menu" id="nav-avatar-menu">
+          <div class="nav-avatar__name">${nom}</div>
+          <a href="/pages/author-profile.html?id=${user.id}" class="nav-avatar__item">👤 Mon profil</a>
+          <a href="/pages/author-dashboard.html" class="nav-avatar__item">📊 Tableau de bord</a>
+          <a href="/pages/library.html" class="nav-avatar__item">📚 Ma bibliothèque</a>
+          <div class="nav-avatar__sep"></div>
+          <button class="nav-avatar__item nav-avatar__item--danger" id="btn-deconnexion">🚪 Déconnexion</button>
+        </div>
+      </div>
     `;
+
+    // Toggle menu avatar
+    document.getElementById('nav-avatar-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('nav-avatar-menu')?.classList.toggle('is-open');
+    });
+    document.addEventListener('click', () => {
+      document.getElementById('nav-avatar-menu')?.classList.remove('is-open');
+    });
+
+    // Déconnexion
+    document.getElementById('btn-deconnexion')?.addEventListener('click', async () => {
+      const { signOut } = await import('./auth.js');
+      await signOut();
+      window.location.href = '/index.html';
+    });
+
     heroActions.innerHTML = `
       <a href="/pages/library.html" class="btn btn--accent btn--lg">Découvrir les œuvres</a>
       <a href="/pages/publish.html" class="btn btn--outline btn--lg" style="color:white;border-color:rgba(255,255,255,0.6)">Publier une œuvre</a>
