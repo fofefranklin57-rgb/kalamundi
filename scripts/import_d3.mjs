@@ -12,8 +12,9 @@
  */
 
 // ─── Credentials ─────────────────────────────────────────────────────────────
-const SUPABASE_URL = "https://iobieffnaauecyukecds.supabase.co";
-const SERVICE_KEY  = "sb_secret_ighJK-990TP2_9gCC7TmUw_rm9N2cDi";
+// Usage : SUPABASE_URL=... SERVICE_KEY=... node scripts/import_d3.mjs
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://iobieffnaauecyukecds.supabase.co";
+const SERVICE_KEY  = process.env.SERVICE_KEY  || "";
 
 const HEADERS = {
   "apikey":        SERVICE_KEY,
