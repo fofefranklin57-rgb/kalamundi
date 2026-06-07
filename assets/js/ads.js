@@ -26,12 +26,11 @@
 
   var DELAI_MS = 2500; // Délai avant injection (laisser la page se charger)
 
-  /* ── Pages sans pub ──────────────────────────────────────── */
+  /* ── Pages complètement sans pub ────────────────────────── */
   var PAGE_SANS_PUB = [
-    'reader.html',
-    'login.html',
-    'admin.html',
-    'payment.html',
+    'reader.html',   // lecture immersive — jamais de pub
+    'admin.html',    // outil de gestion — expérience propre
+    'payment.html',  // tunnel de paiement — ne pas distraire
   ];
 
   /* ── Initialisation ──────────────────────────────────────── */
@@ -69,15 +68,40 @@
 
   /* ── Charger les scripts Monetag selon la page ───────────── */
   function _chargerPubs(page, estAbonne) {
-    var isBrowse = page.includes('library') || page.includes('work')
-                || page.includes('author-profile');
+    var isBrowse  = page.includes('library') || page.includes('work')
+                 || page.includes('author-profile');
+    var isAccueil = page === '/' || page.endsWith('index.html') || page === '';
+    var isLogin   = page.includes('login.html');
+    var isDashboard = page.includes('author-dashboard')
+                   || page.includes('institution')
+                   || page.includes('abonnements')
+                   || page.includes('publish')
+                   || page.includes('cgu')
+                   || page.includes('contrat');
 
     if (isBrowse) {
-      // Pages de navigation : Vignette + Multitag
+      /* Pages de catalogue et fiches œuvres :
+         Vignette Banner + Multitag — meilleur RPM sur contenu éditorial */
       _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
       _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
+
+    } else if (isAccueil) {
+      /* Accueil : In-Page Push + Vignette — trafic élevé, deux formats */
+      _chargerScript(ZONE_INPAGE,   SRC_INPAGE);
+      _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
+
+    } else if (isLogin) {
+      /* Login/inscription : In-Page Push uniquement — discret,
+         format notification, ne bloque pas le formulaire */
+      _chargerScript(ZONE_INPAGE, SRC_INPAGE);
+
+    } else if (isDashboard) {
+      /* Dashboard, publication, pages légales :
+         In-Page Push uniquement — non intrusif */
+      _chargerScript(ZONE_INPAGE, SRC_INPAGE);
+
     } else {
-      // Accueil et autres pages : In-Page Push
+      /* Toutes les autres pages : In-Page Push par défaut */
       _chargerScript(ZONE_INPAGE, SRC_INPAGE);
     }
   }
