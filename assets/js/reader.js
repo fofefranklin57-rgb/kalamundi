@@ -9,8 +9,8 @@ import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
 import { traduire, viderCacheTraduction, rendreOptionLangues, LANGUES_LECTURE } from './translate.js';
 import { activerProtections } from './security.js';
 
-/* Nombre de pages/chapitres gratuits pour les visiteurs non connectés */
-const LIMIT_VISITEUR = 2;
+/* Nombre de pages scrollées gratuites pour les visiteurs non connectés */
+const LIMIT_VISITEUR_PAGES = 2;
 
 /* ============================================================
    État du lecteur
@@ -113,9 +113,9 @@ async function chargerChapitre(numero) {
   mettreAJourTOC();
   sauvegarderProgression();
 
-  // Limite visiteur — afficher modal après LIMIT_VISITEUR chapitres
-  if (!etat.utilisateur && numero >= LIMIT_VISITEUR) {
-    _afficherModalAbonnement();
+  // Limite visiteur — détecter scroll bas de page pour visiteurs
+  if (!etat.utilisateur) {
+    _surveilerScrollVisiteur();
   }
 
   // Scroll vers le haut
@@ -183,13 +183,47 @@ document.getElementById('btn-prev')?.addEventListener('click', () => {
 });
 
 document.getElementById('btn-next')?.addEventListener('click', () => {
-  // Bloquer le chapitre suivant si visiteur et limite atteinte
-  if (!etat.utilisateur && etat.chapitreNum >= LIMIT_VISITEUR) {
-    _afficherModalAbonnement();
-    return;
-  }
   if (etat.chapitreNum < etat.chapitres.length) chargerChapitre(etat.chapitreNum + 1);
 });
+
+// ── Surveillance scroll visiteur ──────────────────────────────
+let _scrollPagesLues = 0;
+let _scrollHandler   = null;
+let _modalMontree    = false;
+
+function _surveilerScrollVisiteur() {
+  // Supprimer l'ancien handler si existant
+  if (_scrollHandler) window.removeEventListener('scroll', _scrollHandler);
+
+  const hauteurFenetre = window.innerHeight;
+  let seuilsAtteints   = new Set();
+
+  _scrollHandler = () => {
+    if (_modalMontree) return;
+    const scrollY   = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight;
+    const pct       = scrollY / (docHeight - hauteurFenetre);
+
+    // Chaque "page" = 100% de hauteur fenêtre scrollée
+    const pageActuelle = Math.floor(scrollY / hauteurFenetre);
+
+    if (pageActuelle > 0 && !seuilsAtteints.has(pageActuelle)) {
+      seuilsAtteints.add(pageActuelle);
+      _scrollPagesLues = seuilsAtteints.size;
+    }
+
+    // Après LIMIT_VISITEUR_PAGES pages scrollées OU arrivée à 80% du contenu
+    if (_scrollPagesLues >= LIMIT_VISITEUR_PAGES || pct >= 0.80) {
+      _modalMontree = true;
+      window.removeEventListener('scroll', _scrollHandler);
+      // Bloquer le scroll
+      document.body.style.overflow = 'hidden';
+      _afficherModalAbonnement();
+    }
+  };
+
+  window.addEventListener('scroll', _scrollHandler, { passive: true });
+}
 
 /* ============================================================
    Progression
@@ -419,10 +453,8 @@ function _afficherModalAbonnement() {
     padding:var(--spacing-lg);
   `;
 
-  document.getElementById('modal-btn-visiteur')?.addEventListener('click', () => {
-    modal.style.display = 'none';
-    toast('Vous êtes en mode visiteur — 3 chapitres gratuits disponibles.', 'info');
-  }, { once: true });
+  // Le bouton "continuer visiteur" n'existe plus — on retire cette option
+  // Le modal est bloquant : seul s'inscrire ou se connecter permet de continuer
 }
 
 /* ============================================================
