@@ -184,12 +184,21 @@ function renderBookMini(oeuvre) {
   const titre  = oeuvre.titre || 'Sans titre';
   const auteur = oeuvre.profiles?.nom || 'Auteur inconnu';
   const genre  = oeuvre.genre || '';
-  const cover  = oeuvre.couverture_url
-    ? `<img src="${oeuvre.couverture_url}" alt="${titre}" loading="lazy">`
-    : '📖';
+  const couleurs = ['#1B4332','#2D6A4F','#A97C0E','#1a3a5c','#5c1a1a','#2c4a1a'];
+  const couleur  = couleurs[titre.charCodeAt(0) % couleurs.length];
+  const initiale = titre.charAt(0).toUpperCase();
+
+  const cover = oeuvre.couverture_url
+    ? `<img src="${oeuvre.couverture_url}" alt="${titre}" loading="lazy"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    : '';
+  const fallback = `<div class="book-mini__fallback" style="background:${couleur};display:${oeuvre.couverture_url ? 'none' : 'flex'}">
+    <span>${initiale}</span>
+  </div>`;
+
   return `
     <a href="/pages/work.html?id=${oeuvre.id}" class="book-mini">
-      <div class="book-mini__cover">${cover}</div>
+      <div class="book-mini__cover">${cover}${fallback}</div>
       <div class="book-mini__body">
         ${genre ? `<div class="book-mini__genre">${genre}</div>` : ''}
         <div class="book-mini__title">${titre}</div>
