@@ -13,7 +13,7 @@ let classeActive = null; // classe ouverte dans le modal détail
    INIT
    ============================================================ */
 
-document.addEventListener('DOMContentLoaded', async () => {
+export async function init() {
   utilisateur = await getUser();
 
   initNavbar();
@@ -28,7 +28,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('zone-connecte').style.display = 'block';
   await chargerMesClasses();
   await chargerMesLectures();
-});
+}
+if (!document.body?.classList.contains('edu-hub')) {
+  document.addEventListener('DOMContentLoaded', init);
+}
 
 /* ============================================================
    NAVBAR

@@ -96,7 +96,7 @@ let programme   = null;  // données Supabase
 let resultats   = [];
 
 /* ── Init ───────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', async () => {
+export async function init() {
   initNavbar();
   utilisateur = await getUser();
 
@@ -109,7 +109,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   initOnglets();
   await Promise.all([chargerProgramme(), chargerResultats()]);
   rendreOngletActif('programme');
-});
+}
+if (!document.body?.classList.contains('edu-hub')) {
+  document.addEventListener('DOMContentLoaded', init);
+}
 
 /* ── Navbar ─────────────────────────────────────────────────── */
 function initNavbar() {

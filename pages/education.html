@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Éducation — Kalamundi</title>
+  <meta name="description" content="Espace Éducation Kalamundi : Annales BAC/Probatoire/BEPC, Simulateur de moyenne, Super Répétiteur et Espace École." />
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <script src="/assets/js/theme-init.js"></script>
+  <style>
+    /* ── Hero ───────────────────────────────────────────────── */
+    .edu-hero {
+      background: linear-gradient(135deg,#0d2137 0%,#1a3a5c 55%,#1B4332 100%);
+      color: #fff;
+    }
+    .edu-hero__top {
+      text-align: center;
+      padding: var(--spacing-xl) 0 0;
+    }
+    .edu-hero h1 { font-size: clamp(1.6rem,4vw,2.6rem); margin-bottom: 6px; }
+    .edu-hero p  { opacity: .8; font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg); }
+
+    /* ── Onglets ─────────────────────────────────────────────── */
+    .edu-tabs {
+      display: flex;
+      justify-content: center;
+      padding: 0 var(--spacing-md);
+      overflow-x: auto;
+      gap: 2px;
+    }
+    .edu-tab {
+      padding: 12px 24px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.75);
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+      font-size: var(--font-size-sm);
+      transition: .2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .edu-tab:hover { background: rgba(255,255,255,.22); color: #fff; }
+    .edu-tab--active {
+      background: var(--bg-primary, #fff);
+      color: var(--color-primary);
+    }
+
+    /* ── Contenu ─────────────────────────────────────────────── */
+    .edu-content {
+      background: var(--bg-primary, #fff);
+      min-height: calc(100vh - 160px);
+    }
+    .edu-panel  { display: none; }
+    .edu-panel--active { display: block; }
+
+    /* ── iFrame ──────────────────────────────────────────────── */
+    .edu-iframe {
+      width: 100%;
+      border: none;
+      display: block;
+      min-height: calc(100vh - 160px);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .edu-iframe.loaded { opacity: 1; }
+
+    /* ── Loader ──────────────────────────────────────────────── */
+    .edu-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      gap: var(--spacing-md);
+      color: var(--text-secondary);
+    }
+    .spinner-lg {
+      width: 48px; height: 48px;
+      border: 4px solid var(--border-color);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <nav class="navbar__nav" id="nav-menu">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/library.html" class="navbar__link">Catalogue</a>
+        <a href="/pages/education.html" class="navbar__link navbar__link--active">🎓 Éducation</a>
+        <a href="/pages/bienvenue.html" class="navbar__link">À propos</a>
+      </nav>
+      <span id="theme-slot"></span>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO + ONGLETS -->
+  <div class="edu-hero">
+    <div class="edu-hero__top container">
+      <div class="hero__badge" style="display:inline-block;margin-bottom:8px">🎓 Espace Éducation</div>
+      <h1>Tout pour réussir vos examens</h1>
+      <p>BAC · Probatoire · BEPC · GCE — Cameroun et Afrique</p>
+    </div>
+    <div class="edu-tabs" role="tablist">
+      <button class="edu-tab edu-tab--active" data-tab="annales"    role="tab">📝 Annales</button>
+      <button class="edu-tab"                 data-tab="simulateur" role="tab">📊 Simulateur</button>
+      <button class="edu-tab"                 data-tab="repetiteur" role="tab">🎯 Répétiteur</button>
+      <button class="edu-tab"                 data-tab="ecole"      role="tab">🏫 Espace École</button>
+    </div>
+  </div>
+
+  <!-- CONTENU PANELS -->
+  <div class="edu-content">
+
+    <div class="edu-panel edu-panel--active" id="panel-annales">
+      <div class="edu-loader" id="loader-annales">
+        <div class="spinner-lg"></div>
+        <span>Chargement des annales…</span>
+      </div>
+      <iframe class="edu-iframe" id="iframe-annales"
+              data-src="/pages/annales.html?hub=1"
+              title="Annales BAC Probatoire BEPC"></iframe>
+    </div>
+
+    <div class="edu-panel" id="panel-simulateur">
+      <div class="edu-loader" id="loader-simulateur">
+        <div class="spinner-lg"></div>
+        <span>Chargement du simulateur…</span>
+      </div>
+      <iframe class="edu-iframe" id="iframe-simulateur"
+              data-src="/pages/simulateur.html?hub=1"
+              title="Simulateur de moyenne BAC"></iframe>
+    </div>
+
+    <div class="edu-panel" id="panel-repetiteur">
+      <div class="edu-loader" id="loader-repetiteur">
+        <div class="spinner-lg"></div>
+        <span>Chargement du répétiteur…</span>
+      </div>
+      <iframe class="edu-iframe" id="iframe-repetiteur"
+              data-src="/pages/repetiteur.html?hub=1"
+              title="Super Répétiteur"></iframe>
+    </div>
+
+    <div class="edu-panel" id="panel-ecole">
+      <div class="edu-loader" id="loader-ecole">
+        <div class="spinner-lg"></div>
+        <span>Chargement de l'espace école…</span>
+      </div>
+      <iframe class="edu-iframe" id="iframe-ecole"
+              data-src="/pages/ecole.html?hub=1"
+              title="Espace École"></iframe>
+    </div>
+
+  </div>
+
+  <script type="module" src="/assets/js/education.js"></script>
+</body>
+</html>

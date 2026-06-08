@@ -31,7 +31,7 @@ const LABELS_SERIE = {
 
 /* ── Init ─────────────────────────────────────────────────── */
 
-document.addEventListener('DOMContentLoaded', async () => {
+export async function init() {
   initNavbar();
   utilisateur = await getUser();
   if (utilisateur) verifierAdmin();
@@ -39,7 +39,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   await chargerAnnales();
   initFiltres();
   initModalUpload();
-});
+}
+if (!document.body?.classList.contains('edu-hub')) {
+  document.addEventListener('DOMContentLoaded', init);
+}
 
 /* ── Navbar ───────────────────────────────────────────────── */
 

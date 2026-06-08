@@ -264,11 +264,14 @@ let notes = {}; // { nomMatiere: valeur }
    INIT
    ============================================================ */
 
-document.addEventListener('DOMContentLoaded', async () => {
+export async function init() {
   initNavbar();
   initSelectors();
   rendreMatieres();
-});
+}
+if (!document.body?.classList.contains('edu-hub')) {
+  document.addEventListener('DOMContentLoaded', init);
+}
 
 function initNavbar() {
   const toggle = document.getElementById('nav-toggle');
