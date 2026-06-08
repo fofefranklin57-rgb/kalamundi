@@ -15,11 +15,8 @@ import {
   _rafraichirBoutonMarquePage,
 } from './annotations.js';
 
-/* Nombre de "pages" scrollées gratuites pour les visiteurs (dans un chapitre) */
-const LIMIT_VISITEUR_PAGES = 2;
-
-/* Nombre de chapitres gratuits pour les visiteurs (session entière) */
-const LIMIT_VISITEUR_CHAPITRES = 1;
+/* Nombre de pages gratuites pour les visiteurs (session entière, toutes pages confondues) */
+const LIMIT_VISITEUR_PAGES = 5;
 
 /* Couleur par genre pour la couverture (doit correspondre à library.js) */
 const GENRE_COULEURS = {
@@ -60,6 +57,8 @@ const etat = {
   oeuvre:         null,
   utilisateur:    null,
   couvertureVisible: true,
+  pages:          0,   // nombre de pages dans le chapitre courant (après pagination)
+  pageCourante:   1,   // page courante (1-indexed)
 };
 
 /* ============================================================
@@ -217,8 +216,7 @@ async function entrerDansLecteur() {
     toast(`Reprise au chapitre ${prog.chapitre_courant}`, 'info');
   }
 
-  // Écouter le scroll pour la progression
-  window.addEventListener('scroll', _mettreAJourScrollProgress, { passive: true });
+  // La progression est gérée par la pagination (pas de scroll)
 }
 
 /* ============================================================
@@ -296,9 +294,8 @@ async function chargerChapitre(numero, sansAnimation = false) {
   mettreAJourChapitre(numero, chapitre.id);
   _rafraichirBoutonMarquePage();
 
-  // UI
+  // UI — la position/progression est mise à jour dans _paginerContenu via _mettreAJourPositionPage
   mettreAJourNavigation();
-  mettreAJourProgressionChapitre();
   mettreAJourTOC();
   mettreAJourNavPanelChapitres();
   remplirNavPanelTitres();
@@ -308,20 +305,10 @@ async function chargerChapitre(numero, sansAnimation = false) {
   // Scroll haut
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Visiteur — contrôle d'accès par chapitre
-  if (!etat.utilisateur) {
-    _chapitresVisiteurLus++;
-
-    if (_visiteurModeStrict || _chapitresVisiteurLus > LIMIT_VISITEUR_CHAPITRES) {
-      // Bloquer immédiatement — afficher le modal sans attendre le scroll
-      _modalMontree = true;
-      document.body.style.overflow = 'hidden';
-      _afficherModalAbonnement();
-    } else {
-      // Premier chapitre — surveiller le scroll normalement
-      _surveilerScrollVisiteur();
-    }
-  }
+  // Pagination : découper le texte en pages de hauteur écran
+  _paginerContenu(contentEl);
+  mettreAJourNavigation();
+  _mettreAJourPositionPage();
 }
 
 /* ============================================================
@@ -779,44 +766,27 @@ function remplirNavPanelTitres() {
    ============================================================ */
 
 function _visiteurBloque() {
-  return !etat.utilisateur && (_visiteurModeStrict || _chapitresVisiteurLus >= LIMIT_VISITEUR_CHAPITRES);
+  return !etat.utilisateur && (_visiteurModeStrict || _pagesVisiteurLues >= LIMIT_VISITEUR_PAGES);
 }
 
 function mettreAJourNavigation() {
-  const bloque = _visiteurBloque();
-  document.getElementById('btn-prev').disabled = etat.chapitreNum <= 1 || bloque;
-  document.getElementById('btn-next').disabled = etat.chapitreNum >= etat.chapitres.length || bloque;
+  const bloque       = _visiteurBloque();
+  const premierePage = etat.pageCourante <= 1 && etat.chapitreNum <= 1;
+  const dernierePage = etat.pageCourante >= etat.pages && etat.chapitreNum >= etat.chapitres.length;
+
+  document.getElementById('btn-prev').disabled = premierePage;
+  document.getElementById('btn-next').disabled = (dernierePage || bloque);
 }
 
-document.getElementById('btn-prev')?.addEventListener('click', () => {
-  if (etat.chapitreNum > 1) chargerChapitre(etat.chapitreNum - 1);
-});
-
-document.getElementById('btn-next')?.addEventListener('click', () => {
-  if (etat.chapitreNum < etat.chapitres.length) chargerChapitre(etat.chapitreNum + 1);
-});
+document.getElementById('btn-prev')?.addEventListener('click', _pagePrev);
+document.getElementById('btn-next')?.addEventListener('click', _pageNext);
 
 /* ============================================================
    PROGRESSION — scroll dans le chapitre (plus précis que X/Y)
    ============================================================ */
 
-function mettreAJourProgressionChapitre() {
-  const pct = etat.chapitres.length > 0
-    ? Math.round((etat.chapitreNum / etat.chapitres.length) * 100) : 0;
-  document.getElementById('reader-position').innerHTML =
-    `Chapitre ${etat.chapitreNum} / ${etat.chapitres.length}<br>
-     <span style="color:var(--color-accent)">${pct}% du livre</span>`;
-}
-
-/* Barre de progression = avancement scroll dans le chapitre */
-function _mettreAJourScrollProgress() {
-  const scrollY     = window.scrollY;
-  const docHeight   = document.documentElement.scrollHeight;
-  const innerHeight = window.innerHeight;
-  const scrollable  = Math.max(1, docHeight - innerHeight);
-  const pct         = Math.min(100, Math.round((scrollY / scrollable) * 100));
-  document.getElementById('progress-fill').style.width = `${pct}%`;
-}
+/* _mettreAJourScrollProgress est géré par _mettreAJourPositionPage() dans la section pagination */
+function _mettreAJourScrollProgress() { /* no-op — remplacé par la pagination */ }
 
 /* ============================================================
    PROGRESSION SUPABASE
@@ -1039,10 +1009,10 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
-    if (!_visiteurBloque() && etat.chapitreNum < etat.chapitres.length) chargerChapitre(etat.chapitreNum + 1);
+    _pageNext();
   }
   if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
-    if (!_visiteurBloque() && etat.chapitreNum > 1) chargerChapitre(etat.chapitreNum - 1);
+    _pagePrev();
   }
   if (e.key === 'Escape') {
     fermerTOC();
@@ -1056,69 +1026,131 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ============================================================
-   SURVEILLANCE SCROLL VISITEUR
+   PAGINATION — découpage en pages hauteur-écran
    ============================================================ */
 
-let _scrollPagesLues       = 0;
-let _scrollHandler         = null;
-let _modalMontree          = false;
-let _chapitresVisiteurLus  = 0;   // nb chapitres chargés par un visiteur cette session
-let _visiteurModeStrict    = false; // true après "Continuer comme visiteur"
+let _pagesVisiteurLues  = 0;     // nb pages tournées par un visiteur cette session
+let _modalMontree       = false;
+let _visiteurModeStrict = false; // true après "Continuer comme visiteur"
 
-function _reinitScrollVisiteur() {
-  _scrollPagesLues = 0;
-  _modalMontree    = false;
-  document.body.style.overflow = '';
+/**
+ * Découpe le contenu de `contentEl` (déjà dans le DOM) en pages
+ * de hauteur égale à la zone de lecture disponible.
+ * Remplace le contenu par des <div class="reader-book-page"> numérotées.
+ */
+function _paginerContenu(contentEl) {
+  const elements = Array.from(contentEl.children);
+  if (!elements.length) { etat.pages = 1; etat.pageCourante = 1; return; }
+
+  // Hauteur disponible pour le texte
+  const header   = document.querySelector('header');
+  const footer   = document.querySelector('.reader-bottombar');
+  const headerH  = header?.offsetHeight ?? 56;
+  const footerH  = footer?.offsetHeight ?? 56;
+  const PADDING  = 72; // padding vertical reader-main (top 36 + bottom 36)
+  const GAP      = 28; // marge estimée entre paragraphes
+  const hauteurMax = Math.max(300, window.innerHeight - headerH - footerH - PADDING);
+
+  // Snapshot des hauteurs (éléments visibles dans le DOM)
+  const pages    = [];
+  let page       = [];
+  let hPage      = 0;
+
+  for (const el of elements) {
+    const h = el.offsetHeight + GAP;
+    if (hPage + h > hauteurMax && page.length > 0) {
+      pages.push(page);
+      page = [el];
+      hPage = h;
+    } else {
+      page.push(el);
+      hPage += h;
+    }
+  }
+  if (page.length) pages.push(page);
+
+  // Reconstruire le DOM avec des divs de pages
+  contentEl.innerHTML = '';
+  pages.forEach((pg, i) => {
+    const div = document.createElement('div');
+    div.className = 'reader-book-page';
+    div.dataset.page = String(i + 1);
+    if (i !== 0) div.hidden = true;
+    pg.forEach(el => div.appendChild(el));
+    contentEl.appendChild(div);
+  });
+
+  etat.pages       = pages.length;
+  etat.pageCourante = 1;
 }
 
-function _surveilerScrollVisiteur() {
-  _reinitScrollVisiteur();
-  if (_scrollHandler) window.removeEventListener('scroll', _scrollHandler);
+/** Affiche la page `num` du chapitre courant */
+function _allerPage(num) {
+  if (num < 1 || num > etat.pages) return;
 
-  const hauteurFenetre = window.innerHeight;
-  let seuilsAtteints   = new Set();
-
-  _scrollHandler = () => {
-    if (_modalMontree) return;
-    const scrollY    = window.scrollY;
-    const docHeight  = document.documentElement.scrollHeight;
-    const scrollable = Math.max(1, docHeight - hauteurFenetre);
-    const pct        = scrollY / scrollable;
-    const page       = Math.floor(scrollY / hauteurFenetre);
-
-    if (page > 0 && !seuilsAtteints.has(page)) {
-      seuilsAtteints.add(page);
-      _scrollPagesLues = seuilsAtteints.size;
-    }
-
-    const contenuScrollable = (docHeight - hauteurFenetre) > 100;
-    if (_scrollPagesLues >= LIMIT_VISITEUR_PAGES || (contenuScrollable && pct >= 0.80)) {
+  // Contrôle visiteur — bloquer après LIMIT_VISITEUR_PAGES
+  if (!etat.utilisateur && num > etat.pageCourante) {
+    if (_visiteurModeStrict || _pagesVisiteurLues >= LIMIT_VISITEUR_PAGES) {
       _modalMontree = true;
-      window.removeEventListener('scroll', _scrollHandler);
       document.body.style.overflow = 'hidden';
       _afficherModalAbonnement();
+      return;
     }
-  };
+    _pagesVisiteurLues++;
+  }
 
-  window.addEventListener('scroll', _scrollHandler, { passive: true });
+  // Masquer page courante, afficher nouvelle
+  const pages = document.querySelectorAll('.reader-book-page');
+  pages.forEach(p => { p.hidden = true; });
+  const cible = document.querySelector(`.reader-book-page[data-page="${num}"]`);
+  if (cible) cible.hidden = false;
+
+  etat.pageCourante = num;
+  window.scrollTo({ top: 0 });
+  mettreAJourNavigation();
+  _mettreAJourPositionPage();
+  _mettreAJourScrollProgress();
 }
 
-function _surveilerScrollVisiteurStrict() {
-  if (_scrollHandler) window.removeEventListener('scroll', _scrollHandler);
-  const hauteurFenetre = window.innerHeight;
-
-  _scrollHandler = () => {
-    if (_modalMontree) return;
-    const pct = window.scrollY / Math.max(1, document.documentElement.scrollHeight - hauteurFenetre);
-    if (pct >= 0.95) {
-      _modalMontree = true;
-      window.removeEventListener('scroll', _scrollHandler);
-      document.body.style.overflow = 'hidden';
-      _afficherModalAbonnement();
-    }
-  };
-  window.addEventListener('scroll', _scrollHandler, { passive: true });
+/** Page suivante, puis chapitre suivant si on est à la dernière page */
+function _pageNext() {
+  if (etat.pageCourante < etat.pages) {
+    _allerPage(etat.pageCourante + 1);
+  } else if (!_visiteurBloque() && etat.chapitreNum < etat.chapitres.length) {
+    chargerChapitre(etat.chapitreNum + 1);
+  } else if (_visiteurBloque()) {
+    _modalMontree = true;
+    document.body.style.overflow = 'hidden';
+    _afficherModalAbonnement();
+  }
 }
+
+/** Page précédente, puis chapitre précédent si on est à la première page */
+function _pagePrev() {
+  if (etat.pageCourante > 1) {
+    _allerPage(etat.pageCourante - 1);
+  } else if (etat.chapitreNum > 1) {
+    chargerChapitre(etat.chapitreNum - 1);
+  }
+}
+
+/** Met à jour le compteur "Page X / Y" dans la bottombar */
+function _mettreAJourPositionPage() {
+  const el = document.getElementById('reader-position');
+  if (!el) return;
+  if (etat.pages > 1) {
+    el.innerHTML = `Page <strong>${etat.pageCourante}</strong> / ${etat.pages}
+      <span style="color:var(--text-light);margin-left:6px;">· Ch. ${etat.chapitreNum}/${etat.chapitres.length}</span>`;
+  } else {
+    el.innerHTML = `Ch. <strong>${etat.chapitreNum}</strong> / ${etat.chapitres.length}`;
+  }
+  // Barre de progression = avancement dans la page courante par rapport au livre total
+  const totalPages = etat.pages || 1;
+  const pct = Math.round((etat.pageCourante / totalPages) * 100);
+  document.getElementById('progress-fill').style.width = `${pct}%`;
+}
+
+/* Anciennes fonctions scroll visiteur — supprimées, remplacées par la pagination par pages */
 
 function _afficherModalAbonnement() {
   const modal = document.getElementById('modal-abonnement');
@@ -1140,10 +1172,8 @@ function _afficherModalAbonnement() {
     newBtn.addEventListener('click', () => {
       modal.classList.remove('is-open');
       document.body.style.overflow = '';
-      _scrollPagesLues    = 0;
       _modalMontree       = false;
-      _visiteurModeStrict = true; // toute prochaine navigation déclenchera le modal immédiatement
-      if (!etat.utilisateur) _surveilerScrollVisiteurStrict();
+      _visiteurModeStrict = true; // toute prochaine page tournée affichera le modal
     });
   }
 }
