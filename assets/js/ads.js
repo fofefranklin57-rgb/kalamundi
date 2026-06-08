@@ -29,9 +29,15 @@
 
   /* ── Pages complètement sans pub ────────────────────────── */
   var PAGE_SANS_PUB = [
-    'reader.html',   // lecture immersive — jamais de pub
-    'admin.html',    // outil de gestion — expérience propre
-    'payment.html',  // tunnel de paiement — ne pas distraire
+    'reader.html',         // lecture immersive — jamais de pub
+    'admin.html',          // outil de gestion — expérience propre
+    'payment.html',        // tunnel de paiement — ne pas distraire
+    'author-dashboard',    // tableau de bord auteur — outil pro
+    'abonnements',         // page paiement — ne pas distraire
+    'contrat-auteur',      // page légale — pas de pub
+    'cgu',                 // page légale — pas de pub
+    'confidentialite',     // page légale — pas de pub
+    'institution',         // page pro — expérience propre
   ];
 
   /* ── Anti-redirection automatique ───────────────────────── */
