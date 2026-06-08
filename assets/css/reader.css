@@ -1718,6 +1718,12 @@ body.theme-dark .annot-ctx-item:hover { background: var(--dark-card); }
   position: relative;
 }
 
+/* Le panneau Pages a besoin d'un scroll vertical */
+#nav-pane-pages {
+  overflow-y: auto;
+  height: 100%;
+}
+
 .nav-panel__pane {
   display: none;
   height: 100%;
@@ -1781,49 +1787,60 @@ body.theme-dark .annot-ctx-item:hover { background: var(--dark-card); }
   white-space: nowrap;
 }
 
-/* ── Items de pages dans le volet ─────────────────────────── */
-.nav-pg-item {
+/* ── Vignettes miniatures des pages (style Word) ─────────── */
+
+/* Grille 2 colonnes dans le volet */
+#nav-pages-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-sm);
+}
+
+.nav-thumb {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 7px var(--spacing-md);
+  gap: 5px;
   cursor: pointer;
-  border-left: 3px solid transparent;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  transition: background var(--transition-fast), color var(--transition-fast);
-}
-
-.nav-pg-item:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.nav-pg-item.is-current {
-  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  color: var(--color-primary);
-  font-weight: var(--font-weight-medium);
-  border-left-color: var(--color-primary);
-}
-
-.nav-pg-item__num {
-  min-width: 22px;
-  height: 22px;
+  padding: 4px;
   border-radius: 4px;
-  background: var(--bg-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--color-primary);
-  flex-shrink: 0;
+  transition: background var(--transition-fast);
 }
 
-.nav-pg-item.is-current .nav-pg-item__num {
-  background: var(--color-primary);
-  color: #fff;
+.nav-thumb:hover {
+  background: var(--bg-secondary);
 }
+
+/* Cadre de la vignette */
+.nav-thumb__viewport {
+  background: #fff;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.18);
+  border-radius: 2px;
+  border: 2px solid transparent;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Page courante — encadré bleu comme Word */
+.nav-thumb.is-current .nav-thumb__viewport {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary), 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.nav-thumb__label {
+  font-size: 10px;
+  color: var(--text-light);
+  line-height: 1;
+}
+
+.nav-thumb.is-current .nav-thumb__label {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* Thème sombre : fond vignette sombre */
+body.theme-dark .nav-thumb__viewport { background: var(--dark-bg, #1a1a1a); }
+body.theme-sepia .nav-thumb__viewport { background: var(--sepia-bg, #f8f0e3); }
 
 .nav-ch-item--paratexte { font-style: italic; }
 

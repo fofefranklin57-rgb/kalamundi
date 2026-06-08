@@ -646,36 +646,97 @@ function _activerOngletNav(onglet) {
   });
 }
 
-/* ── Liste des pages du chapitre courant dans le volet ───── */
+/* ── Vignettes miniatures des pages (style Word) ─────────── */
 function remplirNavPanelPages() {
   const listEl = document.getElementById('nav-pages-list');
   if (!listEl) return;
-  if (!etat.pages || etat.pages <= 1) {
+
+  listEl.innerHTML = '';
+
+  if (!etat.pages) {
+    listEl.innerHTML = '<p class="nav-panel__empty">Chargement…</p>';
+    return;
+  }
+  if (etat.pages <= 1) {
     listEl.innerHTML = '<p class="nav-panel__empty">Chapitre en une seule page.</p>';
     return;
   }
-  let html = '';
+
+  // Dimensions de la vignette
+  const THUMB_W    = 108; // px — largeur vignette
+  const contentW   = etat.maxWidth || 680;
+  const SCALE      = THUMB_W / contentW;
+
+  const header  = document.querySelector('header');
+  const footer  = document.querySelector('.reader-bottombar');
+  const headerH = header?.offsetHeight ?? 56;
+  const footerH = footer?.offsetHeight ?? 56;
+  const PADDING = 72;
+  const contentH = Math.max(300, window.innerHeight - headerH - footerH - PADDING);
+  const THUMB_H  = Math.round(contentH * SCALE);
+
   for (let i = 1; i <= etat.pages; i++) {
-    const actif = i === etat.pageCourante;
-    html += `<div class="nav-pg-item${actif ? ' is-current' : ''}" data-page="${i}">
-      <div class="nav-pg-item__num">${i}</div>
-      <span>Page ${i}</span>
-    </div>`;
-  }
-  listEl.innerHTML = html;
-  listEl.querySelectorAll('.nav-pg-item').forEach(item => {
-    item.addEventListener('click', () => {
-      _allerPage(parseInt(item.dataset.page));
+    const sourcePage = document.querySelector(`.reader-book-page[data-page="${i}"]`);
+    const actif      = i === etat.pageCourante;
+
+    const wrapper  = document.createElement('div');
+    wrapper.className = `nav-thumb${actif ? ' is-current' : ''}`;
+    wrapper.dataset.page = String(i);
+    wrapper.title  = `Page ${i}`;
+
+    // Fenêtre de la vignette (overflow:hidden)
+    const viewport = document.createElement('div');
+    viewport.className = 'nav-thumb__viewport';
+    viewport.style.cssText =
+      `width:${THUMB_W}px;height:${THUMB_H}px;overflow:hidden;position:relative;flex-shrink:0;`;
+
+    if (sourcePage) {
+      // Clone du contenu, mis à l'échelle
+      const clone = sourcePage.cloneNode(true);
+      clone.hidden = false;
+      clone.removeAttribute('data-page');
+      clone.style.cssText = [
+        `transform:scale(${SCALE})`,
+        `transform-origin:top left`,
+        `width:${contentW}px`,
+        `max-width:none`,
+        `position:absolute`,
+        `top:0;left:0`,
+        `font-size:${etat.fontSize}px`,
+        `line-height:${etat.lineHeight}`,
+        `padding:24px 28px`,
+        `pointer-events:none`,
+        `user-select:none`,
+        `color:var(--text-primary)`,
+        `background:var(--bg-main)`,
+      ].join(';');
+      viewport.appendChild(clone);
+    } else {
+      viewport.style.background = 'var(--bg-secondary)';
+    }
+
+    // Numéro de page sous la vignette
+    const label = document.createElement('div');
+    label.className = 'nav-thumb__label';
+    label.textContent = String(i);
+
+    wrapper.appendChild(viewport);
+    wrapper.appendChild(label);
+
+    wrapper.addEventListener('click', () => {
+      _allerPage(i);
       if (window.innerWidth <= 900) fermerNavPanel();
     });
-  });
+
+    listEl.appendChild(wrapper);
+  }
 }
 
 function mettreAJourNavPanelPages() {
-  document.querySelectorAll('#nav-pages-list .nav-pg-item').forEach(item => {
+  document.querySelectorAll('#nav-pages-list .nav-thumb').forEach(item => {
     item.classList.toggle('is-current', parseInt(item.dataset.page) === etat.pageCourante);
   });
-  const courant = document.querySelector('#nav-pages-list .nav-pg-item.is-current');
+  const courant = document.querySelector('#nav-pages-list .nav-thumb.is-current');
   courant?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
