@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Répétiteur — Kalamundi</title>
+  <meta name="description" content="Votre répétiteur personnel : programme d'étude adapté, simulation d'examens BAC/BEPC, détection de lacunes et recommandations." />
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <script src="/assets/js/theme-init.js"></script>
+  <style>
+    /* ── Hero ──────────────────────────────────────────────── */
+    .rep-hero {
+      background: linear-gradient(135deg,#0d2137 0%,#1a3a5c 55%,#1B4332 100%);
+      color:#fff; padding:var(--spacing-2xl) 0 var(--spacing-xl); text-align:center;
+    }
+    .rep-hero h1 { font-size:clamp(1.8rem,4vw,2.8rem); margin-bottom:var(--spacing-sm); }
+    .rep-hero p  { opacity:.85; max-width:600px; margin:0 auto; }
+
+    /* ── Onglets ────────────────────────────────────────────── */
+    .rep-tabs { display:flex; gap:0; border-bottom:2px solid var(--border-color); margin-bottom:var(--spacing-xl); overflow-x:auto; }
+    .rep-tab  { padding:12px 24px; font-weight:700; cursor:pointer; border:none; background:none;
+                color:var(--text-secondary); border-bottom:3px solid transparent; margin-bottom:-2px;
+                font-size:var(--font-size-sm); transition:.2s; white-space:nowrap; }
+    .rep-tab--active { color:var(--color-primary); border-bottom-color:var(--color-primary); }
+    .rep-panel  { display:none; }
+    .rep-panel--active { display:block; }
+
+    /* ── Config form ────────────────────────────────────────── */
+    .config-card {
+      background:var(--bg-card); border:1px solid var(--border-color);
+      border-radius:var(--radius-xl); padding:var(--spacing-xl);
+      max-width:640px; margin:0 auto;
+    }
+    .config-card h2 { margin-bottom:var(--spacing-lg); }
+    .form-group { margin-bottom:var(--spacing-md); }
+    .form-group label { display:block; font-weight:700; margin-bottom:6px; font-size:var(--font-size-sm); }
+    .form-group select, .form-group input[type=date] {
+      width:100%; padding:10px 14px; border:1.5px solid var(--border-color);
+      border-radius:var(--radius-md); background:var(--bg-card); color:var(--text-primary);
+      font-size:var(--font-size-sm);
+    }
+    .form-group select:focus, .form-group input:focus { outline:none; border-color:var(--color-primary); }
+
+    /* Niveaux par matière */
+    .niveaux-grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--spacing-md); }
+    @media(max-width:500px){ .niveaux-grid{ grid-template-columns:1fr; } }
+    .niveau-item { display:flex; flex-direction:column; gap:6px; }
+    .niveau-item label { font-size:12px; font-weight:600; color:var(--text-secondary); }
+    .niveau-stars { display:flex; gap:4px; }
+    .niveau-star  { width:28px; height:28px; border:none; border-radius:4px; background:var(--border-color);
+                    cursor:pointer; font-size:14px; transition:.15s; }
+    .niveau-star.active { background:var(--color-primary); color:#fff; }
+
+    /* ── Planning ───────────────────────────────────────────── */
+    .planning-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--spacing-lg); flex-wrap:wrap; gap:var(--spacing-sm); }
+    .semaine-card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); margin-bottom:var(--spacing-md); overflow:hidden; }
+    .semaine-header {
+      background:linear-gradient(90deg,#1a3a5c,#1B4332); color:#fff;
+      padding:var(--spacing-sm) var(--spacing-lg);
+      display:flex; align-items:center; justify-content:space-between;
+      cursor:pointer; user-select:none;
+    }
+    .semaine-header h3 { font-size:var(--font-size-sm); margin:0; }
+    .semaine-body { padding:0; }
+    .session-row {
+      display:grid; grid-template-columns:80px 1fr auto auto;
+      align-items:center; gap:var(--spacing-md);
+      padding:var(--spacing-sm) var(--spacing-lg);
+      border-bottom:1px solid var(--border-color);
+      transition:background .15s;
+    }
+    .session-row:last-child { border-bottom:none; }
+    .session-row.done { opacity:.55; }
+    .session-jour  { font-size:12px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; }
+    .session-info  { display:flex; flex-direction:column; gap:2px; }
+    .session-mat   { font-weight:600; font-size:var(--font-size-sm); }
+    .session-theme { font-size:11px; color:var(--text-secondary); }
+    .session-duree { font-size:11px; color:var(--text-secondary); white-space:nowrap; }
+    .session-check { width:22px; height:22px; border-radius:4px; border:2px solid var(--border-color);
+                     cursor:pointer; background:none; display:flex; align-items:center; justify-content:center;
+                     transition:.15s; flex-shrink:0; }
+    .session-check.checked { background:var(--color-primary); border-color:var(--color-primary); color:#fff; font-size:12px; }
+    .semaine-collapsed .semaine-body { display:none; }
+
+    /* ── Simulateur panel ───────────────────────────────────── */
+    .sim-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:var(--spacing-md); }
+    .sim-matiere-card {
+      background:var(--bg-card); border:1px solid var(--border-color);
+      border-radius:var(--radius-lg); padding:var(--spacing-lg);
+      display:flex; flex-direction:column; gap:var(--spacing-sm);
+      transition:box-shadow .2s, transform .2s; cursor:pointer;
+    }
+    .sim-matiere-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+    .sim-matiere-card__icon  { font-size:2rem; }
+    .sim-matiere-card__nom   { font-weight:700; color:var(--text-primary); }
+    .sim-matiere-card__score { font-size:var(--font-size-sm); color:var(--text-secondary); }
+    .sim-matiere-card__btn   { margin-top:auto; }
+
+    /* ── Résultats panel ────────────────────────────────────── */
+    .res-item {
+      background:var(--bg-card); border:1px solid var(--border-color);
+      border-radius:var(--radius-md); padding:var(--spacing-md);
+      margin-bottom:var(--spacing-sm); display:flex; align-items:center; gap:var(--spacing-md);
+    }
+    .res-score {
+      width:52px; height:52px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:900; font-size:var(--font-size-sm); color:#fff;
+    }
+    .res-score--good { background:#2e7d32; }
+    .res-score--avg  { background:#f57c00; }
+    .res-score--bad  { background:#b71c1c; }
+
+    /* ── Barre de progression globale ────────────────────────── */
+    .progress-global { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:var(--spacing-lg); margin-bottom:var(--spacing-xl); }
+    .progress-global h3 { margin-bottom:var(--spacing-md); }
+    .matiere-progress-row { display:flex; align-items:center; gap:var(--spacing-md); margin-bottom:10px; }
+    .matiere-progress-nom  { width:160px; font-size:var(--font-size-sm); font-weight:600; flex-shrink:0; }
+    .matiere-progress-bar  { flex:1; height:8px; background:var(--border-color); border-radius:4px; overflow:hidden; }
+    .matiere-progress-fill { height:100%; border-radius:4px; background:var(--color-primary); transition:width .4s; }
+    .matiere-progress-pct  { width:40px; text-align:right; font-size:12px; color:var(--text-secondary); }
+
+    /* ── Spinner ─────────────────────────────────────────────── */
+    .spinner { border:3px solid var(--border-color); border-top-color:var(--color-primary);
+               border-radius:50%; width:32px; height:32px; animation:spin .8s linear infinite; margin:2rem auto; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── Vide ────────────────────────────────────────────────── */
+    .vide { text-align:center; padding:var(--spacing-2xl) 0; color:var(--text-secondary); }
+    .vide__icon { font-size:3rem; margin-bottom:var(--spacing-md); }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <nav class="navbar__nav" id="nav-menu">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/annales.html" class="navbar__link">📝 Annales</a>
+        <a href="/pages/simulateur.html" class="navbar__link">📊 Moyenne</a>
+        <a href="/pages/repetiteur.html" class="navbar__link navbar__link--active">🎓 Répétiteur</a>
+        <a href="/pages/ecole.html" class="navbar__link">🏫 École</a>
+      </nav>
+      <span id="theme-slot"></span>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="rep-hero">
+    <div class="container">
+      <div class="hero__badge" style="display:inline-block;margin-bottom:var(--spacing-md)">🎓 Intelligence adaptative</div>
+      <h1>Super Répétiteur</h1>
+      <p>Programme d'étude personnalisé · Simulation d'examens · Détection de lacunes · Recommandations ciblées</p>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <main class="container" style="padding-block:var(--spacing-xl);max-width:900px">
+
+      <!-- Zone non connecté -->
+      <div id="zone-non-connecte" style="display:none;text-align:center;padding:var(--spacing-2xl) 0">
+        <div style="font-size:3rem;margin-bottom:var(--spacing-md)">🔒</div>
+        <h2>Connectez-vous pour accéder au Répétiteur</h2>
+        <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg)">Créez votre programme d'étude et suivez votre progression.</p>
+        <a href="/pages/login.html?redirect=/pages/repetiteur.html" class="btn btn--accent btn--lg">Se connecter</a>
+      </div>
+
+      <!-- Zone connecté -->
+      <div id="zone-connecte" style="display:none">
+
+        <!-- Onglets -->
+        <div class="rep-tabs">
+          <button class="rep-tab rep-tab--active" data-panel="programme">📅 Mon Programme</button>
+          <button class="rep-tab" data-panel="simulateur">🎯 Simuler un examen</button>
+          <button class="rep-tab" data-panel="resultats">📊 Mes Résultats</button>
+        </div>
+
+        <!-- ── PANEL : MON PROGRAMME ── -->
+        <div class="rep-panel rep-panel--active" id="panel-programme">
+          <div id="zone-programme"><div class="spinner"></div></div>
+        </div>
+
+        <!-- ── PANEL : SIMULATEUR ── -->
+        <div class="rep-panel" id="panel-simulateur">
+          <div id="zone-simulateur"><div class="spinner"></div></div>
+        </div>
+
+        <!-- ── PANEL : RÉSULTATS ── -->
+        <div class="rep-panel" id="panel-resultats">
+          <div id="zone-resultats"><div class="spinner"></div></div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script type="module" src="/assets/js/repetiteur.js"></script>
+</body>
+</html>

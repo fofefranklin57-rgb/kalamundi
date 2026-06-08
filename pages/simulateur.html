@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulateur de Moyenne BAC / Probatoire / BEPC — Cameroun — Kalamundi</title>
+  <meta name="description" content="Calculez votre moyenne au BAC, Probatoire ou BEPC du Cameroun. Coefficients officiels pour toutes les séries A, A4, B, C, D, G1, G2, G3." />
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <script src="/assets/js/theme-init.js"></script>
+  <style>
+    /* ── Hero ──────────────────────────────────────────────── */
+    .sim-hero {
+      background: linear-gradient(135deg, #0d2137 0%, #1a3a5c 60%, #1B4332 100%);
+      color: #fff;
+      padding: var(--spacing-2xl) 0 var(--spacing-xl);
+      text-align: center;
+    }
+    .sim-hero h1 { font-size: clamp(1.8rem,4vw,2.8rem); margin-bottom: var(--spacing-sm); }
+    .sim-hero p  { opacity: .85; max-width: 580px; margin: 0 auto; }
+
+    /* ── Sélecteur examen/série ─────────────────────────────── */
+    .sim-selectors {
+      display: flex;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+      margin: var(--spacing-xl) 0 var(--spacing-lg);
+      align-items: flex-end;
+    }
+    .sim-selectors .form-group { flex: 1; min-width: 180px; margin: 0; }
+    .sim-selectors label { display: block; font-weight: 700; margin-bottom: 8px; font-size: var(--font-size-sm); color: var(--text-primary); }
+    .sim-selectors select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: var(--font-size-md);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .sim-selectors select:focus { outline: none; border-color: var(--color-primary); }
+
+    /* ── Tableau des matières ───────────────────────────────── */
+    .matieres-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      margin-bottom: var(--spacing-xl);
+    }
+    .matieres-card__header {
+      background: linear-gradient(90deg, #1a3a5c, #1B4332);
+      color: #fff;
+      padding: var(--spacing-md) var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .matieres-card__header h2 { font-size: var(--font-size-lg); margin: 0; }
+    .matieres-card__header span { font-size: var(--font-size-sm); opacity: .8; }
+
+    .matiere-row {
+      display: grid;
+      grid-template-columns: 1fr 60px 120px 80px;
+      gap: var(--spacing-md);
+      align-items: center;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--border-color);
+      transition: background .15s;
+    }
+    .matiere-row:last-child { border-bottom: none; }
+    .matiere-row:hover { background: var(--bg-secondary, rgba(0,0,0,.02)); }
+    .matiere-row--eliminatoire { background: rgba(183,28,28,.04); }
+
+    .matiere-nom { font-weight: 600; font-size: var(--font-size-sm); color: var(--text-primary); }
+    .matiere-nom small { display: block; font-weight: 400; color: var(--text-secondary); font-size: 11px; margin-top: 2px; }
+    .matiere-coef {
+      text-align: center;
+      background: var(--color-primary);
+      color: #fff;
+      border-radius: var(--radius-sm);
+      padding: 4px 0;
+      font-weight: 700;
+      font-size: var(--font-size-sm);
+    }
+    .matiere-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: var(--font-size-sm);
+      text-align: center;
+      font-weight: 600;
+      transition: border-color .2s;
+    }
+    .matiere-input:focus { outline: none; border-color: var(--color-primary); }
+    .matiere-input.note-faible  { border-color: #e53935; }
+    .matiere-input.note-moyenne { border-color: #f57c00; }
+    .matiere-input.note-bonne   { border-color: #2e7d32; }
+
+    .matiere-points {
+      text-align: right;
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Header colonnes */
+    .matieres-cols {
+      display: grid;
+      grid-template-columns: 1fr 60px 120px 80px;
+      gap: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      background: var(--bg-secondary, #f8f9fa);
+      border-bottom: 2px solid var(--border-color);
+    }
+    .matieres-cols span {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .matieres-cols span:nth-child(2),
+    .matieres-cols span:nth-child(3),
+    .matieres-cols span:nth-child(4) { text-align: center; }
+
+    /* ── Résultat ───────────────────────────────────────────── */
+    .resultat-card {
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+      transition: .3s;
+    }
+    .resultat-card--admis    { background: linear-gradient(135deg,#e8f5e9,#c8e6c9); border: 2px solid #2e7d32; }
+    .resultat-card--ajourné  { background: linear-gradient(135deg,#fff3e0,#ffe0b2); border: 2px solid #e65c00; }
+    .resultat-card--refusé   { background: linear-gradient(135deg,#ffebee,#ffcdd2); border: 2px solid #b71c1c; }
+    .resultat-card--vide     { background: var(--bg-card); border: 2px dashed var(--border-color); }
+
+    .resultat__verdict { font-size: 3rem; margin-bottom: var(--spacing-sm); }
+    .resultat__moyenne { font-size: clamp(2.5rem,8vw,4rem); font-weight: 900; margin-bottom: var(--spacing-xs); }
+    .resultat__mention { font-size: var(--font-size-lg); font-weight: 700; margin-bottom: var(--spacing-md); }
+    .resultat__detail  { font-size: var(--font-size-sm); color: var(--text-secondary); }
+
+    /* ── Détail matières risquées ────────────────────────────── */
+    .alertes-liste { display: flex; flex-direction: column; gap: var(--spacing-sm); margin-top: var(--spacing-lg); }
+    .alerte-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+    }
+    .alerte-item--danger  { background: #ffebee; color: #b71c1c; }
+    .alerte-item--warning { background: #fff3e0; color: #e65c00; }
+
+    /* ── Partage ─────────────────────────────────────────────── */
+    .partage-zone {
+      display: flex;
+      gap: var(--spacing-sm);
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: var(--spacing-lg);
+    }
+    .btn-whatsapp {
+      background: #25D366;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-whatsapp:hover { background: #128C7E; }
+    .btn-copier {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+    }
+
+    /* ── Promo abonnement ────────────────────────────────────── */
+    .promo-etudiant {
+      background: linear-gradient(135deg,#1a3a5c,#1B4332);
+      color: #fff;
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+    }
+    .promo-etudiant h3 { margin-bottom: var(--spacing-sm); font-size: var(--font-size-xl); }
+    .promo-etudiant p  { opacity: .85; margin-bottom: var(--spacing-lg); font-size: var(--font-size-sm); }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .matiere-row, .matieres-cols {
+        grid-template-columns: 1fr 45px 90px 60px;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+      .matiere-nom small { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <nav class="navbar__nav" id="nav-menu">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/annales.html" class="navbar__link">📝 Annales</a>
+        <a href="/pages/simulateur.html" class="navbar__link navbar__link--active">📊 Simulateur</a>
+        <a href="/pages/ecole.html" class="navbar__link">🏫 Espace École</a>
+      </nav>
+      <span id="theme-slot"></span>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="sim-hero">
+    <div class="container">
+      <div class="hero__badge" style="display:inline-block;margin-bottom:var(--spacing-md)">📊 Outil gratuit</div>
+      <h1>Simulateur de Moyenne</h1>
+      <p>Entrez vos notes et découvrez votre moyenne avec les coefficients officiels du Cameroun.<br>
+         BAC · Probatoire · BEPC — Toutes séries.</p>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <main class="container" style="padding-block: var(--spacing-xl); max-width: 860px">
+
+      <!-- Sélecteurs -->
+      <div class="sim-selectors">
+        <div class="form-group">
+          <label for="sel-examen">Examen</label>
+          <select id="sel-examen">
+            <option value="BAC">BAC (Baccalauréat)</option>
+            <option value="Probatoire">Probatoire</option>
+            <option value="BEPC">BEPC</option>
+          </select>
+        </div>
+        <div class="form-group" id="groupe-serie">
+          <label for="sel-serie">Série</label>
+          <select id="sel-serie">
+            <option value="C">Série C — Maths et Sciences Physiques</option>
+            <option value="D">Série D — Sciences du Vivant</option>
+            <option value="A">Série A — Lettres et Sciences Humaines</option>
+            <option value="A4">Série A4 — Lettres Bilingues</option>
+            <option value="B">Série B — Économie et Sciences Sociales</option>
+            <option value="G1">Série G1 — Gestion Comptable</option>
+            <option value="G2">Série G2 — Commercialisation</option>
+            <option value="G3">Série G3 — Secrétariat-Bureautique</option>
+            <option value="E">Série E — Sciences et Technologies Industrielles</option>
+            <option value="F">Série F — Techniques Industrielles</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="sel-session">Session</label>
+          <select id="sel-session">
+            <option value="principale">Session principale</option>
+            <option value="rattrapage">Session de rattrapage</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Résultat (affiché en haut pour mobile) -->
+      <div class="resultat-card resultat-card--vide" id="resultat-card">
+        <div class="resultat__verdict" id="res-emoji">📝</div>
+        <div class="resultat__moyenne" id="res-moyenne">—</div>
+        <div class="resultat__mention" id="res-mention">Entrez vos notes ci-dessous</div>
+        <div class="resultat__detail" id="res-detail"></div>
+        <div class="partage-zone" id="partage-zone" style="display:none">
+          <button class="btn-whatsapp" id="btn-whatsapp">📱 Partager sur WhatsApp</button>
+          <button class="btn-copier" id="btn-copier">📋 Copier le résultat</button>
+        </div>
+      </div>
+
+      <!-- Alertes matières -->
+      <div id="alertes-zone" style="display:none">
+        <h3 style="font-size:var(--font-size-md);margin-bottom:var(--spacing-sm)">⚠️ Matières à surveiller</h3>
+        <div class="alertes-liste" id="alertes-liste"></div>
+      </div>
+
+      <!-- Tableau des matières -->
+      <div class="matieres-card" id="matieres-card">
+        <div class="matieres-card__header">
+          <h2 id="card-titre">BAC Série C</h2>
+          <span id="card-sous-titre">Coefficients officiels</span>
+        </div>
+        <div class="matieres-cols">
+          <span>Matière</span>
+          <span>Coef.</span>
+          <span>Votre note /20</span>
+          <span>Points</span>
+        </div>
+        <div id="matieres-liste"></div>
+      </div>
+
+      <!-- Promo abonnement -->
+      <div class="promo-etudiant" id="promo-etudiant">
+        <h3>🎓 Préparez votre BAC avec Kalamundi</h3>
+        <p>
+          Abonnez-vous à <strong>500 FCFA/mois</strong> pour accéder aux annales avec corrigés,
+          quiz interactifs par matière, et suivi de progression.
+        </p>
+        <a href="/pages/abonnements.html" class="btn btn--accent btn--lg">Voir l'abonnement Étudiant</a>
+      </div>
+
+    </main>
+  </div>
+
+  <script type="module" src="/assets/js/simulateur.js"></script>
+</body>
+</html>

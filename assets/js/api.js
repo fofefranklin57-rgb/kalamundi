@@ -269,6 +269,25 @@ export const api = {
     if (error) throw error;
   },
 
+  async sauvegarderProgressionEleve(userId, oeuvreId, classeId, chapitreNum, nbChapitres) {
+    const pourcentage = nbChapitres > 0
+      ? Math.min(100, Math.round((chapitreNum / nbChapitres) * 100))
+      : 0;
+    const { error } = await supabase
+      .from('progression_eleves')
+      .upsert({
+        eleve_id:         userId,
+        oeuvre_id:        oeuvreId,
+        classe_id:        classeId,
+        chapitre_lu:      chapitreNum,
+        nb_chapitres:     nbChapitres,
+        pourcentage,
+        termine:          pourcentage >= 100,
+        derniere_lecture: new Date().toISOString(),
+      }, { onConflict: 'eleve_id,oeuvre_id,classe_id' });
+    if (error) throw error;
+  },
+
   async getBibliotheque(userId) {
     const { data, error } = await supabase
       .from('lectures')

@@ -4,7 +4,7 @@
    ============================================================ */
 
 import { api } from './api.js';
-import { getUser } from './auth.js';
+import { getUser, supabase } from './auth.js';
 import { getLivre } from './offline.js';
 import { genererCouverture } from './cover-generator.js';
 import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
@@ -1020,6 +1020,31 @@ async function sauvegarderProgression() {
       etat.utilisateur.id, etat.oeuvreId,
       etat.chapitreNum, 1, sessionId
     );
+  } catch {}
+
+  // Synchroniser progression_eleves pour chaque classe où ce livre est assigné
+  try {
+    const { data: membres } = await supabase
+      .from('membres_classe')
+      .select('classe_id')
+      .eq('eleve_id', etat.utilisateur.id);
+
+    if (membres?.length) {
+      const classeIds = membres.map(m => m.classe_id);
+      const { data: listes } = await supabase
+        .from('listes_lecture')
+        .select('classe_id')
+        .eq('oeuvre_id', etat.oeuvreId)
+        .in('classe_id', classeIds);
+
+      const nbChapitres = etat.chapitres.length;
+      for (const l of listes || []) {
+        await api.sauvegarderProgressionEleve(
+          etat.utilisateur.id, etat.oeuvreId, l.classe_id,
+          etat.chapitreNum, nbChapitres
+        );
+      }
+    }
   } catch {}
 }
 

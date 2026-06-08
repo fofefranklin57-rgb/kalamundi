@@ -20,9 +20,10 @@ const CONFIG = {
 
 /* Plans abonnement */
 const PLANS = {
-  reader_plus:  { label: 'Abonnement Reader+',    montant: 2,  devise: 'USD' },
-  auteur_pro:   { label: 'Abonnement Auteur Pro', montant: 5,  devise: 'USD' },
-  institution:  { label: 'Abonnement Institution',montant: 20, devise: 'USD' },
+  etudiant:     { label: 'Abonnement Étudiant',   montant: 500, devise: 'FCFA' },
+  reader_plus:  { label: 'Abonnement Reader+',    montant: 2,   devise: 'USD' },
+  auteur_pro:   { label: 'Abonnement Auteur Pro', montant: 5,   devise: 'USD' },
+  institution:  { label: 'Abonnement Institution',montant: 20,  devise: 'USD' },
 };
 
 /* ============================================================
@@ -61,6 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else if (PARAMS.plan && PLANS[PARAMS.plan]) {
     const plan = PLANS[PARAMS.plan];
     PARAMS.montant = plan.montant;
+    PARAMS.devise  = plan.devise;
     afficherHeader('Abonnement', plan.label, plan.montant, plan.devise);
   } else {
     afficherErreur('Paramètres de paiement invalides.');
@@ -95,7 +97,7 @@ function afficherHeader(typeLabel, titre, montant, devise) {
 }
 
 function remplirMontants() {
-  const m = `${PARAMS.montant} USD`;
+  const m = `${PARAMS.montant} ${PARAMS.devise || 'USD'}`;
   const ids = ['mtn-montant', 'om-montant', 'paypal-montant'];
   ids.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = m; });
 }
@@ -182,7 +184,7 @@ window.soumettre = async function (methode) {
       oeuvre_id:             PARAMS.oeuvreId || null,
       type:                  PARAMS.plan || 'achat_oeuvre',
       montant:               PARAMS.montant,
-      devise:                'USD',
+      devise:                PARAMS.devise || 'USD',
       methode,
       reference_transaction: ref,
       statut:                'en_attente',

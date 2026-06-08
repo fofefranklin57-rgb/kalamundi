@@ -392,27 +392,80 @@ async function chargerEleves(classeId) {
   const zone = document.getElementById('liste-eleves-classe');
   zone.innerHTML = '<div class="spinner" style="margin:1rem auto"></div>';
 
-  const { data } = await supabase
-    .from('membres_classe')
-    .select(`profiles:eleve_id(id, nom, email, photo_url)`)
-    .eq('classe_id', classeId);
+  const [{ data: membres }, { data: listes }, { data: progressions }] = await Promise.all([
+    supabase
+      .from('membres_classe')
+      .select('profiles:eleve_id(id, nom, email, photo_url)')
+      .eq('classe_id', classeId),
+    supabase
+      .from('listes_lecture')
+      .select('oeuvres:oeuvre_id(id, titre)')
+      .eq('classe_id', classeId)
+      .order('ordre'),
+    supabase
+      .from('progression_eleves')
+      .select('eleve_id, oeuvre_id, pourcentage, termine, derniere_lecture')
+      .eq('classe_id', classeId),
+  ]);
 
-  if (!data?.length) {
+  if (!membres?.length) {
     zone.innerHTML = `<p style="color:var(--text-secondary);padding:1rem 0">Aucun élève. Partagez le code d'accès de la classe.</p>`;
     return;
   }
 
-  zone.innerHTML = data.map(m => {
-    const p = m.profiles;
+  const livres = (listes || []).map(l => l.oeuvres).filter(Boolean);
+
+  // Index : progMap[eleveId][oeuvreId] = { pourcentage, termine, derniere_lecture }
+  const progMap = {};
+  for (const p of progressions || []) {
+    if (!progMap[p.eleve_id]) progMap[p.eleve_id] = {};
+    progMap[p.eleve_id][p.oeuvre_id] = p;
+  }
+
+  function avatar(p) {
+    if (p?.photo_url) return `<img src="${p.photo_url}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">`;
+    return `<div style="width:36px;height:36px;border-radius:50%;background:var(--color-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">${p?.nom?.charAt(0)?.toUpperCase() || '?'}</div>`;
+  }
+
+  function barreProgression(pct, termine) {
+    const couleur = termine ? 'var(--color-success,#2d6a4f)' : pct > 0 ? 'var(--color-primary)' : 'var(--border-color)';
+    const label = termine ? '✅ Terminé' : pct > 0 ? `${pct}%` : 'Non commencé';
     return `
-      <div class="eleve-row">
+      <div style="display:flex;align-items:center;gap:6px;min-width:120px">
+        <div style="flex:1;height:6px;border-radius:3px;background:var(--border-color,#e0e0e0);overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${couleur};border-radius:3px;transition:width .3s"></div>
+        </div>
+        <span style="font-size:10px;color:var(--text-secondary);white-space:nowrap">${label}</span>
+      </div>`;
+  }
+
+  zone.innerHTML = membres.map(m => {
+    const p = m.profiles;
+    const prog = progMap[p?.id] || {};
+
+    const lignesLivres = livres.length ? livres.map(o => {
+      const r = prog[o.id];
+      const pct  = r?.pourcentage ?? 0;
+      const fin  = r?.termine ?? false;
+      const date = r?.derniere_lecture ? new Date(r.derniere_lecture).toLocaleDateString('fr-FR') : null;
+      return `
+        <div style="display:flex;align-items:center;gap:var(--spacing-sm);padding:4px 0;border-top:1px solid var(--border-color)">
+          <span style="flex:1;font-size:12px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.titre}">${o.titre}</span>
+          ${barreProgression(pct, fin)}
+          ${date ? `<span style="font-size:10px;color:var(--text-secondary);white-space:nowrap">${date}</span>` : ''}
+        </div>`;
+    }).join('') : `<div style="font-size:12px;color:var(--text-secondary);padding-top:4px">Aucun livre assigné</div>`;
+
+    return `
+      <div class="eleve-row" style="flex-direction:column;align-items:stretch;gap:var(--spacing-xs)">
         <div style="display:flex;align-items:center;gap:var(--spacing-sm)">
-          ${p?.photo_url ? `<img src="${p.photo_url}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">` : '<div style="width:36px;height:36px;border-radius:50%;background:var(--color-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">' + (p?.nom?.charAt(0) || '?') + '</div>'}
-          <div>
+          ${avatar(p)}
+          <div style="flex:1;min-width:0">
             <div style="font-weight:600">${p?.nom || 'Élève'}</div>
             <div style="font-size:11px;color:var(--text-secondary)">${p?.email || ''}</div>
           </div>
         </div>
+        <div style="padding-left:44px">${lignesLivres}</div>
       </div>`;
   }).join('');
 }

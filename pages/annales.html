@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Annales BAC / Probatoire / BEPC — Cameroun — Kalamundi</title>
+  <meta name="description" content="Téléchargez gratuitement les annales du BAC, Probatoire et BEPC du Cameroun. Toutes séries : A, A4, B, C, D, E, F, G1, G2, G3." />
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <script src="/assets/js/theme-init.js"></script>
+  <style>
+    /* ── Hero ──────────────────────────────────────────────── */
+    .annales-hero {
+      background: linear-gradient(135deg, #0d2137 0%, #1a3a5c 50%, #1B4332 100%);
+      color: #fff;
+      padding: var(--spacing-2xl) 0 var(--spacing-xl);
+      text-align: center;
+    }
+    .annales-hero h1 { font-size: clamp(1.8rem,4vw,3rem); margin-bottom: var(--spacing-sm); }
+    .annales-hero p  { opacity: .85; max-width: 620px; margin: 0 auto var(--spacing-lg); }
+    .annales-stats   { display: flex; justify-content: center; gap: var(--spacing-xl); flex-wrap: wrap; margin-top: var(--spacing-lg); }
+    .annales-stats__item { text-align: center; }
+    .annales-stats__num  { font-size: 2rem; font-weight: 800; }
+    .annales-stats__label{ font-size: 12px; opacity: .75; margin-top: 2px; }
+
+    /* ── Filtres ────────────────────────────────────────────── */
+    .annales-filtres {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: var(--spacing-md) 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .annales-filtres .container {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filtre-select {
+      padding: 8px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+      min-width: 130px;
+    }
+    .filtre-select:focus { outline: none; border-color: var(--color-primary); }
+    .filtre-search {
+      flex: 1;
+      min-width: 180px;
+      padding: 8px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: var(--font-size-sm);
+    }
+    .filtre-search:focus { outline: none; border-color: var(--color-primary); }
+    .filtre-reset {
+      padding: 8px 16px;
+      border: none;
+      background: var(--color-primary);
+      color: #fff;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── Grille annales ─────────────────────────────────────── */
+    .annales-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-xl);
+    }
+    .annale-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      transition: box-shadow .2s, transform .2s;
+    }
+    .annale-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+    .annale-card__badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    .badge-examen  { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-bac     { background: #1B4332; color: #fff; }
+    .badge-prob    { background: #1a3a5c; color: #fff; }
+    .badge-bepc    { background: #5D4037; color: #fff; }
+    .badge-serie   { background: var(--color-primary-light, #e8f5e9); color: var(--color-primary); padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-session { background: #fff3cd; color: #856404; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+
+    .annale-card__matiere { font-size: var(--font-size-lg); font-weight: 700; color: var(--text-primary); margin-top: 4px; }
+    .annale-card__annee   { font-size: var(--font-size-sm); color: var(--text-secondary); }
+    .annale-card__footer  { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: var(--spacing-sm); border-top: 1px solid var(--border-color); }
+    .annale-card__dl      { font-size: 11px; color: var(--text-secondary); }
+
+    .btn-telecharger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      text-decoration: none;
+      transition: .2s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-telecharger--dispo {
+      background: var(--color-primary);
+      color: #fff;
+    }
+    .btn-telecharger--dispo:hover { background: var(--color-primary-dark, #145a32); }
+    .btn-telecharger--indispo {
+      background: var(--border-color);
+      color: var(--text-secondary);
+      cursor: not-allowed;
+    }
+
+    /* ── Empty state ────────────────────────────────────────── */
+    .annales-empty {
+      text-align: center;
+      padding: var(--spacing-2xl) 0;
+      color: var(--text-secondary);
+    }
+    .annales-empty__icon { font-size: 3rem; margin-bottom: var(--spacing-md); }
+
+    /* ── Upload admin ───────────────────────────────────────── */
+    .admin-upload-bar {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+    .admin-upload-bar span { font-weight: 600; color: #856404; flex: 1; }
+
+    /* ── Skeleton loader ─────────────────────────────────────── */
+    @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+    .skeleton {
+      background: linear-gradient(90deg, var(--border-color) 25%, var(--bg-card) 37%, var(--border-color) 63%);
+      background-size: 800px 100%;
+      animation: shimmer 1.4s infinite linear;
+      border-radius: var(--radius-md);
+    }
+    .skeleton-card {
+      height: 160px;
+      border-radius: var(--radius-lg);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <nav class="navbar__nav" id="nav-menu">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/library.html?genre=education" class="navbar__link">🎓 Scolaire</a>
+        <a href="/pages/ecole.html" class="navbar__link">🏫 Espace École</a>
+        <a href="/pages/annales.html" class="navbar__link navbar__link--active">📝 Annales</a>
+      </nav>
+      <span id="theme-slot"></span>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="annales-hero">
+    <div class="container">
+      <div class="hero__badge" style="display:inline-block;margin-bottom:var(--spacing-md)">📝 Annales officielles</div>
+      <h1>BAC · Probatoire · BEPC</h1>
+      <p>Toutes les séries du Cameroun — A, A4, B, C, D, E, F, G1, G2, G3.<br>Téléchargez gratuitement les sujets et corrigés officiels.</p>
+      <div class="annales-stats" id="hero-stats">
+        <div class="annales-stats__item">
+          <div class="annales-stats__num" id="stat-total">—</div>
+          <div class="annales-stats__label">Annales disponibles</div>
+        </div>
+        <div class="annales-stats__item">
+          <div class="annales-stats__num">10</div>
+          <div class="annales-stats__label">Séries couvertes</div>
+        </div>
+        <div class="annales-stats__item">
+          <div class="annales-stats__num">2018–2024</div>
+          <div class="annales-stats__label">Années</div>
+        </div>
+        <div class="annales-stats__item">
+          <div class="annales-stats__num">3</div>
+          <div class="annales-stats__label">Examens</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="annales-filtres">
+    <div class="container">
+      <select class="filtre-select" id="filtre-examen">
+        <option value="">Tous les examens</option>
+        <option value="BAC">BAC</option>
+        <option value="Probatoire">Probatoire</option>
+        <option value="BEPC">BEPC</option>
+      </select>
+
+      <select class="filtre-select" id="filtre-serie">
+        <option value="">Toutes les séries</option>
+        <option value="A">Série A</option>
+        <option value="A4">Série A4</option>
+        <option value="B">Série B</option>
+        <option value="C">Série C</option>
+        <option value="D">Série D</option>
+        <option value="E">Série E</option>
+        <option value="F">Série F</option>
+        <option value="G1">Série G1</option>
+        <option value="G2">Série G2</option>
+        <option value="G3">Série G3</option>
+      </select>
+
+      <select class="filtre-select" id="filtre-annee">
+        <option value="">Toutes les années</option>
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+        <option value="2022">2022</option>
+        <option value="2021">2021</option>
+        <option value="2020">2020</option>
+        <option value="2019">2019</option>
+        <option value="2018">2018</option>
+      </select>
+
+      <select class="filtre-select" id="filtre-session">
+        <option value="">Principale + Rattrapage</option>
+        <option value="principale">Session principale</option>
+        <option value="rattrapage">Session de rattrapage</option>
+      </select>
+
+      <input type="search" class="filtre-search" id="filtre-matiere"
+             placeholder="🔍 Matière (ex: Mathématiques)" autocomplete="off" />
+
+      <button class="filtre-reset" id="btn-reset-filtres">↺ Réinitialiser</button>
+    </div>
+  </div>
+
+  <!-- CONTENU -->
+  <div class="page-wrapper">
+    <main class="container" style="padding-block: var(--spacing-xl)">
+
+      <!-- Barre admin (visible seulement pour admin) -->
+      <div class="admin-upload-bar" id="admin-bar" style="display:none">
+        <span>🔧 Mode Admin — Cliquez sur une annale pour uploader le PDF correspondant.</span>
+        <button class="btn btn--accent btn--sm" id="btn-ajouter-annale">+ Ajouter une annale</button>
+      </div>
+
+      <!-- Résumé filtre courant -->
+      <div id="filtre-resume" style="margin-bottom:var(--spacing-md);color:var(--text-secondary);font-size:var(--font-size-sm)"></div>
+
+      <!-- Grille -->
+      <div class="annales-grid" id="annales-grid">
+        <!-- Skeletons -->
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL upload admin -->
+  <div class="modal-overlay" id="modal-upload" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
+    <div style="background:var(--bg-card);border-radius:var(--radius-xl);padding:var(--spacing-xl);max-width:480px;width:90%">
+      <h2 style="margin-bottom:var(--spacing-lg)">📤 Uploader un PDF</h2>
+      <div id="modal-annale-info" style="margin-bottom:var(--spacing-md);padding:var(--spacing-md);background:var(--bg-secondary,var(--border-color));border-radius:var(--radius-md);font-size:var(--font-size-sm)"></div>
+      <div style="margin-bottom:var(--spacing-md)">
+        <label style="display:block;font-weight:600;margin-bottom:6px;font-size:var(--font-size-sm)">Fichier PDF *</label>
+        <input type="file" id="upload-pdf-input" accept=".pdf" style="width:100%;padding:8px;border:1.5px dashed var(--border-color);border-radius:var(--radius-md);cursor:pointer" />
+      </div>
+      <div id="upload-progress" style="display:none;margin-bottom:var(--spacing-md)">
+        <div style="height:6px;background:var(--border-color);border-radius:3px;overflow:hidden">
+          <div id="upload-bar" style="height:100%;background:var(--color-primary);width:0%;transition:width .3s"></div>
+        </div>
+        <div id="upload-label" style="font-size:12px;color:var(--text-secondary);margin-top:4px">Envoi en cours…</div>
+      </div>
+      <div style="display:flex;gap:var(--spacing-md)">
+        <button class="btn btn--accent" id="btn-confirmer-upload" style="flex:1">Uploader</button>
+        <button class="btn btn--ghost" id="btn-annuler-upload">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="/assets/js/annales.js"></script>
+</body>
+</html>
