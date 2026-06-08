@@ -390,76 +390,48 @@ function formaterTexte(texte) {
     blocs.push(b);
   }
 
-  /* ETAPE 4 : Detecter le paratexte de debut (couverture, copyright, epigraphe)
-     = blocs avant le premier paragraphe narratif long */
-  const idxCorps = _trouverDebutCorps(blocs);
-  const paratexte  = idxCorps > 3 ? blocs.slice(0, idxCorps) : [];
-  const blocsCorps = idxCorps > 3 ? blocs.slice(idxCorps) : blocs;
-
-  /* ETAPE 5 : Construire le HTML */
+  /* ETAPE 4 : HTML fidèle à l'auteur — sans injection de métadonnées
+     (résumé, auteur → déjà dans work.html) */
   let premierVrai = true;
   const html = [];
 
-  // Paratexte compact (couverture, copyright, epigraphe)
-  if (paratexte.length) {
-    html.push('<div class=”reader-paratexte”>');
-    for (const b of paratexte) {
-      if (b === '§SEP§') { html.push('<hr class=”reader-sep reader-sep--thin” />'); continue; }
-      if (b === '§ORN§') { html.push('<div class=”reader-ornament”>✦</div>'); continue; }
-      if (/^\xa9|Tous droits/i.test(b)) { html.push(`<p class=”reader-legal”>${b}</p>`); continue; }
-      if (/^\xab|^”|^“/.test(b) && b.length < 400) { html.push(`<blockquote class=”reader-quote”><p>${b}</p></blockquote>`); continue; }
-      if (/^.{4,80}\xb7\s*\d{1,3}$/.test(b)) continue;
-      html.push(`<p class=”reader-meta”>${b}</p>`);
-    }
-    html.push('</div><hr class=”reader-sep” />');
-  }
-
-  // Corps principal
-  for (const bloc of blocsCorps) {
-    if (bloc === '§SEP§') { html.push('<hr class=”reader-sep” />'); continue; }
-    if (bloc === '§ORN§') { html.push('<div class=”reader-ornament” aria-hidden=”true”>✦</div>'); continue; }
+  for (const bloc of blocs) {
+    // Numéros de page PDF résiduels → ignorer
     if (/^.{4,80}\xb7\s*\d{1,3}$/.test(bloc)) continue;
+
+    if (bloc === '§SEP§') { html.push('<hr class="reader-sep" />'); continue; }
+    if (bloc === '§ORN§') { html.push('<div class="reader-ornament" aria-hidden="true">✦</div>'); continue; }
+
     if (/^\xa9|Tous droits|All rights reserved/i.test(bloc)) {
-      html.push(`<p class=”reader-legal”>${bloc}</p>`); continue;
+      html.push(`<p class="reader-legal">${bloc}</p>`); continue;
     }
     if (/^P\.?\s*S\.?\s+/i.test(bloc)) {
-      html.push(`<p class=”reader-ps”>${bloc}</p>`); continue;
+      html.push(`<p class="reader-ps">${bloc}</p>`); continue;
     }
-    if (/^(À propos|About the|Note de l.auteur|Biographie)/i.test(bloc) && bloc.length < 80) {
-      html.push(`<h2 class=”reader-section-title”>${bloc}</h2>`);
+    if (/^(Chapitre|Chapter|Partie|Part|Prologue|Épilogue|Epilogue|Dédicace|À propos|About the|Note de l.auteur|Biographie)\b/i.test(bloc) && bloc.length < 80) {
+      html.push(`<h2 class="reader-section-title">${bloc}</h2>`);
       premierVrai = true; continue;
     }
     if (/^[—–]\s/.test(bloc)) {
-      html.push(`<p class=”reader-dialogue”>${bloc}</p>`); continue;
+      html.push(`<p class="reader-dialogue">${bloc}</p>`); continue;
     }
-    if ((/^\xab|^”|^“/.test(bloc)) && bloc.length < 400) {
-      html.push(`<blockquote class=”reader-quote”><p>${bloc}</p></blockquote>`); continue;
+    if (/^\xab|^\u201c|^\u201d/.test(bloc) && bloc.length < 400) {
+      html.push(`<blockquote class="reader-quote"><p>${bloc}</p></blockquote>`); continue;
     }
-    if (bloc.length < 60 && /^[A-Z\xc0-\xdc\s]+$/.test(bloc) && !/[.!?,;:]/.test(bloc)) {
-      html.push(`<h3 class=”reader-inner-title”>${bloc}</h3>`); continue;
+    // Titre en majuscules (PROLOGUE, ÉPILOGUE…)
+    if (bloc.length < 70 && /^[A-Z\xc0-\xdc\s\-']+$/.test(bloc) && !/[.!?,;:]/.test(bloc)) {
+      html.push(`<h3 class="reader-inner-title">${bloc}</h3>`);
+      premierVrai = true; continue;
     }
-    const cls = premierVrai ? 'is-first' : '';
-    html.push(`<p${cls ? ` class=”${cls}”` : ''}>${bloc}</p>`);
+
+    const cls = premierVrai ? ' class="is-first"' : '';
+    html.push(`<p${cls}>${bloc}</p>`);
     if (premierVrai) premierVrai = false;
   }
 
   return html.join('');
 }
 
-/* Trouve l'index du debut du corps narratif (premier paragraphe long) */
-function _trouverDebutCorps(blocs) {
-  for (let i = 0; i < blocs.length; i++) {
-    const b = blocs[i];
-    if (b === '§SEP§' || b === '§ORN§') continue;
-    if (b.length > 100
-        && !/^\xa9/.test(b)
-        && !/^KALAMUNDI/.test(b)
-        && !/^[A-Z\xc0-\xdc\s\xb7]+$/.test(b)) {
-      return i;
-    }
-  }
-  return 0;
-}
 
 /* ============================================================
    TRADUCTION
@@ -619,7 +591,8 @@ const _navPage     = document.getElementById('reader-page');
 function ouvrirNavPanel() {
   _navPanel?.classList.add('is-open');
   _navPage?.classList.add('nav-panel-open');
-  _navOverlay?.classList.add('is-visible');
+  // Overlay uniquement sur mobile (sur desktop il bloquerait les clics sur le texte)
+  if (window.innerWidth <= 900) _navOverlay?.classList.add('is-visible');
   _navBtnOpen?.setAttribute('aria-expanded', 'true');
   _navBtnOpen?.classList.add('is-active');
   _majLanguetteNav(true);
