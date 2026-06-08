@@ -216,6 +216,9 @@ async function entrerDansLecteur() {
     toast(`Reprise au chapitre ${prog.chapitre_courant}`, 'info');
   }
 
+  // Volet de navigation ouvert par défaut sur desktop
+  if (window.innerWidth > 900) ouvrirNavPanel();
+
   // La progression est gérée par la pagination (pas de scroll)
 }
 
@@ -619,6 +622,7 @@ function ouvrirNavPanel() {
   _navOverlay?.classList.add('is-visible');
   _navBtnOpen?.setAttribute('aria-expanded', 'true');
   _navBtnOpen?.classList.add('is-active');
+  _majLanguetteNav(true);
 }
 
 function fermerNavPanel() {
@@ -627,6 +631,15 @@ function fermerNavPanel() {
   _navOverlay?.classList.remove('is-visible');
   _navBtnOpen?.setAttribute('aria-expanded', 'false');
   _navBtnOpen?.classList.remove('is-active');
+  _majLanguetteNav(false);
+}
+
+function _majLanguetteNav(ouvert) {
+  const tab = document.getElementById('btn-toggle-nav-tab');
+  if (!tab) return;
+  tab.textContent    = ouvert ? '‹' : '›';
+  tab.title          = ouvert ? 'Rétracter le volet' : 'Ouvrir le volet';
+  tab.ariaLabel      = ouvert ? 'Rétracter le volet' : 'Ouvrir le volet';
 }
 
 function toggleNavPanel() {
@@ -635,6 +648,7 @@ function toggleNavPanel() {
 
 _navBtnOpen?.addEventListener('click', toggleNavPanel);
 document.getElementById('btn-close-nav-panel')?.addEventListener('click', fermerNavPanel);
+document.getElementById('btn-toggle-nav-tab')?.addEventListener('click', toggleNavPanel);
 _navOverlay?.addEventListener('click', fermerNavPanel);
 
 /* Onglets Chapitres / Titres */

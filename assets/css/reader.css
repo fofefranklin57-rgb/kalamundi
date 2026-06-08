@@ -1590,6 +1590,43 @@ body.theme-dark .annot-ctx-item:hover { background: var(--dark-card); }
   transform: translateX(0);
 }
 
+/* ── Languette de rétractation (bord droit du volet) ──────── */
+.nav-panel__toggle-tab {
+  position: absolute;
+  top: 50%;
+  right: -22px;          /* dépasse du bord droit du volet */
+  transform: translateY(-50%);
+  width: 22px;
+  height: 56px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+}
+
+.nav-panel__toggle-tab:hover {
+  background: var(--color-primary-dark, #1a4a2a);
+}
+
+/* Quand volet fermé : flèche pointe vers la droite › */
+.reader-nav-panel:not(.is-open) .nav-panel__toggle-tab {
+  content: '›';
+}
+
+/* ── Masquer sur mobile (l'overlay suffit) ──────────────── */
+@media (max-width: 900px) {
+  .nav-panel__toggle-tab { display: none; }
+}
+
 /* Décale le contenu sur desktop quand le volet est ouvert */
 .reader-page.nav-panel-open .reader-main,
 .reader-page.nav-panel-open header {
