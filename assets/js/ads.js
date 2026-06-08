@@ -35,8 +35,69 @@
     'payment.html',  // tunnel de paiement — ne pas distraire
   ];
 
+  /* ── Anti-redirection automatique ───────────────────────── */
+  /* Bloque les redirections déclenchées par les scripts pub
+     sans geste utilisateur (clic volontaire).
+     Les clics volontaires sur les pubs fonctionnent normalement. */
+  function _activerAntiRedirect() {
+    if (window._kalaAntiRedirect) return;
+    window._kalaAntiRedirect = true;
+
+    var _clicUtilisateur = false;
+    var _timer = null;
+
+    /* Détecter les vrais clics utilisateur */
+    document.addEventListener('click', function () {
+      _clicUtilisateur = true;
+      clearTimeout(_timer);
+      _timer = setTimeout(function () { _clicUtilisateur = false; }, 1000);
+    }, true);
+
+    /* Bloquer window.open automatique (nouvelle tab pub sans clic) */
+    var _origOpen = window.open.bind(window);
+    window.open = function (url, target, features) {
+      if (_clicUtilisateur) return _origOpen(url, target, features);
+      console.log('[KalaAds] window.open bloqué (auto):', url);
+      return null;
+    };
+
+    /* Bloquer window.location.href automatique (redirection page entière) */
+    var _locDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
+    try {
+      var _hrefDescriptor = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
+      if (_hrefDescriptor && _hrefDescriptor.set) {
+        var _origHrefSet = _hrefDescriptor.set;
+        Object.defineProperty(Location.prototype, 'href', {
+          set: function (url) {
+            if (_clicUtilisateur || url.startsWith('/') ||
+                url.includes('kalamundi') || url.startsWith('#')) {
+              return _origHrefSet.call(this, url);
+            }
+            console.log('[KalaAds] location.href bloqué (auto):', url);
+          },
+          get: _hrefDescriptor.get,
+          configurable: true,
+        });
+      }
+    } catch (e) {}
+
+    /* Bloquer window.location.assign automatique */
+    try {
+      var _origAssign = window.location.assign.bind(window.location);
+      window.location.assign = function (url) {
+        if (_clicUtilisateur || url.startsWith('/') || url.includes('kalamundi')) {
+          return _origAssign(url);
+        }
+        console.log('[KalaAds] location.assign bloqué (auto):', url);
+      };
+    } catch (e) {}
+  }
+
   /* ── Initialisation ──────────────────────────────────────── */
   function init() {
+    /* Anti-redirect activé immédiatement, avant tout script pub */
+    _activerAntiRedirect();
+
     var page = window.location.pathname;
 
     // Pas de pub sur les pages blacklistées
