@@ -88,11 +88,10 @@
       _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
 
     } else if (isAccueil) {
-      /* Accueil : Vignette Banner UNIQUEMENT
-         In-Page Push et Multitag INTERDITS sur l'accueil —
-         ces formats génèrent des fausses fenêtres de téléchargement
-         qui nuisent à l'image de la plateforme */
+      /* Accueil : Vignette Banner + Multitag
+         Le popup In-Page Push est fermable via son bouton "Close" natif */
       _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
+      _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
 
     } else if (isLogin) {
       /* Login/inscription : In-Page Push uniquement — discret,
@@ -110,78 +109,7 @@
     }
   }
 
-  /* ── Charger au scroll (% de la page) ───────────────────── */
-  function _chargerAuScroll(seuil, callback) {
-    var declenche = false;
-    function verifier() {
-      if (declenche) return;
-      var scrolled = (window.scrollY + window.innerHeight) / document.documentElement.scrollHeight;
-      if (scrolled >= seuil) {
-        declenche = true;
-        window.removeEventListener('scroll', verifier);
-        callback();
-      }
-    }
-    window.addEventListener('scroll', verifier, { passive: true });
-  }
-
-  /* ── Intercepteur anti-popup In-Page Push ───────────────── */
-  /* Signature exacte du popup Monetag : z-index = 2147483647 (valeur max 32-bit)
-     La Vignette Banner utilise un z-index inférieur → jamais touchée */
-  function _activerAntiPopup() {
-    if (window._kalaAntiPopupActif) return;
-    window._kalaAntiPopupActif = true;
-
-    /* Bloquer les demandes de permission notification */
-    try {
-      Notification.requestPermission = function () { return Promise.resolve('denied'); };
-      Object.defineProperty(Notification, 'permission', { get: function () { return 'denied'; } });
-    } catch (e) {}
-
-    /* Bloquer l'enregistrement de service workers push */
-    try {
-      if (navigator.serviceWorker) {
-        var _origSW = navigator.serviceWorker.register.bind(navigator.serviceWorker);
-        navigator.serviceWorker.register = function (url, opts) {
-          if (/push|notification|subscribe/i.test(String(url))) {
-            return Promise.reject(new Error('blocked'));
-          }
-          return _origSW(url, opts);
-        };
-      }
-    } catch (e) {}
-
-    /* MutationObserver démarré après 4 secondes :
-       - Vignette Banner apparaît en < 2s  → passe avant l'observer
-       - In-Page Push apparaît après 5-10s → bloqué par l'observer
-       z-index 2147483647 = signature exclusive du popup Monetag */
-    setTimeout(function () {
-      var ZMAX = 2147483647;
-
-      function _tuer(el) {
-        if (!el || el.nodeType !== 1) return;
-        try {
-          var z = parseInt(window.getComputedStyle(el).zIndex);
-          if (z === ZMAX) {
-            el.style.cssText += ';display:none!important;visibility:hidden!important;pointer-events:none!important;';
-          }
-        } catch (e) {}
-      }
-
-      new MutationObserver(function (mutations) {
-        for (var i = 0; i < mutations.length; i++) {
-          var nodes = mutations[i].addedNodes;
-          for (var j = 0; j < nodes.length; j++) {
-            _tuer(nodes[j]);
-          }
-        }
-      }).observe(document.documentElement, { childList: true, subtree: true });
-
-    }, 4000); /* 4s : Vignette déjà affichée, popup pas encore arrivé */
-  }
-
   function _chargerScript(zone, src) {
-    _activerAntiPopup(); /* Activer l'intercepteur avant chaque chargement */
     var s       = document.createElement('script');
     s.dataset.zone    = zone;
     s.src             = src;
