@@ -88,21 +88,11 @@
       _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
 
     } else if (isAccueil) {
-      /* Accueil : 3 bannières progressives, zéro notification immédiate
-         1. Vignette Banner dès le chargement (coin discret)
-         2. In-Page Push après 12s (l'utilisateur a eu le temps de lire)
-         3. Multitag au scroll 60% (l'utilisateur a montré de l'intérêt) */
+      /* Accueil : Vignette Banner UNIQUEMENT
+         In-Page Push et Multitag INTERDITS sur l'accueil —
+         ces formats génèrent des fausses fenêtres de téléchargement
+         qui nuisent à l'image de la plateforme */
       _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
-
-      // Bannière 2 : In-Page Push différé 12 secondes
-      setTimeout(function () {
-        _chargerScript(ZONE_INPAGE, SRC_INPAGE);
-      }, 12000);
-
-      // Bannière 3 : Multitag au scroll 60% de la page
-      _chargerAuScroll(0.60, function () {
-        _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
-      });
 
     } else if (isLogin) {
       /* Login/inscription : In-Page Push uniquement — discret,
