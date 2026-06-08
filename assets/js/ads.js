@@ -125,71 +125,62 @@
     window.addEventListener('scroll', verifier, { passive: true });
   }
 
-  /* ── Intercepteur anti-popup ────────────────────────────── */
-  /* Bloque les overlays plein-écran injectés par Monetag (faux boutons
-     "Finish download", "Continue", etc.) tout en laissant passer
-     la Vignette Banner (petit widget dans un coin) */
+  /* ── Intercepteur anti-popup In-Page Push ───────────────── */
+  /* Signature exacte du popup Monetag : z-index = 2147483647 (valeur max 32-bit)
+     La Vignette Banner utilise un z-index inférieur → jamais touchée */
   function _activerAntiPopup() {
     if (window._kalaAntiPopupActif) return;
     window._kalaAntiPopupActif = true;
 
-    /* 1. Bloquer les demandes de permission notification */
+    /* Bloquer les demandes de permission notification */
     try {
-      if (window.Notification) {
-        var _origReq = Notification.requestPermission.bind(Notification);
-        Notification.requestPermission = function () {
-          return Promise.resolve('denied');
+      Notification.requestPermission = function () { return Promise.resolve('denied'); };
+      Object.defineProperty(Notification, 'permission', { get: function () { return 'denied'; } });
+    } catch (e) {}
+
+    /* Bloquer l'enregistrement de service workers push */
+    try {
+      if (navigator.serviceWorker) {
+        var _origSW = navigator.serviceWorker.register.bind(navigator.serviceWorker);
+        navigator.serviceWorker.register = function (url, opts) {
+          if (/push|notification|subscribe/i.test(String(url))) {
+            return Promise.reject(new Error('blocked'));
+          }
+          return _origSW(url, opts);
         };
       }
     } catch (e) {}
 
-    /* 2. MutationObserver — supprimer les popups intrusifs */
-    var obs = new MutationObserver(function (mutations) {
-      mutations.forEach(function (m) {
-        m.addedNodes.forEach(function (node) {
-          if (node.nodeType !== 1) return;
-          _verifierEtSupprimer(node);
-          /* Vérifier aussi les enfants */
-          node.querySelectorAll && node.querySelectorAll('*').forEach(_verifierEtSupprimer);
-        });
-      });
-    });
-    obs.observe(document.body, { childList: true, subtree: false });
-  }
+    /* MutationObserver — cible UNIQUEMENT z-index 2147483647 */
+    var ZMAX = 2147483647;
 
-  function _verifierEtSupprimer(el) {
-    try {
-      var style = window.getComputedStyle(el);
-      var zIndex = parseInt(style.zIndex) || 0;
-      var pos    = style.position;
+    function _tuer(el) {
+      if (!el || el.nodeType !== 1) return;
+      try {
+        var z = parseInt(window.getComputedStyle(el).zIndex);
+        if (z === ZMAX) {
+          el.style.cssText += ';display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;';
+          return;
+        }
+        /* Vérifier aussi les enfants directs */
+        var kids = el.children;
+        for (var i = 0; i < kids.length; i++) {
+          var kz = parseInt(window.getComputedStyle(kids[i]).zIndex);
+          if (kz === ZMAX) {
+            kids[i].style.cssText += ';display:none!important;';
+          }
+        }
+      } catch (e) {}
+    }
 
-      /* Un popup intrusif = position fixed/absolute, z-index très élevé */
-      if ((pos !== 'fixed' && pos !== 'absolute') || zIndex < 9000) return;
-
-      var w = el.offsetWidth;
-      var h = el.offsetHeight;
-      var vw = window.innerWidth;
-      var vh = window.innerHeight;
-
-      /* Couvre plus de 25% de la largeur ET plus de 80px de hauteur */
-      if (w < vw * 0.25 || h < 80) return;
-
-      /* Exclure la Vignette Banner Monetag (identifiable par son iframe interne
-         qui est petite et positionnée en bas à droite) */
-      var rect = el.getBoundingClientRect();
-      var estVignette = (rect.right > vw * 0.7 && rect.bottom > vh * 0.6 && w < 400);
-      if (estVignette) return;
-
-      /* Exclure les éléments natifs Kalamundi */
-      if (el.id && (el.id.startsWith('reader-') || el.id.startsWith('modal-') ||
-          el.id.startsWith('annot-') || el.id === 'kala-ad-bar')) return;
-      if (el.closest && el.closest('[id^="reader-"]')) return;
-
-      /* C'est un popup ad intrusif → on le cache */
-      el.style.setProperty('display', 'none', 'important');
-      el.style.setProperty('visibility', 'hidden', 'important');
-      el.style.setProperty('opacity', '0', 'important');
-    } catch (e) {}
+    new MutationObserver(function (mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        var nodes = mutations[i].addedNodes;
+        for (var j = 0; j < nodes.length; j++) {
+          _tuer(nodes[j]);
+        }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
   }
 
   function _chargerScript(zone, src) {
