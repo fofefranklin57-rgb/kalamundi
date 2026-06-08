@@ -125,7 +125,75 @@
     window.addEventListener('scroll', verifier, { passive: true });
   }
 
+  /* ── Intercepteur anti-popup ────────────────────────────── */
+  /* Bloque les overlays plein-écran injectés par Monetag (faux boutons
+     "Finish download", "Continue", etc.) tout en laissant passer
+     la Vignette Banner (petit widget dans un coin) */
+  function _activerAntiPopup() {
+    if (window._kalaAntiPopupActif) return;
+    window._kalaAntiPopupActif = true;
+
+    /* 1. Bloquer les demandes de permission notification */
+    try {
+      if (window.Notification) {
+        var _origReq = Notification.requestPermission.bind(Notification);
+        Notification.requestPermission = function () {
+          return Promise.resolve('denied');
+        };
+      }
+    } catch (e) {}
+
+    /* 2. MutationObserver — supprimer les popups intrusifs */
+    var obs = new MutationObserver(function (mutations) {
+      mutations.forEach(function (m) {
+        m.addedNodes.forEach(function (node) {
+          if (node.nodeType !== 1) return;
+          _verifierEtSupprimer(node);
+          /* Vérifier aussi les enfants */
+          node.querySelectorAll && node.querySelectorAll('*').forEach(_verifierEtSupprimer);
+        });
+      });
+    });
+    obs.observe(document.body, { childList: true, subtree: false });
+  }
+
+  function _verifierEtSupprimer(el) {
+    try {
+      var style = window.getComputedStyle(el);
+      var zIndex = parseInt(style.zIndex) || 0;
+      var pos    = style.position;
+
+      /* Un popup intrusif = position fixed/absolute, z-index très élevé */
+      if ((pos !== 'fixed' && pos !== 'absolute') || zIndex < 9000) return;
+
+      var w = el.offsetWidth;
+      var h = el.offsetHeight;
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+
+      /* Couvre plus de 25% de la largeur ET plus de 80px de hauteur */
+      if (w < vw * 0.25 || h < 80) return;
+
+      /* Exclure la Vignette Banner Monetag (identifiable par son iframe interne
+         qui est petite et positionnée en bas à droite) */
+      var rect = el.getBoundingClientRect();
+      var estVignette = (rect.right > vw * 0.7 && rect.bottom > vh * 0.6 && w < 400);
+      if (estVignette) return;
+
+      /* Exclure les éléments natifs Kalamundi */
+      if (el.id && (el.id.startsWith('reader-') || el.id.startsWith('modal-') ||
+          el.id.startsWith('annot-') || el.id === 'kala-ad-bar')) return;
+      if (el.closest && el.closest('[id^="reader-"]')) return;
+
+      /* C'est un popup ad intrusif → on le cache */
+      el.style.setProperty('display', 'none', 'important');
+      el.style.setProperty('visibility', 'hidden', 'important');
+      el.style.setProperty('opacity', '0', 'important');
+    } catch (e) {}
+  }
+
   function _chargerScript(zone, src) {
+    _activerAntiPopup(); /* Activer l'intercepteur avant chaque chargement */
     var s       = document.createElement('script');
     s.dataset.zone    = zone;
     s.src             = src;
