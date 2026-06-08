@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espace École — Kalamundi</title>
+  <meta name="description" content="Kalamundi pour les enseignants et élèves. Créez votre classe, assignez des livres, suivez la progression." />
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/dashboard.css" />
+  <script src="/assets/js/theme-init.js"></script>
+  <style>
+    .ecole-hero { background: linear-gradient(135deg,#1B4332,#2D6A4F); color:#fff; padding: var(--spacing-2xl) 0; text-align:center; }
+    .ecole-hero h1 { font-size: clamp(1.8rem,4vw,3rem); margin-bottom: var(--spacing-sm); }
+    .ecole-hero p  { opacity:.85; max-width:600px; margin:0 auto var(--spacing-lg); }
+    .ecole-tabs    { display:flex; gap:var(--spacing-sm); border-bottom:2px solid var(--border-color); margin-bottom:var(--spacing-xl); flex-wrap:wrap; }
+    .ecole-tab     { padding:10px 20px; font-weight:600; cursor:pointer; border:none; background:none; color:var(--text-secondary); border-bottom:3px solid transparent; margin-bottom:-2px; font-size:var(--font-size-sm); transition:.2s; }
+    .ecole-tab--active { color:var(--color-primary); border-bottom-color:var(--color-primary); }
+    .ecole-panel   { display:none; }
+    .ecole-panel--active { display:block; }
+    .classe-card   { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:var(--spacing-lg); margin-bottom:var(--spacing-md); }
+    .classe-card__header { display:flex; justify-content:space-between; align-items:flex-start; gap:var(--spacing-md); }
+    .classe-card__titre  { font-size:var(--font-size-lg); font-weight:700; color:var(--text-primary); }
+    .classe-card__meta   { color:var(--text-secondary); font-size:var(--font-size-sm); margin-top:4px; }
+    .classe-card__code   { background:#e8f5e9; color:var(--color-primary); padding:6px 14px; border-radius:20px; font-weight:700; font-size:var(--font-size-sm); letter-spacing:.1em; cursor:pointer; }
+    .classe-card__actions { display:flex; gap:var(--spacing-sm); margin-top:var(--spacing-md); flex-wrap:wrap; }
+    .livre-liste   { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:var(--spacing-md); margin-top:var(--spacing-md); }
+    .livre-item    { display:flex; gap:var(--spacing-md); align-items:center; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:var(--spacing-md); }
+    .livre-item__cover { width:50px; height:70px; border-radius:4px; object-fit:cover; flex-shrink:0; }
+    .livre-item__cover--placeholder { background:var(--color-primary); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.4rem; }
+    .livre-item__titre { font-weight:600; font-size:var(--font-size-sm); }
+    .livre-item__meta  { color:var(--text-secondary); font-size:var(--font-size-xs); margin-top:2px; }
+    .progress-bar      { height:6px; background:var(--border-color); border-radius:3px; margin-top:6px; overflow:hidden; }
+    .progress-bar__fill { height:100%; background:var(--color-primary); border-radius:3px; transition:width .3s; }
+    .eleve-row     { display:flex; align-items:center; justify-content:space-between; padding:var(--spacing-sm) 0; border-bottom:1px solid var(--border-color); }
+    .eleve-row:last-child { border-bottom:none; }
+    .badge-obligatoire { background:#fff3cd; color:#856404; border-radius:4px; padding:2px 8px; font-size:11px; font-weight:600; }
+    .badge-libre { background:#e8f5e9; color:var(--color-primary); border-radius:4px; padding:2px 8px; font-size:11px; font-weight:600; }
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; }
+    .modal-overlay.is-open { display:flex; }
+    .modal-box { background:var(--bg-card); border-radius:var(--radius-xl); padding:var(--spacing-xl); max-width:480px; width:90%; max-height:90vh; overflow-y:auto; }
+    .modal-box h2 { margin-bottom:var(--spacing-lg); }
+    .form-group { margin-bottom:var(--spacing-md); }
+    .form-group label { display:block; font-weight:600; margin-bottom:6px; font-size:var(--font-size-sm); }
+    .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 14px; border:1.5px solid var(--border-color); border-radius:var(--radius-md); background:var(--bg-input,var(--bg-card)); color:var(--text-primary); font-size:var(--font-size-sm); }
+    .form-group input:focus, .form-group select:focus { outline:none; border-color:var(--color-primary); }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <nav class="navbar__nav" id="nav-menu">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/library.html?genre=education" class="navbar__link">🎓 Scolaire</a>
+        <a href="/pages/ecole.html" class="navbar__link navbar__link--active">Espace École</a>
+      </nav>
+      <span id="theme-slot"></span>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="ecole-hero">
+    <div class="container">
+      <div class="hero__badge" style="display:inline-block;margin-bottom:var(--spacing-md)">🏫 Espace École</div>
+      <h1>La bibliothèque de ta classe</h1>
+      <p>Enseignants : créez votre classe, ajoutez des livres à lire. Élèves : rejoignez avec le code de votre prof.</p>
+      <div id="hero-actions" style="display:flex;gap:var(--spacing-md);justify-content:center;flex-wrap:wrap">
+        <button class="btn btn--accent btn--lg" id="btn-creer-classe">📋 Créer une classe</button>
+        <button class="btn btn--outline btn--lg" style="border-color:#fff;color:#fff" id="btn-rejoindre-classe">🔑 Rejoindre une classe</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <main class="container" style="padding-block:var(--spacing-xl)">
+
+      <!-- État non connecté -->
+      <div id="zone-non-connecte" style="display:none;text-align:center;padding:var(--spacing-2xl) 0">
+        <div style="font-size:3rem;margin-bottom:var(--spacing-md)">🔒</div>
+        <h2>Connectez-vous pour accéder à l'espace école</h2>
+        <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg)">Enseignants et élèves doivent avoir un compte Kalamundi.</p>
+        <a href="/pages/login.html?redirect=/pages/ecole.html" class="btn btn--accent btn--lg">Se connecter</a>
+      </div>
+
+      <!-- Zone connecté -->
+      <div id="zone-connecte" style="display:none">
+        <!-- Onglets -->
+        <div class="ecole-tabs">
+          <button class="ecole-tab ecole-tab--active" data-panel="mes-classes">📚 Mes classes</button>
+          <button class="ecole-tab" data-panel="mes-lectures">📖 Mes lectures</button>
+        </div>
+
+        <!-- Panel : Mes classes (prof) / Classes rejointes (élève) -->
+        <div class="ecole-panel ecole-panel--active" id="panel-mes-classes">
+          <div id="liste-classes">
+            <div class="spinner" style="margin:2rem auto"></div>
+          </div>
+        </div>
+
+        <!-- Panel : Mes lectures assignées -->
+        <div class="ecole-panel" id="panel-mes-lectures">
+          <div id="liste-lectures">
+            <div class="spinner" style="margin:2rem auto"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL : Créer une classe -->
+  <div class="modal-overlay" id="modal-creer">
+    <div class="modal-box">
+      <h2>📋 Créer une classe</h2>
+      <div class="form-group">
+        <label>Nom de la classe *</label>
+        <input type="text" id="input-nom-classe" placeholder="Ex: Terminale C — Lycée de la Cité" maxlength="80" />
+      </div>
+      <div class="form-group">
+        <label>Niveau</label>
+        <select id="input-niveau">
+          <option value="Primaire">Primaire</option>
+          <option value="Collège">Collège</option>
+          <option value="Lycée" selected>Lycée</option>
+          <option value="Université">Université</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Matière principale</label>
+        <input type="text" id="input-matiere" placeholder="Ex: Mathématiques, Français, Biologie…" maxlength="50" />
+      </div>
+      <div class="form-group">
+        <label>Description (optionnel)</label>
+        <textarea id="input-description" rows="3" placeholder="Ex: Liste de lecture pour le 1er trimestre 2026" maxlength="300"></textarea>
+      </div>
+      <div style="display:flex;gap:var(--spacing-md);margin-top:var(--spacing-lg)">
+        <button class="btn btn--accent" id="btn-confirmer-classe" style="flex:1">Créer la classe</button>
+        <button class="btn btn--ghost" id="btn-annuler-classe">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL : Rejoindre une classe -->
+  <div class="modal-overlay" id="modal-rejoindre">
+    <div class="modal-box">
+      <h2>🔑 Rejoindre une classe</h2>
+      <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg)">Demandez le code à votre enseignant(e).</p>
+      <div class="form-group">
+        <label>Code de la classe *</label>
+        <input type="text" id="input-code-classe" placeholder="Ex: KALA-7X2P" maxlength="12" style="font-size:1.2rem;text-align:center;letter-spacing:.15em;text-transform:uppercase" />
+      </div>
+      <div style="display:flex;gap:var(--spacing-md);margin-top:var(--spacing-lg)">
+        <button class="btn btn--accent" id="btn-confirmer-rejoindre" style="flex:1">Rejoindre</button>
+        <button class="btn btn--ghost" id="btn-annuler-rejoindre">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL : Détail d'une classe (prof) -->
+  <div class="modal-overlay" id="modal-classe-detail">
+    <div class="modal-box" style="max-width:700px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--spacing-lg)">
+        <h2 id="modal-classe-titre">Ma classe</h2>
+        <button class="btn btn--ghost btn--sm" id="btn-fermer-detail">✕</button>
+      </div>
+      <!-- Onglets internes -->
+      <div style="display:flex;gap:var(--spacing-sm);margin-bottom:var(--spacing-lg);border-bottom:1px solid var(--border-color);padding-bottom:var(--spacing-sm)">
+        <button class="ecole-tab ecole-tab--active" data-inner="livres">📚 Livres assignés</button>
+        <button class="ecole-tab" data-inner="eleves">👥 Élèves</button>
+      </div>
+      <div id="inner-livres">
+        <div id="liste-livres-classe"><div class="spinner" style="margin:1rem auto"></div></div>
+        <div style="margin-top:var(--spacing-md)">
+          <input type="text" id="input-recherche-livre" placeholder="🔍 Chercher un livre à ajouter…" style="width:100%;padding:10px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-card);color:var(--text-primary)" />
+          <div id="resultats-recherche-livre" style="margin-top:var(--spacing-sm)"></div>
+        </div>
+      </div>
+      <div id="inner-eleves" style="display:none">
+        <div id="liste-eleves-classe"><div class="spinner" style="margin:1rem auto"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module" src="/assets/js/ecole.js"></script>
+</body>
+</html>
