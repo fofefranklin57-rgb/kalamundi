@@ -646,11 +646,129 @@ function _activerOngletNav(onglet) {
   });
 }
 
-/* ── Vignettes miniatures des pages (style Word) ─────────── */
+/* ── Vignettes miniatures des pages — rendu Canvas (style Word) ── */
+
+/**
+ * Dessine sur canvas une représentation visuelle d'une page.
+ * Reproduit la structure du texte (paragraphes, titres, dialogues, lettrine)
+ * sous forme de lignes grises — identique à ce que fait Word en vue miniature.
+ */
+function _dessinerVignette(canvas, pageEl, isDark, isSepia) {
+  const W   = canvas.width;
+  const H   = canvas.height;
+  const dpr = window.devicePixelRatio || 1;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  // Fond selon thème
+  ctx.fillStyle = isDark ? '#1e2a22' : isSepia ? '#f8f0e3' : '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!pageEl) return;
+
+  const MX   = W * 0.09;           // marge horizontale
+  const MY   = H * 0.06;           // marge verticale haut
+  const TW   = W - MX * 2;         // largeur texte
+  const LH   = H * 0.022;          // hauteur d'une ligne
+  const GAP  = LH * 0.6;           // espace entre lignes
+  const PGAP = LH * 1.4;           // espace entre paragraphes
+  const TCOL = isDark ? 'rgba(255,255,255,0.35)' : isSepia ? 'rgba(90,60,20,0.35)' : 'rgba(0,0,0,0.28)';
+  const HCOL = isDark ? '#52B788'  : '#1B4332';  // couleur titres
+  const DCOL = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)'; // dialogues
+
+  let y = MY;
+
+  const elements = pageEl.querySelectorAll('p, h2, h3, blockquote, hr, .reader-ornament');
+
+  for (const el of elements) {
+    if (y > H - MY) break;
+    const tag = el.tagName.toLowerCase();
+    const cls = el.className || '';
+    const txt = el.textContent || '';
+
+    // ── Séparateur ──────────────────────────────────
+    if (tag === 'hr') {
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.fillRect(MX + TW * 0.15, y + LH / 2, TW * 0.7, 1);
+      y += LH + PGAP; continue;
+    }
+
+    // ── Ornement ✦ ──────────────────────────────────
+    if (cls.includes('reader-ornament')) {
+      ctx.fillStyle = HCOL;
+      const sz = LH * 0.9;
+      ctx.fillRect(W / 2 - sz / 2, y, sz, sz);
+      y += LH + PGAP; continue;
+    }
+
+    // ── Titre h2 / section ──────────────────────────
+    if (tag === 'h2') {
+      ctx.fillStyle = HCOL;
+      const w = Math.min(TW * 0.65, Math.max(TW * 0.2, txt.length * LH * 0.52));
+      ctx.fillRect(MX, y, w, LH * 1.25);
+      y += LH * 1.25 + PGAP; continue;
+    }
+
+    // ── Titre h3 / intertitres ───────────────────────
+    if (tag === 'h3') {
+      ctx.fillStyle = HCOL + '99';
+      const w = Math.min(TW * 0.5, Math.max(TW * 0.15, txt.length * LH * 0.48));
+      ctx.fillRect(MX, y, w, LH);
+      y += LH + PGAP; continue;
+    }
+
+    // ── Citation / blockquote ───────────────────────
+    if (tag === 'blockquote') {
+      ctx.fillStyle = 'rgba(0,0,0,0.08)';
+      ctx.fillRect(MX, y, TW, Math.min(LH * 4, (txt.length / 50) * (LH + GAP)));
+      ctx.fillStyle = HCOL;
+      ctx.fillRect(MX, y, 2, Math.min(LH * 4, (txt.length / 50) * (LH + GAP)));
+      y += Math.min(LH * 4, (txt.length / 50) * (LH + GAP)) + PGAP; continue;
+    }
+
+    // ── Paragraphe ──────────────────────────────────
+    const isFirst    = cls.includes('is-first');
+    const isDialogue = cls.includes('reader-dialogue');
+    const nbLignes   = Math.max(1, Math.min(8, Math.ceil(txt.length / 55)));
+
+    ctx.fillStyle = isDialogue ? DCOL : TCOL;
+
+    if (isFirst && txt.length > 2) {
+      // Lettrine — petit carré vert en haut à gauche
+      ctx.fillStyle = HCOL;
+      const ls = LH * 2.8;
+      ctx.fillRect(MX, y, ls * 0.7, ls);
+      // Première ligne à côté de la lettrine
+      ctx.fillStyle = isDialogue ? DCOL : TCOL;
+      ctx.fillRect(MX + ls * 0.85, y, TW - ls * 0.85, LH);
+      y += LH + GAP;
+      if (nbLignes > 1) {
+        ctx.fillRect(MX + ls * 0.85, y, TW * 0.7, LH);
+        y += LH + GAP;
+      }
+      // Lignes restantes pleine largeur
+      for (let l = 2; l < nbLignes; l++) {
+        if (y > H - MY) break;
+        const isLast = l === nbLignes - 1;
+        ctx.fillRect(MX, y, isLast ? TW * (0.25 + (txt.length % 7) / 10) : TW, LH);
+        y += LH + GAP;
+      }
+    } else {
+      for (let l = 0; l < nbLignes; l++) {
+        if (y > H - MY) break;
+        const isLast = l === nbLignes - 1;
+        const ratio  = isLast ? 0.2 + (txt.length % 9) / 12 : 0.92 + (l % 3) * 0.026;
+        ctx.fillRect(MX, y, TW * Math.min(ratio, 1), LH);
+        y += LH + GAP;
+      }
+    }
+    y += PGAP * 0.5;
+  }
+}
+
 function remplirNavPanelPages() {
   const listEl = document.getElementById('nav-pages-list');
   if (!listEl) return;
-
   listEl.innerHTML = '';
 
   if (!etat.pages) {
@@ -662,72 +780,43 @@ function remplirNavPanelPages() {
     return;
   }
 
-  // Dimensions de la vignette
-  const THUMB_W    = 108; // px — largeur vignette
-  const contentW   = etat.maxWidth || 680;
-  const SCALE      = THUMB_W / contentW;
-
-  const header  = document.querySelector('header');
-  const footer  = document.querySelector('.reader-bottombar');
-  const headerH = header?.offsetHeight ?? 56;
-  const footerH = footer?.offsetHeight ?? 56;
-  const PADDING = 72;
-  const contentH = Math.max(300, window.innerHeight - headerH - footerH - PADDING);
-  const THUMB_H  = Math.round(contentH * SCALE);
+  // 1 colonne — largeur disponible = panel (260px) - padding (24px) = 236px
+  const THUMB_W = 210;
+  const RATIO   = 210 / 297; // proportion A4 à l'envers = portrait
+  const THUMB_H = Math.round(THUMB_W / RATIO * 1.06);
+  const DPR     = Math.min(window.devicePixelRatio || 1, 2);
+  const isDark  = document.body.classList.contains('theme-dark');
+  const isSepia = document.body.classList.contains('theme-sepia');
 
   for (let i = 1; i <= etat.pages; i++) {
     const sourcePage = document.querySelector(`.reader-book-page[data-page="${i}"]`);
     const actif      = i === etat.pageCourante;
 
-    const wrapper  = document.createElement('div');
+    const wrapper = document.createElement('div');
     wrapper.className = `nav-thumb${actif ? ' is-current' : ''}`;
     wrapper.dataset.page = String(i);
-    wrapper.title  = `Page ${i}`;
+    wrapper.title = `Page ${i}`;
 
-    // Fenêtre de la vignette (overflow:hidden)
-    const viewport = document.createElement('div');
-    viewport.className = 'nav-thumb__viewport';
-    viewport.style.cssText =
-      `width:${THUMB_W}px;height:${THUMB_H}px;overflow:hidden;position:relative;flex-shrink:0;`;
+    // Canvas vignette
+    const canvas = document.createElement('canvas');
+    canvas.className = 'nav-thumb__canvas';
+    canvas.width  = THUMB_W * DPR;
+    canvas.height = THUMB_H * DPR;
+    canvas.style.width  = THUMB_W + 'px';
+    canvas.style.height = THUMB_H + 'px';
+    canvas.getContext('2d').scale(DPR, DPR);
+    _dessinerVignette(canvas, sourcePage, isDark, isSepia);
 
-    if (sourcePage) {
-      // Clone du contenu, mis à l'échelle
-      const clone = sourcePage.cloneNode(true);
-      clone.hidden = false;
-      clone.removeAttribute('data-page');
-      clone.style.cssText = [
-        `transform:scale(${SCALE})`,
-        `transform-origin:top left`,
-        `width:${contentW}px`,
-        `max-width:none`,
-        `position:absolute`,
-        `top:0;left:0`,
-        `font-size:${etat.fontSize}px`,
-        `line-height:${etat.lineHeight}`,
-        `padding:24px 28px`,
-        `pointer-events:none`,
-        `user-select:none`,
-        `color:var(--text-primary)`,
-        `background:var(--bg-main)`,
-      ].join(';');
-      viewport.appendChild(clone);
-    } else {
-      viewport.style.background = 'var(--bg-secondary)';
-    }
-
-    // Numéro de page sous la vignette
     const label = document.createElement('div');
     label.className = 'nav-thumb__label';
     label.textContent = String(i);
 
-    wrapper.appendChild(viewport);
+    wrapper.appendChild(canvas);
     wrapper.appendChild(label);
-
     wrapper.addEventListener('click', () => {
       _allerPage(i);
       if (window.innerWidth <= 900) fermerNavPanel();
     });
-
     listEl.appendChild(wrapper);
   }
 }
