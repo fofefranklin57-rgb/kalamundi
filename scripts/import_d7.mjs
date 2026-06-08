@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 const SUPABASE_URL = 'https://iobieffnaauecyukecds.supabase.co';
 const SUPABASE_KEY = 'sb_secret_ighJK-990TP2_9gCC7TmUw_rm9N2cDi';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-const AUTEUR_SYSTEME_ID = '00000000-0000-0000-0000-000000000001';
+const AUTEUR_SYSTEME_ID = 'cd117018-5e89-4d2c-96d6-4f1a6be4a236';
 const MAX_OEUVRES = 30;
 const DELAI_MS    = 600;
 
@@ -108,18 +108,17 @@ async function fetchTexte(identifier) {
 }
 
 /* ── Requête principale ─────────────────────────────────── */
-async function chercherOeuvres(langue, start = 0) {
+async function chercherOeuvres(langue, sujet = 'roman', start = 0) {
   const langCode = langue === 'fr' ? 'fre' : langue === 'ar' ? 'ara' : langue === 'sw' ? 'swa' : 'eng';
   const q = [
     `language:${langCode}`,
     'mediatype:texts',
-    'NOT collection:opensource_movies',
-    'licenseurl:(creativecommons OR "public domain")',
-    '-subject:magazine -subject:journal -subject:newspaper',
+    `subject:${sujet}`,
+    '-subject:magazine -subject:journal -subject:newspaper -subject:periodical',
   ].join(' AND ');
 
-  const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(q)}&fl=identifier,title,creator,description,subject,language,date&rows=20&start=${start}&output=json`;
-  const res = await fetch(url, { headers: { 'User-Agent': 'KalamudiLibrary/1.0' } });
+  const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(q)}&fl=identifier,title,creator,description,subject,language,date&rows=15&start=${start}&output=json`;
+  const res = await fetch(url, { headers: { 'User-Agent': 'KalamudiLibrary/1.0' }, signal: AbortSignal.timeout(15_000) });
   if (!res.ok) return [];
   const data = await res.json();
   return data?.response?.docs || [];
@@ -188,12 +187,20 @@ async function main() {
   await assureCompteSysteme();
 
   let total = 0;
-  const langues = ['fr', 'en', 'ar', 'sw'];
+  const requetes = [
+    { langue: 'fr', sujet: 'roman' },
+    { langue: 'fr', sujet: 'conte' },
+    { langue: 'fr', sujet: 'poésie' },
+    { langue: 'en', sujet: 'novel' },
+    { langue: 'ar', sujet: 'literature' },
+    { langue: 'sw', sujet: 'literature' },
+  ];
 
-  for (const langue of langues) {
+  for (const { langue, sujet } of requetes) {
     if (total >= MAX_OEUVRES) break;
-    console.log(`\n--- Langue : ${langue} ---`);
-    const docs = await chercherOeuvres(langue);
+    console.log(`\n--- ${langue} / sujet:${sujet} ---`);
+    const docs = await chercherOeuvres(langue, sujet);
+    console.log(`  ${docs.length} résultats`);
 
     for (const doc of docs) {
       if (total >= MAX_OEUVRES) break;

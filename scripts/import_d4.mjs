@@ -16,10 +16,13 @@ const MAX_OEUVRES       = 30;
 const DELAI_MS          = 500;
 
 const CATEGORIES = [
-  'Textes_à_exporter',
-  'Littérature_africaine',
-  'Romans_du_domaine_public',
-  'Poèmes_du_domaine_public',
+  'Romans',
+  'Nouvelles',
+  'Poèmes',
+  'Contes',
+  'Essais',
+  'Pièces_de_théâtre',
+  'Autobiographies',
 ];
 
 const GENRE_MOTS = {
