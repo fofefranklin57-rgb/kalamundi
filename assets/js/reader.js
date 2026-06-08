@@ -1329,6 +1329,8 @@ function _pageNext() {
   if (etat.pageCourante < etat.pages) {
     _allerPage(etat.pageCourante + 1);
   } else if (!_visiteurBloque() && etat.chapitreNum < etat.chapitres.length) {
+    // Déclencher pub interstitielle dans l'APK Android au changement de chapitre
+    if (window.KalamundiAds) window.KalamundiAds.onChapterChange();
     chargerChapitre(etat.chapitreNum + 1);
   } else if (_visiteurBloque()) {
     _modalMontree = true;
