@@ -151,36 +151,33 @@
       }
     } catch (e) {}
 
-    /* MutationObserver — cible UNIQUEMENT z-index 2147483647 */
-    var ZMAX = 2147483647;
+    /* MutationObserver démarré après 4 secondes :
+       - Vignette Banner apparaît en < 2s  → passe avant l'observer
+       - In-Page Push apparaît après 5-10s → bloqué par l'observer
+       z-index 2147483647 = signature exclusive du popup Monetag */
+    setTimeout(function () {
+      var ZMAX = 2147483647;
 
-    function _tuer(el) {
-      if (!el || el.nodeType !== 1) return;
-      try {
-        var z = parseInt(window.getComputedStyle(el).zIndex);
-        if (z === ZMAX) {
-          el.style.cssText += ';display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;';
-          return;
-        }
-        /* Vérifier aussi les enfants directs */
-        var kids = el.children;
-        for (var i = 0; i < kids.length; i++) {
-          var kz = parseInt(window.getComputedStyle(kids[i]).zIndex);
-          if (kz === ZMAX) {
-            kids[i].style.cssText += ';display:none!important;';
+      function _tuer(el) {
+        if (!el || el.nodeType !== 1) return;
+        try {
+          var z = parseInt(window.getComputedStyle(el).zIndex);
+          if (z === ZMAX) {
+            el.style.cssText += ';display:none!important;visibility:hidden!important;pointer-events:none!important;';
+          }
+        } catch (e) {}
+      }
+
+      new MutationObserver(function (mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+          var nodes = mutations[i].addedNodes;
+          for (var j = 0; j < nodes.length; j++) {
+            _tuer(nodes[j]);
           }
         }
-      } catch (e) {}
-    }
+      }).observe(document.documentElement, { childList: true, subtree: true });
 
-    new MutationObserver(function (mutations) {
-      for (var i = 0; i < mutations.length; i++) {
-        var nodes = mutations[i].addedNodes;
-        for (var j = 0; j < nodes.length; j++) {
-          _tuer(nodes[j]);
-        }
-      }
-    }).observe(document.documentElement, { childList: true, subtree: true });
+    }, 4000); /* 4s : Vignette déjà affichée, popup pas encore arrivé */
   }
 
   function _chargerScript(zone, src) {
