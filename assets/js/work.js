@@ -5,6 +5,7 @@
 
 import { api } from './api.js';
 import { getUser } from './auth.js';
+import { estSauvegarde, sauvegarderLivre, supprimerLivre } from './offline.js';
 import { getParam, formatNombre, formatDate, toast, toastErreur, toastSucces } from './utils.js';
 import { genererCouverture } from './cover-generator.js';
 
@@ -173,10 +174,14 @@ async function rendreActions(oeuvre) {
   const actionsEl = document.getElementById('work-actions');
 
   if (oeuvre.statut === 'gratuit') {
+    const deja = await estSauvegarde(oeuvre.id).catch(() => false);
     actionsEl.innerHTML = `
       <a href="/pages/reader.html?id=${oeuvre.id}&ch=1" class="btn btn--accent btn--lg">
         📖 Lire maintenant
       </a>
+      <button class="btn btn--outline" id="btn-offline" data-id="${oeuvre.id}" data-sauvegarde="${deja}">
+        ${deja ? '✅ Disponible hors-ligne' : '⬇️ Lire hors-ligne'}
+      </button>
       <button class="btn btn--outline" id="btn-partager">
         Partager
       </button>`;
@@ -197,6 +202,59 @@ async function rendreActions(oeuvre) {
         </p>`;
     }
   }
+
+  // Bouton hors-ligne
+  document.getElementById('btn-offline')?.addEventListener('click', async (e) => {
+    const btn      = e.currentTarget;
+    const deja     = btn.dataset.sauvegarde === 'true';
+    if (deja) {
+      if (!confirm(`Supprimer "${oeuvre.titre}" du mode hors-ligne ?`)) return;
+      btn.disabled = true;
+      btn.textContent = '🗑️ Suppression…';
+      await supprimerLivre(oeuvre.id);
+      btn.dataset.sauvegarde = 'false';
+      btn.textContent = '⬇️ Lire hors-ligne';
+      btn.disabled = false;
+      toast('Livre retiré du mode hors-ligne.', 'info');
+      return;
+    }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner spinner--sm"></span> Téléchargement…';
+    try {
+      // Récupérer tous les chapitres
+      const { data: chapitres, error } = await api.supabase
+        ? api.supabase.from('chapitres').select('numero,titre,contenu').eq('oeuvre_id', oeuvre.id).order('numero')
+        : { data: null, error: 'no supabase' };
+
+      // Fallback : utiliser l'import supabase direct
+      let chaps = chapitres;
+      if (!chaps) {
+        const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
+        const sb = createClient('https://iobieffnaauecyukecds.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvYmllZmZuYWF1ZWN5dWtlY2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDIzNTEsImV4cCI6MjA5NjMxODM1MX0.w1_Zv9VeVvoLlt1H0d7wN8To-A5DAxSfszV0kJ_5NRE');
+        const res = await sb.from('chapitres').select('numero,titre,contenu').eq('oeuvre_id', oeuvre.id).order('numero');
+        chaps = res.data;
+      }
+
+      if (!chaps || !chaps.length) {
+        toast('Aucun chapitre disponible pour ce livre.', 'erreur');
+        btn.disabled = false;
+        btn.textContent = '⬇️ Lire hors-ligne';
+        return;
+      }
+
+      await sauvegarderLivre(oeuvre, chaps);
+      btn.dataset.sauvegarde = 'true';
+      btn.textContent = '✅ Disponible hors-ligne';
+      btn.disabled = false;
+      const ko = chaps.reduce((s, c) => s + (c.contenu?.length || 0), 0);
+      toast(`"${oeuvre.titre}" sauvegardé (${Math.round(ko/1024)} Ko) — lisible sans internet !`, 'success');
+    } catch (err) {
+      console.error(err);
+      toast('Erreur lors du téléchargement.', 'erreur');
+      btn.disabled = false;
+      btn.textContent = '⬇️ Lire hors-ligne';
+    }
+  });
 
   // Partager — lien avec titre + auteur pour URL lisible
   document.getElementById('btn-partager')?.addEventListener('click', async () => {

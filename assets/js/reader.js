@@ -5,6 +5,7 @@
 
 import { api } from './api.js';
 import { getUser } from './auth.js';
+import { getLivre } from './offline.js';
 import { genererCouverture } from './cover-generator.js';
 import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
 import { traduire, viderCacheTraduction, rendreOptionLangues, LANGUES_LECTURE } from './translate.js';
@@ -247,15 +248,31 @@ async function chargerChapitre(numero, sansAnimation = false) {
     return;
   }
 
-  // Charger le texte
+  // Charger le texte — réseau d'abord, IndexedDB en fallback hors-ligne
   let contenu = '';
   try {
     const ch = await api.getChapitre(chapitre.id);
     contenu = ch.contenu_texte;
   } catch {
-    toastErreur('Erreur de chargement du chapitre.');
-    loadingEl.style.display = 'none';
-    return;
+    // Tentative lecture hors-ligne
+    try {
+      const livreLocal = await getLivre(etat.oeuvreId);
+      const chapLocal  = livreLocal?.chapitres?.find(c => c.numero === numero);
+      if (chapLocal?.contenu) {
+        contenu = chapLocal.contenu;
+        if (numero === etat.chapitreNum) {
+          toast('📵 Mode hors-ligne — lecture depuis la mémoire locale.', 'info');
+        }
+      } else {
+        toastErreur('Chapitre indisponible hors-ligne. Connectez-vous pour lire.');
+        loadingEl.style.display = 'none';
+        return;
+      }
+    } catch {
+      toastErreur('Erreur de chargement du chapitre.');
+      loadingEl.style.display = 'none';
+      return;
+    }
   }
 
   // Traduire si nécessaire
