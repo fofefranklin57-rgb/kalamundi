@@ -23,8 +23,7 @@
   var ZONE_VIGNETTE = '11117130';   // Vignette Banner (zone mise à jour)
   var SRC_VIGNETTE  = 'https://n6wxm.com/vignette.min.js';
 
-  var ZONE_MULTITAG = '246898';     // Multitag
-  var SRC_MULTITAG  = 'https://quge5.com/88/tag.min.js';
+  // Multitag supprimé — injectait des formats non contrôlés (popunders, redirections)
 
   var DELAI_MS = 2500; // Délai avant injection (laisser la page se charger)
 
@@ -145,7 +144,6 @@
     /* Toutes les autres pages → In-Page Push (discret) */
     if (isBrowse) {
       _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
-      _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
     } else {
       _chargerScript(ZONE_INPAGE, SRC_INPAGE);
     }
