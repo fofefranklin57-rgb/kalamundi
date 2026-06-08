@@ -302,6 +302,44 @@
   text-align: center;
 }
 
+/* Genre card éducation — mise en avant */
+.genre-card--edu {
+  border: 2px solid var(--color-primary);
+  background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ── Section scolaire — onglets niveaux ─────────────────── */
+.edu-tabs {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.edu-tab {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.edu-tab:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.edu-tab--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
 /* ============================================================
    CTA section
    ============================================================ */

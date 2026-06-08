@@ -3,7 +3,7 @@
    Kalamundi — La Plume du Monde
    ============================================================ */
 
-import { getSession } from './auth.js';
+import { getSession, supabase } from './auth.js';
 import { api } from './api.js';
 
 /* ============================================================
@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chargerVedettes(),
     chargerNouveautes(),
     chargerNouveauxTalents(),
+    chargerScolaire('tous'),
   ]);
   initHamburger();
   /* Pubs Monetag — chargées après le contenu, respecte les abonnés */
@@ -413,6 +414,72 @@ function videState(message) {
 /* ============================================================
    Menu hamburger mobile
    ============================================================ */
+
+/* ============================================================
+   Section Scolaire — Manuels OpenStax
+   ============================================================ */
+
+async function chargerScolaire(niveau = 'tous') {
+  const grid = document.getElementById('grid-scolaire');
+  if (!grid) return;
+  grid.innerHTML = '<div class="spinner" style="margin:2rem auto"></div>';
+
+  try {
+    let query = supabase
+      .from('oeuvres')
+      .select(`id, titre, couverture_url, genre, public_cible, note_moyenne, statut, profiles:auteur_id(nom)`)
+      .like('genre', 'education%')
+      .eq('visible', true)
+      .order('titre', { ascending: true })
+      .limit(20);
+
+    if (niveau !== 'tous') {
+      query = query.eq('public_cible', niveau);
+    }
+
+    const { data, error } = await query;
+    if (error || !data?.length) {
+      grid.innerHTML = videState('Aucun manuel disponible.');
+      return;
+    }
+
+    grid.innerHTML = data.map(o => {
+      const titre   = o.titre || 'Sans titre';
+      const niveau_ = o.public_cible || '';
+      const matiere = o.genre?.replace('education_', '') || '';
+      const couleurs = { maths:'#1B4332', sciences:'#1a3a5c', sh:'#5c1a1a', eco:'#A97C0E', info:'#2D6A4F', langues:'#4a1a5c', autre:'#333' };
+      const cle = matiere.toLowerCase();
+      const couleur = couleurs[cle] || couleurs.autre;
+      const initiale = titre.charAt(0).toUpperCase();
+      const cover = o.couverture_url
+        ? `<img src="${o.couverture_url}" alt="${titre}" loading="lazy" class="book-mini__img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        : '';
+      const fallback = `<div class="book-mini__fallback" style="background:${couleur};display:${o.couverture_url ? 'none' : 'flex'}"><span>${initiale}</span></div>`;
+      const badge = niveau_ ? `<span style="font-size:10px;background:var(--accent-light,#e8f5e9);color:var(--primary);border-radius:4px;padding:1px 6px;font-weight:600">${niveau_}</span>` : '';
+      return `
+        <a href="/pages/work.html?id=${o.id}" class="book-mini">
+          <div class="book-mini__cover">${cover}${fallback}</div>
+          <div class="book-mini__body">
+            <div class="book-mini__genre" style="display:flex;gap:4px;align-items:center">🎓 ${badge}</div>
+            <div class="book-mini__title">${titre}</div>
+            <div class="book-mini__author">OpenStax · CC-BY</div>
+          </div>
+        </a>`;
+    }).join('');
+
+  } catch (e) {
+    grid.innerHTML = videState('Erreur de chargement.');
+  }
+
+  /* Onglets niveaux */
+  document.getElementById('edu-tabs')?.querySelectorAll('.edu-tab').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      document.querySelectorAll('.edu-tab').forEach(b => b.classList.remove('edu-tab--active'));
+      btn.classList.add('edu-tab--active');
+      await chargerScolaire(btn.dataset.niveau);
+    });
+  });
+}
 
 function initHamburger() {
   const toggle = document.getElementById('nav-toggle');

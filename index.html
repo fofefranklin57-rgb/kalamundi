@@ -30,6 +30,7 @@
         <a href="/pages/library.html?genre=roman" class="navbar__link">Romans</a>
         <a href="/pages/library.html?genre=poesie" class="navbar__link">Poésie</a>
         <a href="/pages/library.html?genre=conte" class="navbar__link">Contes</a>
+        <a href="/pages/library.html?genre=education" class="navbar__link">🎓 Scolaire</a>
         <a href="/pages/bienvenue.html" class="navbar__link">À propos</a>
       </nav>
       <span id="theme-slot"></span>
@@ -174,7 +175,29 @@
             <a href="/pages/library.html?genre=theatre" class="genre-card"><span class="genre-card__icon">🎭</span><span class="genre-card__name">Théâtre</span></a>
             <a href="/pages/library.html?genre=biographie" class="genre-card"><span class="genre-card__icon">👤</span><span class="genre-card__name">Biographie</span></a>
             <a href="/pages/library.html?genre=bd" class="genre-card"><span class="genre-card__icon">🎨</span><span class="genre-card__name">BD / Manga</span></a>
+            <a href="/pages/library.html?genre=education" class="genre-card genre-card--edu"><span class="genre-card__icon">🎓</span><span class="genre-card__name">Scolaire</span></a>
           </div>
+        </div>
+      </section>
+
+      <!-- SECTION : Manuels scolaires -->
+      <section class="section container" id="section-scolaire">
+        <div class="section__header">
+          <h2 class="section__title">🎓 Manuels scolaires gratuits</h2>
+          <a href="/pages/library.html?genre=education" class="btn btn--ghost btn--sm">Tout voir →</a>
+        </div>
+        <div class="section__subtitle" style="margin-bottom:var(--spacing-md);color:var(--text-secondary);font-size:var(--font-size-sm)">
+          Mathématiques · Sciences · Économie · Histoire · Informatique — Licences CC-BY
+        </div>
+        <!-- Onglets niveaux -->
+        <div class="edu-tabs" id="edu-tabs">
+          <button class="edu-tab edu-tab--active" data-niveau="tous">Tous niveaux</button>
+          <button class="edu-tab" data-niveau="Collège">Collège</button>
+          <button class="edu-tab" data-niveau="Lycée">Lycée</button>
+          <button class="edu-tab" data-niveau="Université">Université</button>
+        </div>
+        <div class="books-carousel-wrap">
+          <div class="books-carousel" id="grid-scolaire"></div>
         </div>
       </section>
 
