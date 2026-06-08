@@ -20,7 +20,7 @@
   var ZONE_INPAGE   = '11110665';   // In-Page Push
   var SRC_INPAGE    = 'https://nap5k.com/tag.min.js';
 
-  var ZONE_VIGNETTE = '11110687';   // Vignette Banner
+  var ZONE_VIGNETTE = '11117130';   // Vignette Banner (zone mise à jour)
   var SRC_VIGNETTE  = 'https://n6wxm.com/vignette.min.js';
 
   var ZONE_MULTITAG = '246898';     // Multitag
