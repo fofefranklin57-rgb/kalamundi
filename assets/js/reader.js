@@ -5,6 +5,7 @@
 
 import { api } from './api.js';
 import { getUser } from './auth.js';
+import { genererCouverture } from './cover-generator.js';
 import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
 import { traduire, viderCacheTraduction, rendreOptionLangues, LANGUES_LECTURE } from './translate.js';
 import { activerProtections } from './security.js';
@@ -114,13 +115,16 @@ function afficherCouverture() {
     bgEl.style.background = `linear-gradient(160deg, ${couleur} 0%, color-mix(in srgb, ${couleur} 50%, #000) 100%)`;
   }
 
-  // Miniature livre
-  const bookEl = document.getElementById('cover-book-img');
+  // Miniature livre — générée automatiquement si pas de couverture uploadée
+  const bookEl  = document.getElementById('cover-book-img');
+  const coverGenerated = genererCouverture(
+    oeuvre.titre, auteur, (oeuvre.genre || '').toLowerCase(), 220, 308
+  );
   if (oeuvre.couverture_url) {
-    bookEl.innerHTML = `<img src="${oeuvre.couverture_url}" alt="Couverture de ${oeuvre.titre}" />`;
+    bookEl.innerHTML = `<img src="${oeuvre.couverture_url}" alt="Couverture de ${oeuvre.titre}"
+      onerror="this.onerror=null;this.src='${coverGenerated}'" />`;
   } else {
-    bookEl.style.background = `linear-gradient(145deg, ${couleur}, color-mix(in srgb, ${couleur} 70%, #000))`;
-    bookEl.innerHTML = `<span style="font-size:3rem;opacity:0.4">${emoji}</span>`;
+    bookEl.innerHTML = `<img src="${coverGenerated}" alt="Couverture générée — ${oeuvre.titre}" />`;
   }
 
   // Métadonnées
@@ -149,22 +153,15 @@ function afficherCouverture() {
   const backBtn = document.getElementById('cover-back-btn');
   if (backBtn) backBtn.href = `/pages/work.html?id=${etat.oeuvreId}`;
 
-  // TOC : couverture miniature
-  const tocCover = document.getElementById('toc-cover');
-  if (oeuvre.couverture_url) {
-    tocCover.innerHTML = `
-      <img src="${oeuvre.couverture_url}" alt="Couverture" />
-      <div class="reader-toc__cover-overlay">
-        <div class="reader-toc__cover-title">${oeuvre.titre}</div>
-      </div>`;
-  } else {
-    tocCover.style.background = `linear-gradient(145deg, ${couleur}, color-mix(in srgb, ${couleur} 60%, #000))`;
-    tocCover.innerHTML = `
-      <span class="reader-toc__cover-placeholder">${emoji}</span>
-      <div class="reader-toc__cover-overlay">
-        <div class="reader-toc__cover-title">${oeuvre.titre}</div>
-      </div>`;
-  }
+  // TOC : couverture miniature (générée si absente ou cassée)
+  const tocCover   = document.getElementById('toc-cover');
+  const tocCoverSrc = oeuvre.couverture_url || coverGenerated;
+  tocCover.innerHTML = `
+    <img src="${tocCoverSrc}" alt="Couverture"
+      onerror="this.onerror=null;this.src='${coverGenerated}'" />
+    <div class="reader-toc__cover-overlay">
+      <div class="reader-toc__cover-title">${oeuvre.titre}</div>
+    </div>`;
 
   document.getElementById('toc-book-title').textContent = oeuvre.titre;
   document.getElementById('toc-author').textContent     = `par ${auteur}`;

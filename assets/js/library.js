@@ -5,6 +5,7 @@
 
 import { api } from './api.js';
 import { debounce, getParam, formatNombre, truncate } from './utils.js';
+import { genererCouverture } from './cover-generator.js';
 
 /* ============================================================
    RÉFÉRENTIEL GENRE — adapté BISAC
@@ -229,10 +230,14 @@ function carteOeuvre(o) {
   const note    = o.note_moyenne ? `⭐ ${Number(o.note_moyenne).toFixed(1)}` : '';
   const lectures = o.nb_lectures ? `👁 ${formatNombre(o.nb_lectures)}` : '';
 
-  // Couverture : image réelle ou placeholder coloré par genre
+  // Couverture : image réelle, générée automatiquement, ou emoji fallback
+  const auteurNom = o.profiles?.nom || '';
+  const genreKey  = (o.genre || '').toLowerCase();
+  const coverFallbackB64 = genererCouverture(o.titre, auteurNom, genreKey, 300, 420);
   const couverture = o.couverture_url
-    ? `<img src="${o.couverture_url}" alt="Couverture — ${o.titre}" loading="lazy" />`
-    : `<span class="book-card__cover-icon">${cfg.emoji}</span>`;
+    ? `<img src="${o.couverture_url}" alt="Couverture — ${o.titre}" loading="lazy"
+           onerror="this.onerror=null;this.src='${coverFallbackB64}'" />`
+    : `<img src="${coverFallbackB64}" alt="Couverture générée — ${o.titre}" loading="lazy" />`;
 
   // Badge licence (dc:rights)
   const badgeLicence = o.statut === 'premium'

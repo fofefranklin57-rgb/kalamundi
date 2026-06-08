@@ -6,6 +6,7 @@
 import { api } from './api.js';
 import { getUser } from './auth.js';
 import { getParam, formatNombre, formatDate, toast, toastErreur, toastSucces } from './utils.js';
+import { genererCouverture } from './cover-generator.js';
 
 const oeuvreId = getParam('id');
 let noteSelectionnee = 0;
@@ -118,10 +119,16 @@ async function chargerOeuvre() {
       }
     }
 
-    // Couverture
-    const coverEl = document.getElementById('work-cover');
+    // Couverture : réelle, générée automatiquement, ou fallback si URL cassée
+    const coverEl   = document.getElementById('work-cover');
+    const auteurCov = oeuvre.profiles?.nom || '';
+    const genreCov  = (oeuvre.genre || '').toLowerCase();
+    const coverGen  = genererCouverture(oeuvre.titre, auteurCov, genreCov, 300, 420);
     if (oeuvre.couverture_url) {
-      coverEl.innerHTML = `<img src="${oeuvre.couverture_url}" alt="Couverture ${oeuvre.titre}" />`;
+      coverEl.innerHTML = `<img src="${oeuvre.couverture_url}" alt="Couverture ${oeuvre.titre}"
+        onerror="this.onerror=null;this.src='${coverGen}'" />`;
+    } else {
+      coverEl.innerHTML = `<img src="${coverGen}" alt="Couverture générée — ${oeuvre.titre}" />`;
     }
 
     // Résumé
