@@ -131,43 +131,19 @@
 
   /* ── Charger les scripts Monetag selon la page ───────────── */
   function _chargerPubs(page, estAbonne) {
-    var isBrowse  = page.includes('library') || page.includes('work')
-                 || page.includes('author-profile');
-    var isAccueil = page === '/' || page.endsWith('index.html') || page === '';
-    var isLogin   = page.includes('login.html');
-    var isDashboard = page.includes('author-dashboard')
-                   || page.includes('institution')
-                   || page.includes('abonnements')
-                   || page.includes('publish')
-                   || page.includes('cgu')
-                   || page.includes('contrat');
+    /* Pubs uniquement sur les pages de navigation/découverte
+       Zéro pub sur : accueil, login, publish, dashboard, légal */
+    var isBrowse = page.includes('library')
+                || page.includes('work.html')
+                || page.includes('author-profile');
 
     if (isBrowse) {
-      /* Pages de catalogue et fiches œuvres :
-         Vignette Banner + Multitag — meilleur RPM sur contenu éditorial */
+      /* Catalogue, fiche œuvre, profil auteur :
+         Vignette Banner (coin discret) + Multitag */
       _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
       _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
-
-    } else if (isAccueil) {
-      /* Accueil : Vignette Banner + Multitag
-         Le popup In-Page Push est fermable via son bouton "Close" natif */
-      _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
-      _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
-
-    } else if (isLogin) {
-      /* Login/inscription : In-Page Push uniquement — discret,
-         format notification, ne bloque pas le formulaire */
-      _chargerScript(ZONE_INPAGE, SRC_INPAGE);
-
-    } else if (isDashboard) {
-      /* Dashboard, publication, pages légales :
-         In-Page Push uniquement — non intrusif */
-      _chargerScript(ZONE_INPAGE, SRC_INPAGE);
-
-    } else {
-      /* Toutes les autres pages : In-Page Push par défaut */
-      _chargerScript(ZONE_INPAGE, SRC_INPAGE);
     }
+    /* Toutes les autres pages : aucune pub */
   }
 
   function _chargerScript(zone, src) {
