@@ -15,8 +15,11 @@ import {
   _rafraichirBoutonMarquePage,
 } from './annotations.js';
 
-/* Nombre de "pages" scrollées gratuites pour les visiteurs */
+/* Nombre de "pages" scrollées gratuites pour les visiteurs (dans un chapitre) */
 const LIMIT_VISITEUR_PAGES = 2;
+
+/* Nombre de chapitres gratuits pour les visiteurs (session entière) */
+const LIMIT_VISITEUR_CHAPITRES = 1;
 
 /* Couleur par genre pour la couverture (doit correspondre à library.js) */
 const GENRE_COULEURS = {
@@ -305,9 +308,19 @@ async function chargerChapitre(numero, sansAnimation = false) {
   // Scroll haut
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Visiteur — surveiller le scroll
+  // Visiteur — contrôle d'accès par chapitre
   if (!etat.utilisateur) {
-    _surveilerScrollVisiteur();
+    _chapitresVisiteurLus++;
+
+    if (_visiteurModeStrict || _chapitresVisiteurLus > LIMIT_VISITEUR_CHAPITRES) {
+      // Bloquer immédiatement — afficher le modal sans attendre le scroll
+      _modalMontree = true;
+      document.body.style.overflow = 'hidden';
+      _afficherModalAbonnement();
+    } else {
+      // Premier chapitre — surveiller le scroll normalement
+      _surveilerScrollVisiteur();
+    }
   }
 }
 
@@ -571,7 +584,15 @@ function remplirTOC() {
 
   listEl.querySelectorAll('.toc-item').forEach(item => {
     item.addEventListener('click', () => {
-      chargerChapitre(parseInt(item.dataset.num));
+      const numCible = parseInt(item.dataset.num);
+      if (_visiteurBloque() && numCible !== etat.chapitreNum) {
+        fermerTOC();
+        _modalMontree = true;
+        document.body.style.overflow = 'hidden';
+        _afficherModalAbonnement();
+        return;
+      }
+      chargerChapitre(numCible);
       fermerTOC();
     });
   });
@@ -691,7 +712,15 @@ function remplirNavPanelChapitres() {
 
   listEl.querySelectorAll('.nav-ch-item').forEach(item => {
     item.addEventListener('click', () => {
-      chargerChapitre(parseInt(item.dataset.num));
+      const numCible = parseInt(item.dataset.num);
+      if (_visiteurBloque() && numCible !== etat.chapitreNum) {
+        fermerNavPanel();
+        _modalMontree = true;
+        document.body.style.overflow = 'hidden';
+        _afficherModalAbonnement();
+        return;
+      }
+      chargerChapitre(numCible);
       // Sur mobile, fermer après navigation
       if (window.innerWidth <= 900) fermerNavPanel();
     });
@@ -749,9 +778,14 @@ function remplirNavPanelTitres() {
    NAVIGATION CHAPITRES
    ============================================================ */
 
+function _visiteurBloque() {
+  return !etat.utilisateur && (_visiteurModeStrict || _chapitresVisiteurLus >= LIMIT_VISITEUR_CHAPITRES);
+}
+
 function mettreAJourNavigation() {
-  document.getElementById('btn-prev').disabled = etat.chapitreNum <= 1;
-  document.getElementById('btn-next').disabled = etat.chapitreNum >= etat.chapitres.length;
+  const bloque = _visiteurBloque();
+  document.getElementById('btn-prev').disabled = etat.chapitreNum <= 1 || bloque;
+  document.getElementById('btn-next').disabled = etat.chapitreNum >= etat.chapitres.length || bloque;
 }
 
 document.getElementById('btn-prev')?.addEventListener('click', () => {
@@ -1005,10 +1039,10 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
-    if (etat.chapitreNum < etat.chapitres.length) chargerChapitre(etat.chapitreNum + 1);
+    if (!_visiteurBloque() && etat.chapitreNum < etat.chapitres.length) chargerChapitre(etat.chapitreNum + 1);
   }
   if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
-    if (etat.chapitreNum > 1) chargerChapitre(etat.chapitreNum - 1);
+    if (!_visiteurBloque() && etat.chapitreNum > 1) chargerChapitre(etat.chapitreNum - 1);
   }
   if (e.key === 'Escape') {
     fermerTOC();
@@ -1025,9 +1059,11 @@ document.addEventListener('keydown', (e) => {
    SURVEILLANCE SCROLL VISITEUR
    ============================================================ */
 
-let _scrollPagesLues = 0;
-let _scrollHandler   = null;
-let _modalMontree    = false;
+let _scrollPagesLues       = 0;
+let _scrollHandler         = null;
+let _modalMontree          = false;
+let _chapitresVisiteurLus  = 0;   // nb chapitres chargés par un visiteur cette session
+let _visiteurModeStrict    = false; // true après "Continuer comme visiteur"
 
 function _reinitScrollVisiteur() {
   _scrollPagesLues = 0;
@@ -1104,8 +1140,9 @@ function _afficherModalAbonnement() {
     newBtn.addEventListener('click', () => {
       modal.classList.remove('is-open');
       document.body.style.overflow = '';
-      _scrollPagesLues = 0;
-      _modalMontree    = false;
+      _scrollPagesLues    = 0;
+      _modalMontree       = false;
+      _visiteurModeStrict = true; // toute prochaine navigation déclenchera le modal immédiatement
       if (!etat.utilisateur) _surveilerScrollVisiteurStrict();
     });
   }
