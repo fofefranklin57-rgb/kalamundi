@@ -88,9 +88,21 @@
       _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
 
     } else if (isAccueil) {
-      /* Accueil : Vignette Banner UNIQUEMENT
-         Le Multitag est EXCLU car il auto-inclut le In-Page Push */
+      /* Accueil : 3 bannières progressives, zéro notification immédiate
+         1. Vignette Banner dès le chargement (coin discret)
+         2. In-Page Push après 12s (l'utilisateur a eu le temps de lire)
+         3. Multitag au scroll 60% (l'utilisateur a montré de l'intérêt) */
       _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
+
+      // Bannière 2 : In-Page Push différé 12 secondes
+      setTimeout(function () {
+        _chargerScript(ZONE_INPAGE, SRC_INPAGE);
+      }, 12000);
+
+      // Bannière 3 : Multitag au scroll 60% de la page
+      _chargerAuScroll(0.60, function () {
+        _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
+      });
 
     } else if (isLogin) {
       /* Login/inscription : In-Page Push uniquement — discret,
@@ -106,6 +118,21 @@
       /* Toutes les autres pages : In-Page Push par défaut */
       _chargerScript(ZONE_INPAGE, SRC_INPAGE);
     }
+  }
+
+  /* ── Charger au scroll (% de la page) ───────────────────── */
+  function _chargerAuScroll(seuil, callback) {
+    var declenche = false;
+    function verifier() {
+      if (declenche) return;
+      var scrolled = (window.scrollY + window.innerHeight) / document.documentElement.scrollHeight;
+      if (scrolled >= seuil) {
+        declenche = true;
+        window.removeEventListener('scroll', verifier);
+        callback();
+      }
+    }
+    window.addEventListener('scroll', verifier, { passive: true });
   }
 
   function _chargerScript(zone, src) {
