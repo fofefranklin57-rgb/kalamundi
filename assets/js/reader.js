@@ -780,13 +780,17 @@ function remplirNavPanelPages() {
     return;
   }
 
-  // 1 colonne — largeur disponible = panel (260px) - padding (24px) = 236px
-  const THUMB_W = 210;
-  const RATIO   = 210 / 297; // proportion A4 à l'envers = portrait
-  const THUMB_H = Math.round(THUMB_W / RATIO * 1.06);
-  const DPR     = Math.min(window.devicePixelRatio || 1, 2);
-  const isDark  = document.body.classList.contains('theme-dark');
-  const isSepia = document.body.classList.contains('theme-sepia');
+  // 1 colonne — vignette 210px de large
+  const THUMB_W  = 210;
+  const contentW = etat.maxWidth || 680;
+  const SCALE    = THUMB_W / contentW;
+
+  const header  = document.querySelector('header');
+  const footer  = document.querySelector('.reader-bottombar');
+  const headerH = header?.offsetHeight ?? 56;
+  const footerH = footer?.offsetHeight ?? 56;
+  const contentH = Math.max(300, window.innerHeight - headerH - footerH - 72);
+  const THUMB_H  = Math.round(contentH * SCALE);
 
   for (let i = 1; i <= etat.pages; i++) {
     const sourcePage = document.querySelector(`.reader-book-page[data-page="${i}"]`);
@@ -797,21 +801,44 @@ function remplirNavPanelPages() {
     wrapper.dataset.page = String(i);
     wrapper.title = `Page ${i}`;
 
-    // Canvas vignette
-    const canvas = document.createElement('canvas');
-    canvas.className = 'nav-thumb__canvas';
-    canvas.width  = THUMB_W * DPR;
-    canvas.height = THUMB_H * DPR;
-    canvas.style.width  = THUMB_W + 'px';
-    canvas.style.height = THUMB_H + 'px';
-    canvas.getContext('2d').scale(DPR, DPR);
-    _dessinerVignette(canvas, sourcePage, isDark, isSepia);
+    // Viewport : fenêtre de taille fixe avec overflow:hidden
+    const viewport = document.createElement('div');
+    viewport.className = 'nav-thumb__viewport';
+    viewport.style.cssText = `width:${THUMB_W}px;height:${THUMB_H}px;overflow:hidden;position:relative;`;
+
+    if (sourcePage) {
+      // Inner : le vrai contenu de la page, réduit via zoom CSS
+      // Wrappé dans .reader-content pour que toutes les règles CSS s'appliquent
+      const inner = document.createElement('div');
+      inner.className = 'reader-content nav-thumb__inner';
+      inner.style.cssText = [
+        `zoom:${SCALE}`,          // réduit le rendu — le texte reste lisible
+        `width:${contentW}px`,
+        `max-width:none`,
+        `padding:${etat.fontSize * 1.2}px ${etat.fontSize * 1.5}px`,
+        `font-size:${etat.fontSize}px`,
+        `line-height:${etat.lineHeight}`,
+        `pointer-events:none`,
+        `position:relative`,
+        `background:var(--bg-main)`,
+      ].join(';');
+
+      // Cloner les enfants (paragraphes, titres…) du .reader-book-page
+      Array.from(sourcePage.children).forEach(child => {
+        const c = child.cloneNode(true);
+        inner.appendChild(c);
+      });
+
+      viewport.appendChild(inner);
+    } else {
+      viewport.style.background = 'var(--bg-secondary)';
+    }
 
     const label = document.createElement('div');
     label.className = 'nav-thumb__label';
     label.textContent = String(i);
 
-    wrapper.appendChild(canvas);
+    wrapper.appendChild(viewport);
     wrapper.appendChild(label);
     wrapper.addEventListener('click', () => {
       _allerPage(i);

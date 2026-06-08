@@ -1813,19 +1813,27 @@ body.theme-dark .annot-ctx-item:hover { background: var(--dark-card); }
 
 .nav-thumb:hover { background: var(--bg-secondary); }
 
-/* Canvas vignette — ombre + bordure */
-.nav-thumb__canvas {
+/* Viewport vignette — ombre + bordure */
+.nav-thumb__viewport {
   display: block;
-  border-radius: 2px;
+  border-radius: 3px;
   box-shadow: 0 1px 6px rgba(0,0,0,0.18);
   border: 2.5px solid transparent;
   transition: border-color 0.15s, box-shadow 0.15s;
+  background: var(--bg-main);
 }
 
 /* Page courante — encadré vert comme Word est bleu */
-.nav-thumb.is-current .nav-thumb__canvas {
+.nav-thumb.is-current .nav-thumb__viewport {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 1px var(--color-primary), 0 2px 10px rgba(0,0,0,0.22);
+}
+
+/* Inner : empêcher toute sélection / interaction sur le texte miniature */
+.nav-thumb__inner {
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
 .nav-thumb__label {
