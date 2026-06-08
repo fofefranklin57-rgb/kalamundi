@@ -1,5 +1,9 @@
 # Redirections Cloudflare Pages — Kalamundi
 
+# Favicon manquant → icône PWA existante
+/assets/img/favicon.ico   /assets/img/icons/icon-192.png  301
+/favicon.ico              /assets/img/icons/icon-192.png  301
+
 # Alias pratiques
 /login          /pages/login.html       301
 /library        /pages/library.html     301
