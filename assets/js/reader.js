@@ -302,6 +302,7 @@ async function chargerChapitre(numero, sansAnimation = false) {
   mettreAJourTOC();
   mettreAJourNavPanelChapitres();
   remplirNavPanelTitres();
+  remplirNavPanelPages(); // liste les pages du chapitre après pagination
   sauvegarderProgression();
   rendreInfosTopbar();
 
@@ -345,9 +346,13 @@ function afficherPageTitreChapitre(numero) {
 
 function formaterTexte(texte) {
 
+  /* ETAPE 0 : Protéger les marqueurs de saut de page originaux (PDF)
+     avant tout autre traitement */
+  const texteAvecMarqueurs = texte.replace(/---PAGE---/g, '\n§PGBRK§\n');
+
   /* ETAPE 1 : Supprimer les en-tetes de page PDF repetes
      Pattern : “Titre · Auteur · N” en debut de chaque page */
-  const lignesBrutes  = texte.split('\n').filter(l => l.trim());
+  const lignesBrutes  = texteAvecMarqueurs.split('\n').filter(l => l.trim());
   const rxEnTete      = /^.{4,120}\xb7\s*\d{1,3}\s+/;
   const nbEnTetes     = lignesBrutes.filter(l => rxEnTete.test(l)).length;
   const estPDF        = nbEnTetes / Math.max(lignesBrutes.length, 1) > 0.35;
@@ -355,13 +360,11 @@ function formaterTexte(texte) {
     ? lignesBrutes.map(l => l.replace(rxEnTete, '').trim())
     : lignesBrutes;
 
-  /* ETAPE 2 : Decoupage intelligent des paragraphes
-     REGLE CLE : on coupe sur double espace SEULEMENT apres ponctuation de fin
-     On NE coupe PAS sur — au milieu d'une phrase (tiret litteraire) */
+  /* ETAPE 2 : Decoupage intelligent des paragraphes */
   const txt = lignesPropres.join('\n')
-    .replace(/[—\-]{4,}/g, '\n§SEP§\n')   // separateurs longs
-    .replace(/✦|★|✶|✴/g, '\n§ORN§\n')  // ornements typographiques ✦ ★
-    .replace(/\*\s*\*\s*\*/g, '\n§ORN§\n')       // * * *
+    .replace(/[—\-]{4,}/g, '\n§SEP§\n')
+    .replace(/✦|★|✶|✴/g, '\n§ORN§\n')
+    .replace(/\*\s*\*\s*\*/g, '\n§ORN§\n')
     // Saut de para SEULEMENT apres ponctuation forte + double espace + debut de phrase
     .replace(/([.!?\xbb])\s{2,}([A-Z\xc0-\xdc«””—])/g, '$1\n$2')
     // Debut de dialogue reel (apres ponctuation forte)
@@ -371,7 +374,7 @@ function formaterTexte(texte) {
   const blocsRaw = txt.split('\n').map(l => l.trim()).filter(l => l);
   const blocs = [];
   for (const b of blocsRaw) {
-    const isMarqueur = b === '§SEP§' || b === '§ORN§';
+    const isMarqueur = b === '§SEP§' || b === '§ORN§' || b === '§PGBRK§';
     const isSpecial  = isMarqueur
       || /^[—–]\s/.test(b)
       || /^\xa9/.test(b)
@@ -382,7 +385,7 @@ function formaterTexte(texte) {
     // Fusionner les micro-blocs avec le precedent (artefacts OCR)
     if (!isSpecial && b.length < 55 && blocs.length > 0) {
       const prev = blocs[blocs.length - 1];
-      if (prev !== '§SEP§' && prev !== '§ORN§') {
+      if (prev !== '§SEP§' && prev !== '§ORN§' && prev !== '§PGBRK§') {
         blocs[blocs.length - 1] = prev + ' ' + b;
         continue;
       }
@@ -399,6 +402,7 @@ function formaterTexte(texte) {
     // Numéros de page PDF résiduels → ignorer
     if (/^.{4,80}\xb7\s*\d{1,3}$/.test(bloc)) continue;
 
+    if (bloc === '§PGBRK§') { html.push('<div class="reader-page-break" data-forced="true"></div>'); premierVrai = true; continue; }
     if (bloc === '§SEP§') { html.push('<hr class="reader-sep" />'); continue; }
     if (bloc === '§ORN§') { html.push('<div class="reader-ornament" aria-hidden="true">✦</div>'); continue; }
 
@@ -624,21 +628,58 @@ document.getElementById('btn-close-nav-panel')?.addEventListener('click', fermer
 document.getElementById('btn-toggle-nav-tab')?.addEventListener('click', toggleNavPanel);
 _navOverlay?.addEventListener('click', fermerNavPanel);
 
-/* Onglets Chapitres / Titres */
+/* Onglets Chapitres / Pages / Titres */
 document.getElementById('nav-tab-chapitres')?.addEventListener('click', () => {
   _activerOngletNav('chapitres');
 });
+document.getElementById('nav-tab-pages')?.addEventListener('click', () => {
+  _activerOngletNav('pages');
+  remplirNavPanelPages();
+});
 document.getElementById('nav-tab-titres')?.addEventListener('click', () => {
   _activerOngletNav('titres');
-  remplirNavPanelTitres(); // rafraîchit à la demande
+  remplirNavPanelTitres();
 });
 
 function _activerOngletNav(onglet) {
-  ['chapitres', 'titres'].forEach(o => {
+  ['chapitres', 'pages', 'titres'].forEach(o => {
     document.getElementById(`nav-tab-${o}`)?.classList.toggle('is-active', o === onglet);
     document.getElementById(`nav-tab-${o}`)?.setAttribute('aria-selected', o === onglet ? 'true' : 'false');
     document.getElementById(`nav-pane-${o}`)?.classList.toggle('is-active', o === onglet);
   });
+}
+
+/* ── Liste des pages du chapitre courant dans le volet ───── */
+function remplirNavPanelPages() {
+  const listEl = document.getElementById('nav-pages-list');
+  if (!listEl) return;
+  if (!etat.pages || etat.pages <= 1) {
+    listEl.innerHTML = '<p class="nav-panel__empty">Chapitre en une seule page.</p>';
+    return;
+  }
+  let html = '';
+  for (let i = 1; i <= etat.pages; i++) {
+    const actif = i === etat.pageCourante;
+    html += `<div class="nav-pg-item${actif ? ' is-current' : ''}" data-page="${i}">
+      <div class="nav-pg-item__num">${i}</div>
+      <span>Page ${i}</span>
+    </div>`;
+  }
+  listEl.innerHTML = html;
+  listEl.querySelectorAll('.nav-pg-item').forEach(item => {
+    item.addEventListener('click', () => {
+      _allerPage(parseInt(item.dataset.page));
+      if (window.innerWidth <= 900) fermerNavPanel();
+    });
+  });
+}
+
+function mettreAJourNavPanelPages() {
+  document.querySelectorAll('#nav-pages-list .nav-pg-item').forEach(item => {
+    item.classList.toggle('is-current', parseInt(item.dataset.page) === etat.pageCourante);
+  });
+  const courant = document.querySelector('#nav-pages-list .nav-pg-item.is-current');
+  courant?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 /* ── Liste des chapitres dans le volet ─────────────────── */
@@ -1044,7 +1085,14 @@ function _paginerContenu(contentEl) {
   let hPage      = 0;
 
   for (const el of elements) {
+    // Saut de page forcé (marqueur ---PAGE--- du PDF original) → nouvelle page immédiate
+    if (el.dataset.forced === 'true') {
+      if (page.length > 0) { pages.push(page); page = []; hPage = 0; }
+      continue; // ne pas inclure l'élément marqueur dans la page
+    }
+
     const h = el.offsetHeight + GAP;
+    // Saut de page automatique par hauteur (docs sans marqueurs)
     if (hPage + h > hauteurMax && page.length > 0) {
       pages.push(page);
       page = [el];
@@ -1055,6 +1103,8 @@ function _paginerContenu(contentEl) {
     }
   }
   if (page.length) pages.push(page);
+  // Garantir au moins 1 page
+  if (!pages.length) pages.push([]);
 
   // Reconstruire le DOM avec des divs de pages
   contentEl.innerHTML = '';
@@ -1097,6 +1147,7 @@ function _allerPage(num) {
   mettreAJourNavigation();
   _mettreAJourPositionPage();
   _mettreAJourScrollProgress();
+  mettreAJourNavPanelPages(); // synchronise la page surlignée dans le volet
 }
 
 /** Page suivante, puis chapitre suivant si on est à la dernière page */

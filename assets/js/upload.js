@@ -59,13 +59,24 @@ async function lirePdf(fichier) {
   }
   const buffer  = await fichier.arrayBuffer();
   const pdf     = await window.pdfjsLib.getDocument({ data: buffer }).promise;
-  let texte     = '';
+  const pages   = [];
   for (let i = 1; i <= pdf.numPages; i++) {
     const page    = await pdf.getPage(i);
     const content = await page.getTextContent();
-    texte += content.items.map(item => item.str).join(' ') + '\n\n';
+    // Reconstituer le texte de la page en préservant les sauts de ligne internes
+    let lignes = '';
+    let lastY  = null;
+    for (const item of content.items) {
+      if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+        lignes += '\n';
+      }
+      lignes += item.str;
+      lastY = item.transform[5];
+    }
+    pages.push(lignes.trim());
   }
-  return texte.trim();
+  // Séparer les pages par un marqueur explicite — préservé dans le lecteur
+  return pages.join('\n---PAGE---\n').trim();
 }
 
 /* ---- EPUB ------------------------------------------------- */

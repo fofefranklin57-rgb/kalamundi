@@ -1781,6 +1781,50 @@ body.theme-dark .annot-ctx-item:hover { background: var(--dark-card); }
   white-space: nowrap;
 }
 
+/* ── Items de pages dans le volet ─────────────────────────── */
+.nav-pg-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px var(--spacing-md);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.nav-pg-item:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.nav-pg-item.is-current {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+  border-left-color: var(--color-primary);
+}
+
+.nav-pg-item__num {
+  min-width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.nav-pg-item.is-current .nav-pg-item__num {
+  background: var(--color-primary);
+  color: #fff;
+}
+
 .nav-ch-item--paratexte { font-style: italic; }
 
 /* Items titres (headings dans le chapitre) */

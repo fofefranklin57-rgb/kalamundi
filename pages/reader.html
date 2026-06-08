@@ -161,12 +161,18 @@
       <button class="nav-panel__close" id="btn-close-nav-panel" aria-label="Fermer le volet">✕</button>
     </div>
     <div class="nav-panel__tabs" role="tablist">
-      <button class="nav-panel__tab is-active" id="nav-tab-chapitres" role="tab" aria-selected="true" aria-controls="nav-pane-chapitres">Chapitres</button>
-      <button class="nav-panel__tab" id="nav-tab-titres" role="tab" aria-selected="false" aria-controls="nav-pane-titres">Titres</button>
+      <button class="nav-panel__tab is-active" id="nav-tab-chapitres" role="tab" aria-selected="true"  aria-controls="nav-pane-chapitres">Chapitres</button>
+      <button class="nav-panel__tab"            id="nav-tab-pages"     role="tab" aria-selected="false" aria-controls="nav-pane-pages">Pages</button>
+      <button class="nav-panel__tab"            id="nav-tab-titres"    role="tab" aria-selected="false" aria-controls="nav-pane-titres">Titres</button>
     </div>
     <div class="nav-panel__body">
       <div class="nav-panel__pane is-active" id="nav-pane-chapitres" role="tabpanel">
         <div id="nav-chapters-list"></div>
+      </div>
+      <div class="nav-panel__pane" id="nav-pane-pages" role="tabpanel">
+        <div id="nav-pages-list">
+          <p class="nav-panel__empty">Chargement…</p>
+        </div>
       </div>
       <div class="nav-panel__pane" id="nav-pane-titres" role="tabpanel">
         <div id="nav-headings-list">
