@@ -131,19 +131,24 @@
 
   /* ── Charger les scripts Monetag selon la page ───────────── */
   function _chargerPubs(page, estAbonne) {
-    /* Pubs uniquement sur les pages de navigation/découverte
-       Zéro pub sur : accueil, login, publish, dashboard, légal */
+    /* Zéro pub : accueil et lecteur uniquement */
+    var isAccueil = page === '/' || page.endsWith('index.html') || page === '';
+    var isReader  = page.includes('reader.html');
+    if (isAccueil || isReader) return;
+
+    /* Pages de navigation/contenu → Vignette + Multitag (meilleur RPM) */
     var isBrowse = page.includes('library')
                 || page.includes('work.html')
-                || page.includes('author-profile');
+                || page.includes('author-profile')
+                || page.includes('bienvenue');
 
+    /* Toutes les autres pages → In-Page Push (discret) */
     if (isBrowse) {
-      /* Catalogue, fiche œuvre, profil auteur :
-         Vignette Banner (coin discret) + Multitag */
       _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
       _chargerScript(ZONE_MULTITAG, SRC_MULTITAG);
+    } else {
+      _chargerScript(ZONE_INPAGE, SRC_INPAGE);
     }
-    /* Toutes les autres pages : aucune pub */
   }
 
   function _chargerScript(zone, src) {
