@@ -69,17 +69,24 @@
               Choisissez votre méthode de paiement :
             </p>
             <div class="methods">
+              <button class="method-btn" onclick="choisirMethode('fapshi')">
+                <span class="method-btn__icon">⚡</span>
+                <div>
+                  <div class="method-btn__label">Fapshi — Mobile Money</div>
+                  <div class="method-btn__sub">MTN · Orange · Express Union — Cameroun (automatique)</div>
+                </div>
+              </button>
               <button class="method-btn" onclick="choisirMethode('mtn')">
                 <span class="method-btn__icon">📱</span>
                 <div>
-                  <div class="method-btn__label">MTN Mobile Money</div>
-                  <div class="method-btn__sub">Cameroun — Rapide et sans carte</div>
+                  <div class="method-btn__label">MTN Mobile Money (manuel)</div>
+                  <div class="method-btn__sub">Cameroun — Transfert direct</div>
                 </div>
               </button>
               <button class="method-btn" onclick="choisirMethode('om')">
                 <span class="method-btn__icon">🟠</span>
                 <div>
-                  <div class="method-btn__label">Orange Money</div>
+                  <div class="method-btn__label">Orange Money (manuel)</div>
                   <div class="method-btn__sub">Afrique francophone</div>
                 </div>
               </button>
@@ -90,6 +97,27 @@
                   <div class="method-btn__sub">International — Visa, Mastercard, PayPal</div>
                 </div>
               </button>
+            </div>
+
+            <!-- Panel Fapshi (automatique) -->
+            <div class="method-panel" id="panel-fapshi">
+              <div class="instruction-box">
+                <h3>⚡ Paiement automatique via Fapshi</h3>
+                <p style="font-size:var(--font-size-sm);color:var(--text-secondary);margin-bottom:var(--spacing-md)">
+                  Tu seras redirigé vers la page de paiement sécurisée Fapshi.
+                  Choisis MTN MoMo, Orange Money ou Express Union directement sur leur interface.
+                  L'accès est activé <strong>instantanément</strong> après confirmation.
+                </p>
+                <div id="fapshi-montant-display" style="font-size:1.6rem;font-weight:700;color:var(--color-primary);margin-bottom:var(--spacing-sm)"></div>
+              </div>
+              <div id="form-fapshi">
+                <button class="btn btn--primary" style="width:100%;font-size:var(--font-size-md);padding:14px" id="btn-payer-fapshi">
+                  ⚡ Payer maintenant avec Fapshi
+                </button>
+                <p style="font-size:11px;color:var(--text-light);text-align:center;margin-top:8px">
+                  Sécurisé · Pas de création de compte requise · Activation instantanée
+                </p>
+              </div>
             </div>
 
             <!-- Panel MTN MoMo -->

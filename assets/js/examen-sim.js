@@ -114,13 +114,8 @@ async function chargerQuestions() {
   const { data, error } = await query;
 
   if (error || !data?.length) {
-    document.getElementById('app').innerHTML = `
-      <div style="text-align:center;padding:4rem 0;color:var(--text-secondary)">
-        <div style="font-size:3rem;margin-bottom:1rem">📭</div>
-        <h3>Aucune question disponible pour ${MATIERE}</h3>
-        <p>Les questions pour cette matière seront ajoutées prochainement.</p>
-        <a href="/pages/repetiteur.html" class="btn btn--accent" style="margin-top:1rem">← Retour au Répétiteur</a>
-      </div>`;
+    /* Fallback IA : générer les questions via Claude */
+    await chargerQuestionsIA();
     return;
   }
 
@@ -132,6 +127,63 @@ async function chargerQuestions() {
 
   demarrerTimer();
   afficherQuestion();
+}
+
+/* ── Fallback IA — génération de questions via Claude ───────── */
+async function chargerQuestionsIA() {
+  document.getElementById('app').innerHTML = `
+    <div style="text-align:center;padding:4rem 1rem;color:var(--text-secondary)">
+      <div style="font-size:3rem;margin-bottom:1rem">🤖</div>
+      <h3 style="color:var(--color-primary)">Super Répétiteur IA</h3>
+      <p style="margin-bottom:1rem">Aucune question en base pour <strong>${MATIERE}</strong>.<br>
+         Je génère ${NB_Q} questions personnalisées avec l'IA…</p>
+      <div class="spinner" style="margin:0 auto"></div>
+    </div>`;
+
+  try {
+    const res = await fetch('/api/generate-questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matiere: MATIERE, examen: EXAMEN, serie: SERIE || null, nb: NB_Q }),
+    });
+
+    if (!res.ok) throw new Error(`Erreur ${res.status}`);
+    const { questions: qIA } = await res.json();
+
+    if (!qIA?.length) throw new Error('Aucune question générée');
+
+    questions = shuffle(qIA).slice(0, NB_Q);
+    reponses  = [];
+    courant   = 0;
+    debut     = Date.now();
+
+    /* Badge IA visible pendant l'exam */
+    document.getElementById('app').innerHTML = `
+      <div style="background:linear-gradient(90deg,#1a3a5c,#1B4332);color:#fff;
+           text-align:center;padding:6px;font-size:12px;border-radius:var(--radius-md) var(--radius-md) 0 0">
+        🤖 Questions générées par IA — ${MATIERE} · ${EXAMEN}${SERIE ? ' Série '+SERIE : ''}
+      </div>
+      <div id="app-inner"></div>`;
+
+    const origApp = document.getElementById('app');
+    Object.defineProperty(origApp, 'innerHTML', {
+      set(v) { document.getElementById('app-inner').innerHTML = v; },
+      get() { return document.getElementById('app-inner').innerHTML; },
+      configurable: true,
+    });
+
+    demarrerTimer();
+    afficherQuestion();
+
+  } catch (e) {
+    document.getElementById('app').innerHTML = `
+      <div style="text-align:center;padding:4rem 0;color:var(--text-secondary)">
+        <div style="font-size:3rem;margin-bottom:1rem">⚠️</div>
+        <h3>Questions indisponibles</h3>
+        <p style="margin-bottom:1rem">${e.message}</p>
+        <a href="/pages/repetiteur.html" class="btn btn--accent">← Retour au Répétiteur</a>
+      </div>`;
+  }
 }
 
 /* ── Timer ──────────────────────────────────────────────────── */

@@ -16,6 +16,7 @@ const CONFIG = {
   mtn:    { numero: '673 950 019', operateur: 'MTN Mobile Money' },
   om:     { numero: '673 950 019', operateur: 'Orange Money' },
   paypal: { merchantId: '6YGZW846EQMJ2' },
+  fapshi: { workerUrl: '/api/fapshi-pay' },
 };
 
 /* Plans abonnement */
@@ -117,13 +118,21 @@ function afficherErreur(msg) {
    Sélection méthode
    ============================================================ */
 window.choisirMethode = function (methode) {
-  /* Activer le bouton sélectionné */
   document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.method-panel').forEach(p => p.classList.remove('active'));
 
-  const btnMap = { mtn: 0, om: 1, paypal: 2 };
+  const btnMap = { fapshi: 0, mtn: 1, om: 2, paypal: 3 };
   document.querySelectorAll('.method-btn')[btnMap[methode]]?.classList.add('active');
   document.getElementById(`panel-${methode}`)?.classList.add('active');
+
+  if (methode === 'fapshi') {
+    const display = document.getElementById('fapshi-montant-display');
+    if (display) display.textContent = `${PARAMS.montant} ${PARAMS.devise || 'XAF'}`;
+    const btn = document.getElementById('btn-payer-fapshi');
+    btn?.removeEventListener('click', _fapshiHandler);
+    btn?.addEventListener('click', _fapshiHandler);
+    return;
+  }
 
   /* Générer le formulaire de confirmation si pas encore fait */
   const formId = `form-${methode}`;
@@ -131,6 +140,42 @@ window.choisirMethode = function (methode) {
     document.getElementById(formId).innerHTML = formulaireConfirmation(methode);
   }
 };
+
+/* ── Fapshi : initiation paiement automatique ────────────── */
+async function _fapshiHandler() {
+  const btn = document.getElementById('btn-payer-fapshi');
+  btn.disabled = true;
+  btn.textContent = 'Initialisation…';
+
+  try {
+    const res = await fetch(CONFIG.fapshi.workerUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        montant:     Math.round(PARAMS.montant * 655.957), // USD→XAF si USD
+        devise:      PARAMS.devise || 'XAF',
+        description: PARAMS.titre || 'Kalamundi — Paiement',
+        userId:      SESSION.user.id,
+        oeuvreId:    PARAMS.oeuvreId || null,
+        plan:        PARAMS.plan || null,
+        redirectUrl: window.location.origin + '/pages/payment.html?fapshi=success',
+      }),
+    });
+
+    if (!res.ok) throw new Error('Erreur initialisation Fapshi');
+    const { link } = await res.json();
+    window.location.href = link;
+
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = '⚡ Payer maintenant avec Fapshi';
+    const errDiv = document.createElement('div');
+    errDiv.className = 'toast toast--error';
+    errDiv.style.marginTop = '8px';
+    errDiv.textContent = 'Erreur : ' + e.message;
+    btn.parentElement.appendChild(errDiv);
+  }
+}
 
 /* ============================================================
    Formulaire de confirmation de transaction

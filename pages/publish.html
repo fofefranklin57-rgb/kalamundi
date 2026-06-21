@@ -327,6 +327,37 @@
               placeholder="Ex : Prologue, Chapitre 1 — L'Enfance..." maxlength="200" />
           </div>
 
+          <!-- Publication programmée -->
+          <div style="background:var(--bg-secondary,#f8fafc);border:1px solid var(--border-color);border-radius:var(--radius-md,8px);padding:var(--spacing-lg,24px);margin-top:var(--spacing-md,16px)">
+            <h3 style="font-size:var(--font-size-md);margin:0 0 4px">📅 Publication programmée</h3>
+            <p class="form-hint" style="margin-bottom:var(--spacing-md,16px)">
+              Upload toute ton œuvre maintenant — les chapitres seront dévoilés automatiquement selon ton rythme.
+              Le premier chapitre est publié immédiatement (ou à la date de début choisie).
+            </p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-md,16px)">
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label" for="frequence-publication">Fréquence de publication</label>
+                <select class="form-select" id="frequence-publication">
+                  <option value="immediate">Tout publier immédiatement</option>
+                  <option value="quotidien">Un chapitre par jour</option>
+                  <option value="hebdomadaire">Un chapitre par semaine</option>
+                  <option value="mensuel">Un chapitre par mois</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0" id="groupe-date-debut">
+                <label class="form-label" for="date-debut-publication">Date du 1er chapitre</label>
+                <input class="form-input" type="date" id="date-debut-publication" />
+                <span class="form-hint">Laisser vide = aujourd'hui</span>
+              </div>
+            </div>
+
+            <div id="apercu-planning" style="margin-top:var(--spacing-md,16px);font-size:var(--font-size-sm);color:var(--text-secondary);display:none">
+              <!-- Aperçu généré par JS -->
+            </div>
+          </div>
+
         </div>
 
         <div class="publish-nav">

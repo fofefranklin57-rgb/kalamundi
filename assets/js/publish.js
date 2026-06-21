@@ -342,12 +342,48 @@ qs('#editor-content')?.addEventListener('input', () => {
 });
 
 /* ============================================================
-   Étape 2 — Publication par chapitres
+   Étape 2 — Publication par chapitres + programmation
    ============================================================ */
 
 qs('#par-chapitres')?.addEventListener('change', (e) => {
   qs('#groupe-chapitres-details').classList.toggle('hidden', !e.target.checked);
+  if (e.target.checked) mettreAJourApercuPlanning();
 });
+
+qs('#frequence-publication')?.addEventListener('change', mettreAJourApercuPlanning);
+qs('#date-debut-publication')?.addEventListener('change', mettreAJourApercuPlanning);
+
+function mettreAJourApercuPlanning() {
+  const freq    = qs('#frequence-publication')?.value || 'immediate';
+  const apercu  = qs('#apercu-planning');
+  if (!apercu) return;
+
+  if (freq === 'immediate') {
+    apercu.style.display = 'none';
+    return;
+  }
+
+  const labels = { quotidien: 'par jour', hebdomadaire: 'par semaine', mensuel: 'par mois' };
+  apercu.style.display = 'block';
+  apercu.innerHTML = `✅ Les chapitres seront dévoilés automatiquement — 1 chapitre ${labels[freq]}.<br>
+    Le premier paraît à la date de début (ou aujourd'hui si vide).`;
+}
+
+function calculerDatesPublication(nbChapitres, frequence, dateDebut) {
+  const dates = [];
+  const debut = dateDebut ? new Date(dateDebut + 'T00:00:00') : new Date();
+  debut.setHours(0, 0, 0, 0);
+
+  for (let i = 0; i < nbChapitres; i++) {
+    const d = new Date(debut);
+    if (frequence === 'quotidien')     d.setDate(debut.getDate() + i);
+    else if (frequence === 'hebdomadaire') d.setDate(debut.getDate() + i * 7);
+    else if (frequence === 'mensuel')  d.setMonth(debut.getMonth() + i);
+    // 'immediate' → toutes dates = maintenant
+    dates.push(frequence === 'immediate' ? null : d.toISOString());
+  }
+  return dates;
+}
 
 /* ============================================================
    Étape 3 — Statut gratuit / premium
@@ -468,18 +504,26 @@ qs('#btn-publier')?.addEventListener('click', async () => {
     const parChapitres  = qs('#par-chapitres').checked;
     const typeElement   = qs('#type-element-chapitre')?.value || 'chapitre';
     const titreChapitre = qs('#titre-chapitre')?.value?.trim() || null;
+    const frequence     = qs('#frequence-publication')?.value || 'immediate';
+    const dateDebut     = qs('#date-debut-publication')?.value || null;
 
     const chapitres = parChapitres
       ? decouперEnChapitres(contenu)
       : [{ numero: 1, titre: titreChapitre, contenu }];
 
-    for (const ch of chapitres) {
+    const datesPublication = calculerDatesPublication(chapitres.length, parChapitres ? frequence : 'immediate', dateDebut);
+
+    for (let i = 0; i < chapitres.length; i++) {
+      const ch = chapitres[i];
+      const datePubli = datesPublication[i];
       await api.creerChapitre({
-        oeuvre_id:     oeuvre.id,
-        numero:        ch.numero,
-        titre:         ch.titre,
-        contenu_texte: ch.contenu,
-        type_element:  parChapitres ? (ch.type_element || 'chapitre') : typeElement,
+        oeuvre_id:        oeuvre.id,
+        numero:           ch.numero,
+        titre:            ch.titre,
+        contenu_texte:    ch.contenu,
+        type_element:     parChapitres ? (ch.type_element || 'chapitre') : typeElement,
+        date_publication: datePubli,
+        visible:          datePubli === null || new Date(datePubli) <= new Date(),
       });
     }
 

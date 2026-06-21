@@ -23,6 +23,14 @@
   var ZONE_VIGNETTE = '11117130';   // Vignette Banner (zone mise à jour)
   var SRC_VIGNETTE  = 'https://n6wxm.com/vignette.min.js';
 
+  /* ── Zone IDs Adsterra ────────────────────────────────────── */
+  /* ⚠️ Remplacer ADSTERRA_BANNER_KEY par la vraie clé obtenue sur adsterra.com */
+  /* Format : https://www.highperformanceformat.com/VOTRE_CLE/invoke.js         */
+  var ADSTERRA_BANNER_KEY     = 'VOTRE_CLE_ADSTERRA_BANNER';   // Bannière 728×90 desktop
+  var ADSTERRA_MOBILE_KEY     = 'VOTRE_CLE_ADSTERRA_MOBILE';   // Bannière 320×50 mobile
+  var ADSTERRA_NATIVE_KEY     = 'VOTRE_CLE_ADSTERRA_NATIVE';   // Native ads (recommandé)
+  var ADSTERRA_SRC_BASE       = 'https://www.highperformanceformat.com/';
+
   // Multitag supprimé — injectait des formats non contrôlés (popunders, redirections)
 
   var DELAI_MS = 2500; // Délai avant injection (laisser la page se charger)
@@ -134,24 +142,24 @@
     });
   }
 
-  /* ── Charger les scripts Monetag selon la page ───────────── */
+  /* ── Charger les scripts pub selon la page ──────────────── */
   function _chargerPubs(page, estAbonne) {
     /* Zéro pub : accueil et lecteur uniquement */
     var isAccueil = page === '/' || page.endsWith('index.html') || page === '';
     var isReader  = page.includes('reader.html');
     if (isAccueil || isReader) return;
 
-    /* Pages de navigation/contenu → Vignette + Multitag (meilleur RPM) */
+    /* Pages de navigation/contenu → bannières Adsterra + Vignette Monetag */
     var isBrowse = page.includes('library')
                 || page.includes('work.html')
                 || page.includes('author-profile')
                 || page.includes('bienvenue');
 
-    /* Toutes les autres pages → In-Page Push (discret) */
     if (isBrowse) {
-      _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);
+      _chargerScript(ZONE_VIGNETTE, SRC_VIGNETTE);           // Monetag vignette
+      if (!estAbonne) _injecterBanniereAdsterra();           // Adsterra bannière
     } else {
-      _chargerScript(ZONE_INPAGE, SRC_INPAGE);
+      _chargerScript(ZONE_INPAGE, SRC_INPAGE);               // Monetag In-Page Push
     }
   }
 
@@ -162,6 +170,61 @@
     s.async           = true;
     s.dataset.cfasync = 'false';
     document.body.appendChild(s);
+  }
+
+  /* ── Bannière Adsterra ───────────────────────────────────── */
+  function _injecterBanniereAdsterra() {
+    /* Ne rien faire si les clés ne sont pas encore configurées */
+    if (ADSTERRA_BANNER_KEY === 'VOTRE_CLE_ADSTERRA_BANNER') return;
+
+    var isMobile = window.innerWidth < 768;
+    var key = isMobile ? ADSTERRA_MOBILE_KEY : ADSTERRA_BANNER_KEY;
+    var w   = isMobile ? 320 : 728;
+    var h   = isMobile ? 50  : 90;
+
+    /* Conteneur bannière */
+    var wrap = document.createElement('div');
+    wrap.id  = 'kala-adsterra-bar';
+    wrap.setAttribute('aria-label', 'Publicité Adsterra');
+    wrap.style.cssText = [
+      'position:fixed', 'bottom:0', 'left:0', 'right:0',
+      'height:' + (h + 16) + 'px', 'z-index:9997',
+      'background:var(--bg-card,#fff)',
+      'border-top:1px solid var(--border-color,#e2e8f0)',
+      'display:flex', 'align-items:center', 'justify-content:center',
+      'overflow:hidden',
+    ].join(';');
+
+    var label = document.createElement('span');
+    label.textContent = 'pub';
+    label.style.cssText = 'position:absolute;left:6px;top:3px;font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em';
+
+    var fermer = document.createElement('button');
+    fermer.innerHTML = '✕';
+    fermer.setAttribute('aria-label', 'Fermer');
+    fermer.style.cssText = [
+      'position:absolute', 'right:6px', 'top:50%',
+      'transform:translateY(-50%)',
+      'background:none', 'border:none',
+      'color:#94a3b8', 'font-size:14px',
+      'cursor:pointer', 'padding:6px', 'z-index:1',
+    ].join(';');
+    fermer.onclick = function () {
+      wrap.remove();
+      document.documentElement.style.paddingBottom = '';
+    };
+
+    /* Script Adsterra natif dans le conteneur */
+    var atKey = document.createElement('script');
+    atKey.async = true;
+    atKey.setAttribute('data-cfasync', 'false');
+    atKey.src = ADSTERRA_SRC_BASE + key + '/invoke.js';
+
+    wrap.appendChild(label);
+    wrap.appendChild(fermer);
+    wrap.appendChild(atKey);
+    document.body.appendChild(wrap);
+    document.documentElement.style.paddingBottom = (h + 16) + 'px';
   }
 
   /* ── Bandeau bas discret ─────────────────────────────────── */
