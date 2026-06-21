@@ -619,6 +619,162 @@ export const api = {
     if (error) throw error;
   },
 
+  /* ---- Finance & Croissance ----------------------------- */
+
+  async adminGetFinance() {
+    const [paiements, revenus, oeuvres, users] = await Promise.all([
+      supabase.from('paiements')
+        .select('montant, devise, type, statut, created_at')
+        .eq('statut', 'confirme')
+        .order('created_at', { ascending: true }),
+      supabase.from('revenus')
+        .select('montant, statut, created_at'),
+      supabase.from('oeuvres')
+        .select('id, titre, nb_lectures, genre, profiles!oeuvres_auteur_id_fkey(nom)')
+        .order('nb_lectures', { ascending: false })
+        .limit(10),
+      supabase.from('profiles')
+        .select('id, created_at, pays, role')
+        .order('created_at', { ascending: true }),
+    ]);
+    // Tables peuvent ne pas encore exister — on tolère les erreurs
+    if (paiements.error && !paiements.error.message?.includes('does not exist')) throw paiements.error;
+
+    const now = new Date();
+    const moisActuel = now.getMonth();
+    const anneeActuelle = now.getFullYear();
+
+    // Revenus Kalamundi = total paiements - part auteurs
+    const totalPaiements = (paiements.data || []).reduce((s, p) => s + Number(p.montant || 0), 0);
+    const totalAuteurs   = (revenus.data   || []).reduce((s, r) => s + Number(r.montant || 0), 0);
+    const totalKalamundi = totalPaiements - totalAuteurs;
+
+    // MRR — paiements du mois en cours
+    const mrr = (paiements.data || [])
+      .filter(p => {
+        const d = new Date(p.created_at);
+        return d.getMonth() === moisActuel && d.getFullYear() === anneeActuelle;
+      })
+      .reduce((s, p) => s + Number(p.montant || 0), 0);
+
+    // Graphe 12 derniers mois
+    const graphe = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(anneeActuelle, moisActuel - i, 1);
+      const m = d.getMonth(); const y = d.getFullYear();
+      const total = (paiements.data || [])
+        .filter(p => { const pd = new Date(p.created_at); return pd.getMonth() === m && pd.getFullYear() === y; })
+        .reduce((s, p) => s + Number(p.montant || 0), 0);
+      graphe.push({
+        label: d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }),
+        total: Math.round(total * 100) / 100,
+      });
+    }
+
+    // Croissance users par mois (6 derniers mois)
+    const usersParMois = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(anneeActuelle, moisActuel - i, 1);
+      const m = d.getMonth(); const y = d.getFullYear();
+      const count = (users.data || []).filter(u => {
+        const ud = new Date(u.created_at);
+        return ud.getMonth() === m && ud.getFullYear() === y;
+      }).length;
+      usersParMois.push({ label: d.toLocaleDateString('fr-FR', { month: 'short' }), count });
+    }
+
+    // Top pays
+    const paysCount = {};
+    (users.data || []).forEach(u => {
+      if (u.pays) paysCount[u.pays] = (paysCount[u.pays] || 0) + 1;
+    });
+    const topPays = Object.entries(paysCount)
+      .sort((a, b) => b[1] - a[1]).slice(0, 5)
+      .map(([pays, count]) => ({ pays, count }));
+
+    return {
+      totalPaiements: Math.round(totalPaiements * 100) / 100,
+      totalKalamundi: Math.round(totalKalamundi * 100) / 100,
+      totalAuteurs:   Math.round(totalAuteurs   * 100) / 100,
+      mrr:            Math.round(mrr * 100) / 100,
+      totalUsers:     (users.data || []).length,
+      topOeuvres:     oeuvres.data || [],
+      graphe,
+      usersParMois,
+      topPays,
+    };
+  },
+
+  /* ---- Régie publicitaire ------------------------------- */
+
+  async pubGetBannieres() {
+    const { data, error } = await supabase
+      .from('pub_bannieres')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async pubGetBannierePage(page) {
+    const { data } = await supabase
+      .from('pub_bannieres')
+      .select('id, image_url, lien_cible, texte_cta, titre')
+      .eq('actif', true)
+      .or(`page_cible.eq.all,page_cible.eq.${page}`)
+      .limit(3);
+    return data || [];
+  },
+
+  async pubCreerBanniere(champs) {
+    const { data, error } = await supabase
+      .from('pub_bannieres').insert(champs).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async pubUpdateBanniere(id, champs) {
+    const { error } = await supabase
+      .from('pub_bannieres').update(champs).eq('id', id);
+    if (error) throw error;
+  },
+
+  async pubSupprimerBanniere(id) {
+    const { error } = await supabase
+      .from('pub_bannieres').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  async pubEnregistrerImpression(id) {
+    await supabase.rpc('incrementer_impressions', { banniere_id: id }).catch(() => {});
+  },
+
+  async pubEnregistrerClic(id) {
+    await supabase.rpc('incrementer_clics', { banniere_id: id }).catch(() => {});
+  },
+
+  /* ---- Configuration plateforme ------------------------- */
+
+  async configGetAll() {
+    const { data, error } = await supabase
+      .from('config_plateforme').select('*').order('cle');
+    if (error) throw error;
+    return data || [];
+  },
+
+  async configGet(cle) {
+    const { data } = await supabase
+      .from('config_plateforme').select('valeur').eq('cle', cle).single();
+    return data?.valeur ?? null;
+  },
+
+  async configSet(cle, valeur) {
+    const { error } = await supabase
+      .from('config_plateforme')
+      .upsert({ cle, valeur, updated_at: new Date().toISOString() }, { onConflict: 'cle' });
+    if (error) throw error;
+  },
+
   /* ---- Annotations (marque-pages, notes, surlignages) -- */
 
   async getAnnotations(userId, oeuvreId) {
