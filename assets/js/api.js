@@ -622,6 +622,8 @@ export const api = {
   /* ---- Finance & Croissance ----------------------------- */
 
   async adminGetFinance() {
+    const vide = { totalPaiements:0, totalKalamundi:0, totalAuteurs:0, mrr:0, totalUsers:0, topOeuvres:[], graphe: Array.from({length:12},(_,i)=>{ const d=new Date(new Date().getFullYear(),new Date().getMonth()-11+i,1); return {label:d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}),total:0}; }), usersParMois: Array.from({length:6},(_,i)=>{ const d=new Date(new Date().getFullYear(),new Date().getMonth()-5+i,1); return {label:d.toLocaleDateString('fr-FR',{month:'short'}),count:0}; }), topPays:[] };
+    try {
     const [paiements, revenus, oeuvres, users] = await Promise.all([
       supabase.from('paiements')
         .select('montant, devise, type, statut, created_at')
@@ -705,6 +707,7 @@ export const api = {
       usersParMois,
       topPays,
     };
+    } catch(e) { console.warn('adminGetFinance fallback:', e); return vide; }
   },
 
   /* ---- Régie publicitaire ------------------------------- */
