@@ -154,7 +154,7 @@ async function chargerFinance() {
             <span class="list-row__val">${(o.nb_lectures||0).toLocaleString('fr-FR')}</span>
           </div>`).join('') || '<div style="color:var(--text3);font-size:13px">Aucune donnée</div>'}
       </div>`;
-  } catch (e) { el.innerHTML = errEl('Erreur finance: ' + (e?.message || JSON.stringify(e))); console.error(e); }
+  } catch (e) { const msg = e?.message || e?.toString() || JSON.stringify(e); alert('FINANCE ERR: ' + msg); el.innerHTML = errEl('Erreur: ' + msg); }
 }
 
 /* ── Croissance ──────────────────────────────────────────────── */
