@@ -626,19 +626,21 @@ export const api = {
       supabase.from('paiements')
         .select('montant, devise, type, statut, created_at')
         .eq('statut', 'confirme')
-        .order('created_at', { ascending: true }),
+        .order('created_at', { ascending: true })
+        .then(r => r.error ? { data: [] } : r),
       supabase.from('revenus')
-        .select('montant, statut, created_at'),
+        .select('montant, statut, created_at')
+        .then(r => r.error ? { data: [] } : r),
       supabase.from('oeuvres')
         .select('id, titre, nb_lectures, genre, profiles!oeuvres_auteur_id_fkey(nom)')
         .order('nb_lectures', { ascending: false })
-        .limit(10),
+        .limit(10)
+        .then(r => r.error ? { data: [] } : r),
       supabase.from('profiles')
         .select('id, created_at, pays, role')
-        .order('created_at', { ascending: true }),
+        .order('created_at', { ascending: true })
+        .then(r => r.error ? { data: [] } : r),
     ]);
-    // Tables peuvent ne pas encore exister — on tolère les erreurs
-    if (paiements.error && !paiements.error.message?.includes('does not exist')) throw paiements.error;
 
     const now = new Date();
     const moisActuel = now.getMonth();
