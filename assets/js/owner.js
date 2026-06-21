@@ -2,8 +2,8 @@
    owner.js — Owner Dashboard Kalamundi (mobile-first)
    ============================================================ */
 
-import { api } from './api.js';
-import { supabase } from './auth.js';
+import { api } from './api.js?v=20260621';
+import { supabase } from './auth.js?v=20260621';
 
 /* ── Auth guard + login intégré ─────────────────────────────── */
 (async () => {
