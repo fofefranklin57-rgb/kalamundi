@@ -31,11 +31,13 @@ supabase.auth.onAuthStateChange((event) => {
    ============================================================ */
 
 (async () => {
-  const hash = window.location.hash;
-  if (hash.includes('type=recovery')) return; // laisser onAuthStateChange gérer
+  const params = new URLSearchParams(window.location.search);
+  const hash   = window.location.hash;
+  // Laisser onAuthStateChange gérer le reset (PKCE = ?code=, ancien = #type=recovery)
+  if (params.has('code') || hash.includes('type=recovery')) return;
   const session = await getSession();
   if (session) {
-    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    const redirect = params.get('redirect');
     window.location.href = redirect || '/index.html';
   }
 })();
