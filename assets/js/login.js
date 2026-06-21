@@ -8,14 +8,31 @@ import {
   inscription,
   connexionGoogle,
   resetPassword,
+  updatePassword,
   getSession,
 } from './auth.js';
+import { supabase } from './auth.js';
 
 /* ============================================================
-   Rediriger si déjà connecté
+   Détecter mode reset mot de passe (lien email Supabase)
+   ============================================================ */
+
+supabase.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    // Masquer les tabs, afficher uniquement le formulaire reset
+    document.querySelector('.login-tabs').classList.add('hidden');
+    afficherForm('reset');
+    cacherAlertes();
+  }
+});
+
+/* ============================================================
+   Rediriger si déjà connecté (sauf si on est en mode reset)
    ============================================================ */
 
 (async () => {
+  const hash = window.location.hash;
+  if (hash.includes('type=recovery')) return; // laisser onAuthStateChange gérer
   const session = await getSession();
   if (session) {
     const redirect = new URLSearchParams(window.location.search).get('redirect');
@@ -160,6 +177,37 @@ formInscription.addEventListener('submit', async (e) => {
     await inscription(email, password, nom);
     afficherSucces('Compte créé ! Vérifie ton email pour confirmer ton inscription.');
     formInscription.reset();
+  } catch (err) {
+    afficherErreur(err.message);
+  } finally {
+    btn.classList.remove('btn--loading');
+    btn.disabled = false;
+  }
+});
+
+/* ============================================================
+   Formulaire nouveau mot de passe (reset)
+   ============================================================ */
+
+const formReset = document.querySelector('[data-form="reset"]');
+formReset.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  cacherAlertes();
+  const password = formReset.querySelector('[name="password"]').value;
+  if (password.length < 8) return afficherErreur('Le mot de passe doit faire au moins 8 caractères.');
+
+  const btn = formReset.querySelector('[type="submit"]');
+  btn.classList.add('btn--loading');
+  btn.disabled = true;
+
+  try {
+    await updatePassword(password);
+    afficherSucces('Mot de passe mis à jour ! Tu peux maintenant te connecter.');
+    formReset.reset();
+    setTimeout(() => {
+      document.querySelector('.login-tabs').classList.remove('hidden');
+      afficherForm('connexion');
+    }, 2000);
   } catch (err) {
     afficherErreur(err.message);
   } finally {

@@ -171,6 +171,32 @@
           </button>
         </form>
 
+        <!-- ====== FORMULAIRE NOUVEAU MOT DE PASSE (reset) ====== -->
+        <form class="login-form hidden" data-form="reset" novalidate>
+          <p class="login-forgot__intro">
+            Choisis ton nouveau mot de passe.
+          </p>
+          <div class="form-group">
+            <label class="form-label form-label--required" for="reset-password">Nouveau mot de passe</label>
+            <div class="input-password">
+              <input
+                class="form-input"
+                type="password"
+                id="reset-password"
+                name="password"
+                autocomplete="new-password"
+                placeholder="8 caractères minimum"
+                minlength="8"
+                required
+              />
+              <button type="button" class="input-password__toggle" aria-label="Afficher le mot de passe">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn--primary btn--full">
+            Enregistrer le mot de passe
+          </button>
+        </form>
+
         <!-- ====== FORMULAIRE MOT DE PASSE OUBLIÉ ====== -->
         <form class="login-form hidden" data-form="forgot" novalidate>
           <p class="login-forgot__intro">
