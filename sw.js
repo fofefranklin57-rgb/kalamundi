@@ -51,6 +51,10 @@ const SHELL_URLS = [
 /* Domaines traités comme API (Network First) */
 const API_ORIGINS = [
   'iobieffnaauecyukecds.supabase.co',
+];
+
+/* CDN statique — Cache First (supabase-js ne change pas souvent) */
+const CDN_ORIGINS = [
   'cdn.jsdelivr.net',
 ];
 
@@ -104,7 +108,13 @@ self.addEventListener('fetch', event => {
   /* Ignorer les navigations HTML — laisser le navigateur gérer les redirects */
   if (request.mode === 'navigate') return;
 
-  /* ── API Supabase + CDN → Network First ── */
+  /* ── CDN statique (supabase-js) → Cache First ── */
+  if (CDN_ORIGINS.some(origin => url.hostname.includes(origin))) {
+    event.respondWith(cacheFirst(request, CACHE_SHELL));
+    return;
+  }
+
+  /* ── API Supabase → Network First ── */
   if (API_ORIGINS.some(origin => url.hostname.includes(origin))) {
     event.respondWith(networkFirst(request, CACHE_API));
     return;

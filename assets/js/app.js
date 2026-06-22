@@ -37,12 +37,23 @@ window._installerApp = async function () {
 document.addEventListener('DOMContentLoaded', async () => {
   enregistrerSW();
   const session = await initNavbar();
-  await Promise.all([
-    chargerVedettes(),
-    chargerNouveautes(),
-    chargerNouveauxTalents(),
-    chargerScolaire('tous'),
-  ]);
+
+  /* Charger vedettes immédiatement (above the fold) */
+  await chargerVedettes();
+
+  /* Lazy load sections sous le fold via IntersectionObserver */
+  const lazyLoad = (elementId, fn) => {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) { obs.disconnect(); fn(); }
+    }, { rootMargin: '200px' });
+    obs.observe(el);
+  };
+  lazyLoad('section-scolaire',         () => chargerScolaire('tous'));
+  lazyLoad('section-nouveautes',       () => chargerNouveautes());
+  lazyLoad('section-nouveaux-talents', () => chargerNouveauxTalents());
+
   initHamburger();
   /* Pubs Monetag — chargées après le contenu, respecte les abonnés */
   if (window.initAds) {
