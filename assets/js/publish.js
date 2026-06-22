@@ -374,13 +374,24 @@ function calculerDatesPublication(nbChapitres, frequence, dateDebut) {
   const debut = dateDebut ? new Date(dateDebut + 'T00:00:00') : new Date();
   debut.setHours(0, 0, 0, 0);
 
+  const intervalJours = {
+    quotidien:      1,
+    biquotidien:    2,
+    hebdomadaire:   7,
+    bihebdomadaire: 14,
+  };
+
   for (let i = 0; i < nbChapitres; i++) {
+    if (frequence === 'immediate') { dates.push(null); continue; }
     const d = new Date(debut);
-    if (frequence === 'quotidien')     d.setDate(debut.getDate() + i);
-    else if (frequence === 'hebdomadaire') d.setDate(debut.getDate() + i * 7);
-    else if (frequence === 'mensuel')  d.setMonth(debut.getMonth() + i);
-    // 'immediate' → toutes dates = maintenant
-    dates.push(frequence === 'immediate' ? null : d.toISOString());
+    if (intervalJours[frequence] !== undefined) {
+      d.setDate(debut.getDate() + i * intervalJours[frequence]);
+    } else if (frequence === 'mensuel') {
+      d.setMonth(debut.getMonth() + i);
+    } else if (frequence === 'bimensuel') {
+      d.setMonth(debut.getMonth() + i * 2);
+    }
+    dates.push(d.toISOString());
   }
   return dates;
 }
