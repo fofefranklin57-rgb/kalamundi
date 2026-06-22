@@ -116,7 +116,7 @@ export const api = {
     const { data, error } = await supabase
       .from('oeuvres')
       .select(`
-        *,
+        *, frequence_publication, date_debut_publication,
         profiles!oeuvres_auteur_id_fkey(id, nom, photo_url, pays, bio, niveau_auteur, badge_fondateur)
       `)
       .eq('id', id)

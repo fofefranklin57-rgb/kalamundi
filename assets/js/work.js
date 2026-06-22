@@ -5,6 +5,7 @@
 
 import { api } from './api.js';
 import { getUser } from './auth.js';
+import { injecterPub } from './pub.js';
 import { estSauvegarde, sauvegarderLivre, supprimerLivre } from './offline.js';
 import { getParam, formatNombre, formatDate, toast, toastErreur, toastSucces } from './utils.js';
 import { genererCouverture } from './cover-generator.js';
@@ -150,6 +151,26 @@ async function chargerOeuvre() {
     document.getElementById('info-genre').textContent   = oeuvre.genre;
     document.getElementById('info-public').textContent  = oeuvre.public_cible || 'Tout public';
     document.getElementById('info-date').textContent    = formatDate(oeuvre.created_at);
+
+    // Badge rythme de publication
+    const FREQ_LABELS = {
+      quotidien:      '📅 1 chapitre / jour',
+      biquotidien:    '📅 1 chapitre / 2 jours',
+      hebdomadaire:   '📅 1 chapitre / semaine',
+      bihebdomadaire: '📅 1 chapitre / 2 semaines',
+      mensuel:        '📅 1 chapitre / mois',
+      bimensuel:      '📅 1 chapitre / 2 mois',
+    };
+    const freq = oeuvre.frequence_publication;
+    const badgeEl = document.getElementById('badge-frequence');
+    if (badgeEl) {
+      if (freq && freq !== 'immediate' && FREQ_LABELS[freq]) {
+        badgeEl.textContent = FREQ_LABELS[freq];
+        badgeEl.style.display = 'inline-flex';
+      } else {
+        badgeEl.style.display = 'none';
+      }
+    }
 
     // Actions
     await rendreActions(oeuvre);
@@ -527,3 +548,5 @@ async function chargerRecommandations(genre, oeuvreActuelleId) {
     section.style.display = 'block';
   } catch { /* silencieux — les reco sont non-critiques */ }
 }
+
+injecterPub('work');
