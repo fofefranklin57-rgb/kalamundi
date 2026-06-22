@@ -159,11 +159,13 @@ export const api = {
   },
 
   async supprimerOeuvre(id) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('oeuvres')
       .update({ visible: false })
-      .eq('id', id);
+      .eq('id', id)
+      .select('id');
     if (error) throw error;
+    if (!data || data.length === 0) throw new Error('Non autorisé ou œuvre introuvable.');
   },
 
   async incrementerLectures(oeuvreId) {
