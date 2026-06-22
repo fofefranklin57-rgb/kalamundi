@@ -182,7 +182,7 @@ function chargerScript(src) {
    Découpage en chapitres automatique
    ============================================================ */
 
-export function decouперEnChapitres(texte) {
+export function decouperEnChapitres(texte) {
   // Cherche des séparateurs courants : "Chapitre", "Chapter", numéros romains
   const regex = /\n\s*(chapitre\s+\d+|chapter\s+\d+|partie\s+\d+|[IVXivx]+\.|—\s*\d+\s*—|\*{3})\s*\n/gi;
   const parties = texte.split(regex);

@@ -5,7 +5,7 @@
 
 import { protegerRoute, getUser } from './auth.js';
 import { api } from './api.js';
-import { lireFichier, calculerSHA256, calculerSHA256Fichier, decouперEnChapitres, watermark } from './upload.js';
+import { lireFichier, calculerSHA256, calculerSHA256Fichier, decouperEnChapitres, watermark } from './upload.js';
 import { toast, toastErreur, formatTailleFichier, qs, cacher, afficher, copier } from './utils.js';
 
 /* ============================================================
@@ -519,7 +519,7 @@ qs('#btn-publier')?.addEventListener('click', async () => {
     const dateDebut     = qs('#date-debut-publication')?.value || null;
 
     const chapitres = parChapitres
-      ? decouперEnChapitres(contenu)
+      ? decouperEnChapitres(contenu)
       : [{ numero: 1, titre: titreChapitre, contenu }];
 
     const datesPublication = calculerDatesPublication(chapitres.length, parChapitres ? frequence : 'immediate', dateDebut);

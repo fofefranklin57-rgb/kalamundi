@@ -73,7 +73,7 @@ async function chargerEpreuve(id) {
     .from('epreuves')
     .select(`
       id, matiere, annee, semestre, type_epreuve, a_corrige,
-      description, enonce_url, nb_vues, nb_telechargements,
+      description, fichier_url, nb_vues, nb_telechargements,
       filiere_id,
       filieres(id, nom, categorie, icone, etablissement_id,
         etablissements(id, nom, nom_court, type))
@@ -120,14 +120,14 @@ function afficherSujet(ep) {
   const zone = document.getElementById('sujet-zone');
   const btnDl = document.getElementById('btn-dl-sujet');
 
-  if (ep.enonce_url) {
-    btnDl.href = ep.enonce_url;
+  if (ep.fichier_url) {
+    btnDl.href = ep.fichier_url;
     btnDl.style.display = 'inline-flex';
     // Si c'est un PDF on l'embed
-    if (ep.enonce_url.endsWith('.pdf')) {
+    if (ep.fichier_url.endsWith('.pdf')) {
       zone.innerHTML = `
         <div class="fax-viewer">
-          <iframe src="${ep.enonce_url}" title="Sujet ${ep.matiere} ${ep.annee}"></iframe>
+          <iframe src="${ep.fichier_url}" title="Sujet ${ep.matiere} ${ep.annee}"></iframe>
         </div>`;
     } else {
       zone.innerHTML = `
@@ -135,7 +135,7 @@ function afficherSujet(ep) {
           <p style="color:var(--text-secondary);margin-bottom:var(--spacing-md)">
             Le sujet est disponible en téléchargement.
           </p>
-          <a href="${ep.enonce_url}" target="_blank" class="btn btn--accent">
+          <a href="${ep.fichier_url}" target="_blank" class="btn btn--accent">
             Ouvrir le sujet
           </a>
         </div>`;
@@ -401,10 +401,10 @@ async function verifierAccesPremium(corrigeId, user) {
 
 /* ── Compteurs ──────────────────────────────────────────────── */
 function enregistrerVue(id) {
-  supabase.rpc('incrementer_vue_epreuve', { ep_id: id }).catch(() => {});
+  supabase.rpc('incrementer_vue_epreuve', { p_epreuve_id: id }).catch(() => {});
 }
 function enregistrerTelechargement(id) {
-  supabase.rpc('incrementer_telechargement_epreuve', { ep_id: id }).catch(() => {});
+  supabase.rpc('incrementer_telechargement_epreuve', { p_epreuve_id: id }).catch(() => {});
 }
 
 /* ── Erreur ─────────────────────────────────────────────────── */
