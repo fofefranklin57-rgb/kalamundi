@@ -5,10 +5,34 @@
 
 import { getSession, supabase } from './auth.js';
 import { api } from './api.js';
+import { injecterPub } from './pub.js';
 
 /* ============================================================
    Init
    ============================================================ */
+
+/* ============================================================
+   PWA Install
+   ============================================================ */
+let _installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _installPrompt = e;
+  document.querySelectorAll('.btn-pwa-install').forEach(b => b.style.display = 'inline-flex');
+});
+
+window.addEventListener('appinstalled', () => {
+  _installPrompt = null;
+  document.querySelectorAll('.btn-pwa-install').forEach(b => b.style.display = 'none');
+});
+
+window._installerApp = async function () {
+  if (!_installPrompt) return;
+  _installPrompt.prompt();
+  const { outcome } = await _installPrompt.userChoice;
+  if (outcome === 'accepted') _installPrompt = null;
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
   enregistrerSW();
@@ -68,6 +92,7 @@ async function initNavbar() {
       : `<span class="nav-avatar__initiale">${initiale}</span>`;
 
     navbarActions.innerHTML = `
+      <button class="btn btn--outline btn--sm btn-pwa-install" onclick="window._installerApp()" style="display:none;color:rgba(255,255,255,0.9);border-color:rgba(255,255,255,0.4)">📲 Installer</button>
       <a href="/pages/publish.html" class="btn btn--accent btn--sm">Publier</a>
       <div class="nav-avatar" id="nav-avatar-btn" title="${nom}">
         ${avatarHtml}
@@ -104,6 +129,7 @@ async function initNavbar() {
     `;
   } else {
     navbarActions.innerHTML = `
+      <button class="btn btn--outline btn--sm btn-pwa-install" onclick="window._installerApp()" style="display:none;color:rgba(255,255,255,0.9);border-color:rgba(255,255,255,0.4)">📲 Installer</button>
       <a href="/pages/login.html" class="btn btn--ghost btn--sm" style="color:rgba(255,255,255,0.85)">Connexion</a>
       <a href="/pages/login.html?mode=inscription" class="btn btn--accent btn--sm">S'inscrire</a>
     `;
@@ -491,3 +517,5 @@ function initHamburger() {
     toggle.setAttribute('aria-expanded', isOpen);
   });
 }
+
+injecterPub('home');
