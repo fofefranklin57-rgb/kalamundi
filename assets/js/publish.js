@@ -479,17 +479,21 @@ qs('#btn-publier')?.addEventListener('click', async () => {
     etat.hash = await calculerSHA256(contenu);
 
     // 3. Créer l'œuvre en base
+    const frequence      = qs('#frequence-publication')?.value || 'immediate';
+    const dateDebut      = qs('#date-debut-publication')?.value || null;
     const oeuvreData = {
-      auteur_id:         user.id,
-      titre:             qs('#titre').value.trim(),
-      genre:             qs('#genre').value,
-      resume:            qs('#resume').value.trim() || null,
-      langue_originale:  qs('#langue').value,
-      statut:            qs('#statut-oeuvre').value,
-      prix:              qs('#statut-oeuvre').value === 'premium' ? parseFloat(qs('#prix').value) : 0,
-      public_cible:      qs('#public_cible').value,
-      hash_sha256:       etat.hash,
-      visible:           true,
+      auteur_id:              user.id,
+      titre:                  qs('#titre').value.trim(),
+      genre:                  qs('#genre').value,
+      resume:                 qs('#resume').value.trim() || null,
+      langue_originale:       qs('#langue').value,
+      statut:                 qs('#statut-oeuvre').value,
+      prix:                   qs('#statut-oeuvre').value === 'premium' ? parseFloat(qs('#prix').value) : 0,
+      public_cible:           qs('#public_cible').value,
+      hash_sha256:            etat.hash,
+      visible:                true,
+      frequence_publication:  frequence,
+      date_debut_publication: dateDebut || null,
     };
 
     const oeuvre = await api.creerOeuvre(oeuvreData);
@@ -515,8 +519,6 @@ qs('#btn-publier')?.addEventListener('click', async () => {
     const parChapitres  = qs('#par-chapitres').checked;
     const typeElement   = qs('#type-element-chapitre')?.value || 'chapitre';
     const titreChapitre = qs('#titre-chapitre')?.value?.trim() || null;
-    const frequence     = qs('#frequence-publication')?.value || 'immediate';
-    const dateDebut     = qs('#date-debut-publication')?.value || null;
 
     const chapitres = parChapitres
       ? decouperEnChapitres(contenu)
