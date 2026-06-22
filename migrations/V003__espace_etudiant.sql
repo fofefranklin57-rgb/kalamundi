@@ -353,126 +353,160 @@ ON CONFLICT (code) DO NOTHING;
 
 
 -- ============================================================
--- 11. SEED — FILIÈRES PRINCIPALES
+-- 11. SEED — FILIÈRES (generiques + ecoles specifiques)
+-- Filieres communes : etablissement_id = NULL (toutes universites)
+-- Filieres specifiques : liees a l'etablissement unique
+-- L'etablissement_id de l'epreuve indique quelle universite a pose le sujet
 -- ============================================================
 
--- UY2 — Droit / Économie
-INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_DROIT_L1',   'Droit — L1',       'droit_sciences_juridiques','L1','⚖️'),
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_DROIT_L2',   'Droit — L2',       'droit_sciences_juridiques','L2','⚖️'),
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_DROIT_L3',   'Droit — L3',       'droit_sciences_juridiques','L3','⚖️'),
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_DROIT_M1',   'Droit — M1',       'droit_sciences_juridiques','M1','⚖️'),
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_DROIT_M2',   'Droit — M2',       'droit_sciences_juridiques','M2','⚖️'),
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_ECO_L1',     'Économie — L1',    'economie_gestion','L1','📈'),
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_ECO_L2',     'Économie — L2',    'economie_gestion','L2','📈'),
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_ECO_L3',     'Économie — L3',    'economie_gestion','L3','📈'),
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_GESTION_L1', 'Gestion — L1',     'economie_gestion','L1','📊'),
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_GESTION_L2', 'Gestion — L2',     'economie_gestion','L2','📊'),
-  ((SELECT id FROM etablissements WHERE code='UY2'), 'UY2_GESTION_L3', 'Gestion — L3',     'economie_gestion','L3','📊')
+-- ── DROIT / SCIENCES JURIDIQUES ──────────────────────────────
+INSERT INTO filieres (code, nom, categorie, niveau, icone) VALUES
+  ('DROIT_L1', 'Droit — L1', 'droit_sciences_juridiques', 'L1', '⚖️'),
+  ('DROIT_L2', 'Droit — L2', 'droit_sciences_juridiques', 'L2', '⚖️'),
+  ('DROIT_L3', 'Droit — L3', 'droit_sciences_juridiques', 'L3', '⚖️'),
+  ('DROIT_M1', 'Droit — M1', 'droit_sciences_juridiques', 'M1', '⚖️'),
+  ('DROIT_M2', 'Droit — M2', 'droit_sciences_juridiques', 'M2', '⚖️')
 ON CONFLICT DO NOTHING;
 
--- UY1 — Sciences Exactes
-INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_MATHS_L1',   'Mathématiques — L1',      'sciences_exactes','L1','📐'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_MATHS_L2',   'Mathématiques — L2',      'sciences_exactes','L2','📐'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_MATHS_L3',   'Mathématiques — L3',      'sciences_exactes','L3','📐'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_PHYSIQUE_L1','Physique — L1',            'sciences_exactes','L1','⚡'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_PHYSIQUE_L2','Physique — L2',            'sciences_exactes','L2','⚡'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_PHYSIQUE_L3','Physique — L3',            'sciences_exactes','L3','⚡'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_CHIMIE_L1',  'Chimie — L1',             'sciences_exactes','L1','🧪'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_CHIMIE_L2',  'Chimie — L2',             'sciences_exactes','L2','🧪'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_INFO_L1',    'Informatique — L1',       'informatique_tech','L1','💻'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_INFO_L2',    'Informatique — L2',       'informatique_tech','L2','💻'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_INFO_L3',    'Informatique — L3',       'informatique_tech','L3','💻'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_SVT_L1',     'Sciences de la Vie — L1', 'sciences_exactes','L1','🧬'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_SVT_L2',     'Sciences de la Vie — L2', 'sciences_exactes','L2','🧬'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_SVT_L3',     'Sciences de la Vie — L3', 'sciences_exactes','L3','🧬')
+-- ── ÉCONOMIE / GESTION ───────────────────────────────────────
+INSERT INTO filieres (code, nom, categorie, niveau, icone) VALUES
+  ('ECO_L1',     'Économie — L1',     'economie_gestion', 'L1', '📈'),
+  ('ECO_L2',     'Économie — L2',     'economie_gestion', 'L2', '📈'),
+  ('ECO_L3',     'Économie — L3',     'economie_gestion', 'L3', '📈'),
+  ('GESTION_L1', 'Gestion — L1',      'economie_gestion', 'L1', '📊'),
+  ('GESTION_L2', 'Gestion — L2',      'economie_gestion', 'L2', '📊'),
+  ('GESTION_L3', 'Gestion — L3',      'economie_gestion', 'L3', '📊'),
+  ('GESTION_M1', 'Gestion — M1',      'economie_gestion', 'M1', '📊'),
+  ('COMPTA_L1',  'Comptabilité — L1', 'economie_gestion', 'L1', '🧾'),
+  ('COMPTA_L2',  'Comptabilité — L2', 'economie_gestion', 'L2', '🧾')
 ON CONFLICT DO NOTHING;
 
--- UY1 — Lettres / Sciences Humaines
-INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_LETTRES_L1', 'Lettres Modernes — L1',   'lettres_langues','L1','📖'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_LETTRES_L2', 'Lettres Modernes — L2',   'lettres_langues','L2','📖'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_LETTRES_L3', 'Lettres Modernes — L3',   'lettres_langues','L3','📖'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_ANGLAIS_L1', 'Anglais — L1',            'lettres_langues','L1','🇬🇧'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_ANGLAIS_L2', 'Anglais — L2',            'lettres_langues','L2','🇬🇧'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_HIST_L1',    'Histoire — L1',           'sciences_humaines','L1','🌍'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_HIST_L2',    'Histoire — L2',           'sciences_humaines','L2','🌍'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_GEO_L1',     'Géographie — L1',         'sciences_humaines','L1','🗺️'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_GEO_L2',     'Géographie — L2',         'sciences_humaines','L2','🗺️'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_SOCIO_L1',   'Sociologie — L1',         'sciences_humaines','L1','👥'),
-  ((SELECT id FROM etablissements WHERE code='UY1'), 'UY1_PHILO_L1',   'Philosophie — L1',        'sciences_humaines','L1','🧠')
+-- ── SCIENCES EXACTES ─────────────────────────────────────────
+INSERT INTO filieres (code, nom, categorie, niveau, icone) VALUES
+  ('MATHS_L1',    'Mathématiques — L1',    'sciences_exactes', 'L1', '📐'),
+  ('MATHS_L2',    'Mathématiques — L2',    'sciences_exactes', 'L2', '📐'),
+  ('MATHS_L3',    'Mathématiques — L3',    'sciences_exactes', 'L3', '📐'),
+  ('PHYSIQUE_L1', 'Physique — L1',          'sciences_exactes', 'L1', '⚡'),
+  ('PHYSIQUE_L2', 'Physique — L2',          'sciences_exactes', 'L2', '⚡'),
+  ('PHYSIQUE_L3', 'Physique — L3',          'sciences_exactes', 'L3', '⚡'),
+  ('CHIMIE_L1',   'Chimie — L1',            'sciences_exactes', 'L1', '🧪'),
+  ('CHIMIE_L2',   'Chimie — L2',            'sciences_exactes', 'L2', '🧪'),
+  ('SVT_L1',      'Sciences de la Vie — L1','sciences_exactes', 'L1', '🧬'),
+  ('SVT_L2',      'Sciences de la Vie — L2','sciences_exactes', 'L2', '🧬'),
+  ('SVT_L3',      'Sciences de la Vie — L3','sciences_exactes', 'L3', '🧬')
 ON CONFLICT DO NOTHING;
 
--- FMSB — Médecine
-INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
-  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_PCEM1', 'Médecine — PCEM1 (1ère année)', 'medecine_sante','PCEM1','🏥'),
-  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_PCEM2', 'Médecine — PCEM2 (2ème année)', 'medecine_sante','PCEM2','🏥'),
-  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_DCEM1', 'Médecine — DCEM1 (3ème année)', 'medecine_sante','DCEM1','🩺'),
-  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_DCEM2', 'Médecine — DCEM2 (4ème année)', 'medecine_sante','DCEM2','🩺'),
-  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_DCEM3', 'Médecine — DCEM3 (5ème année)', 'medecine_sante','DCEM3','🩺'),
-  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_DCEM4', 'Médecine — DCEM4 (6ème année)', 'medecine_sante','DCEM4','🩺')
+-- ── INFORMATIQUE ─────────────────────────────────────────────
+INSERT INTO filieres (code, nom, categorie, niveau, icone) VALUES
+  ('INFO_L1', 'Informatique — L1', 'informatique_tech', 'L1', '💻'),
+  ('INFO_L2', 'Informatique — L2', 'informatique_tech', 'L2', '💻'),
+  ('INFO_L3', 'Informatique — L3', 'informatique_tech', 'L3', '💻'),
+  ('INFO_M1', 'Informatique — M1', 'informatique_tech', 'M1', '💻'),
+  ('INFO_M2', 'Informatique — M2', 'informatique_tech', 'M2', '💻')
 ON CONFLICT DO NOTHING;
 
--- CUSS — Médecine
-INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
-  ((SELECT id FROM etablissements WHERE code='CUSS'), 'CUSS_PCEM1', 'Médecine CUSS — PCEM1', 'medecine_sante','PCEM1','🏥'),
-  ((SELECT id FROM etablissements WHERE code='CUSS'), 'CUSS_PCEM2', 'Médecine CUSS — PCEM2', 'medecine_sante','PCEM2','🏥')
+-- ── LETTRES / LANGUES ────────────────────────────────────────
+INSERT INTO filieres (code, nom, categorie, niveau, icone) VALUES
+  ('LETTRES_L1', 'Lettres Modernes — L1', 'lettres_langues', 'L1', '📖'),
+  ('LETTRES_L2', 'Lettres Modernes — L2', 'lettres_langues', 'L2', '📖'),
+  ('LETTRES_L3', 'Lettres Modernes — L3', 'lettres_langues', 'L3', '📖'),
+  ('ANGLAIS_L1', 'Anglais — L1',           'lettres_langues', 'L1', '🇬🇧'),
+  ('ANGLAIS_L2', 'Anglais — L2',           'lettres_langues', 'L2', '🇬🇧'),
+  ('ANGLAIS_L3', 'Anglais — L3',           'lettres_langues', 'L3', '🇬🇧')
 ON CONFLICT DO NOTHING;
 
--- ENS Yaoundé
-INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
-  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_MATHS_L1',   'ENS Maths — L1',        'sciences_education','L1','📐'),
-  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_MATHS_L2',   'ENS Maths — L2',        'sciences_education','L2','📐'),
-  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_MATHS_L3',   'ENS Maths — L3',        'sciences_education','L3','📐'),
-  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_LETTRES_L1', 'ENS Lettres — L1',      'sciences_education','L1','📖'),
-  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_LETTRES_L2', 'ENS Lettres — L2',      'sciences_education','L2','📖'),
-  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_ANGLAIS_L1', 'ENS Anglais — L1',      'sciences_education','L1','🇬🇧'),
-  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_HIST_L1',    'ENS Histoire-Géo — L1', 'sciences_education','L1','🌍')
+-- ── SCIENCES HUMAINES ────────────────────────────────────────
+INSERT INTO filieres (code, nom, categorie, niveau, icone) VALUES
+  ('HIST_L1',    'Histoire — L1',          'sciences_humaines', 'L1', '🌍'),
+  ('HIST_L2',    'Histoire — L2',          'sciences_humaines', 'L2', '🌍'),
+  ('GEO_L1',     'Géographie — L1',        'sciences_humaines', 'L1', '🗺️'),
+  ('GEO_L2',     'Géographie — L2',        'sciences_humaines', 'L2', '🗺️'),
+  ('SOCIO_L1',   'Sociologie — L1',        'sciences_humaines', 'L1', '👥'),
+  ('SOCIO_L2',   'Sociologie — L2',        'sciences_humaines', 'L2', '👥'),
+  ('PHILO_L1',   'Philosophie — L1',       'sciences_humaines', 'L1', '🧠'),
+  ('PSYCHO_L1',  'Psychologie — L1',       'sciences_humaines', 'L1', '🧠'),
+  ('SCI_POL_L1', 'Science Politique — L1', 'sciences_humaines', 'L1', '🏛️')
 ON CONFLICT DO NOTHING;
 
--- ENSET Douala
+-- ══════════════════════════════════════════════════════════════
+-- ÉCOLES SPÉCIFIQUES (etablissement_id obligatoire)
+-- ══════════════════════════════════════════════════════════════
+
+-- ── FMSB + CUSS — Médecine ───────────────────────────────────
 INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
-  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GE_L1', 'Génie Électrique — L1',   'informatique_tech','L1','🔌'),
-  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GE_L2', 'Génie Électrique — L2',   'informatique_tech','L2','🔌'),
-  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GI_L1', 'Génie Informatique — L1', 'informatique_tech','L1','💻'),
-  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GI_L2', 'Génie Informatique — L2', 'informatique_tech','L2','💻'),
-  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GM_L1', 'Génie Mécanique — L1',    'informatique_tech','L1','🔧'),
-  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GM_L2', 'Génie Mécanique — L2',    'informatique_tech','L2','🔧')
+  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_PCEM1', 'Médecine — PCEM1', 'medecine_sante', 'PCEM1', '🏥'),
+  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_PCEM2', 'Médecine — PCEM2', 'medecine_sante', 'PCEM2', '🏥'),
+  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_DCEM1', 'Médecine — DCEM1', 'medecine_sante', 'DCEM1', '🩺'),
+  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_DCEM2', 'Médecine — DCEM2', 'medecine_sante', 'DCEM2', '🩺'),
+  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_DCEM3', 'Médecine — DCEM3', 'medecine_sante', 'DCEM3', '🩺'),
+  ((SELECT id FROM etablissements WHERE code='FMSB'), 'FMSB_DCEM4', 'Médecine — DCEM4', 'medecine_sante', 'DCEM4', '🩺'),
+  ((SELECT id FROM etablissements WHERE code='CUSS'), 'CUSS_PCEM1', 'Médecine CUSS — PCEM1', 'medecine_sante', 'PCEM1', '🏥'),
+  ((SELECT id FROM etablissements WHERE code='CUSS'), 'CUSS_PCEM2', 'Médecine CUSS — PCEM2', 'medecine_sante', 'PCEM2', '🏥')
 ON CONFLICT DO NOTHING;
 
--- IUT Douala
+-- ── ENS Yaoundé ──────────────────────────────────────────────
 INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
-  ((SELECT id FROM etablissements WHERE code='IUT_DOUALA'), 'IUT_D_INFO_1', 'Informatique — DUT1',         'informatique_tech','DUT1','💻'),
-  ((SELECT id FROM etablissements WHERE code='IUT_DOUALA'), 'IUT_D_INFO_2', 'Informatique — DUT2',         'informatique_tech','DUT2','💻'),
-  ((SELECT id FROM etablissements WHERE code='IUT_DOUALA'), 'IUT_D_TC_1',   'Techniques de Comm — DUT1',   'economie_gestion','DUT1','📡'),
-  ((SELECT id FROM etablissements WHERE code='IUT_DOUALA'), 'IUT_D_GEA_1',  'Gestion des Entreprises — DUT1','economie_gestion','DUT1','📊')
+  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_MATHS_L1',    'ENS — Maths L1',        'sciences_education', 'L1', '📐'),
+  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_MATHS_L2',    'ENS — Maths L2',        'sciences_education', 'L2', '📐'),
+  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_MATHS_L3',    'ENS — Maths L3',        'sciences_education', 'L3', '📐'),
+  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_LETTRES_L1',  'ENS — Lettres L1',      'sciences_education', 'L1', '📖'),
+  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_LETTRES_L2',  'ENS — Lettres L2',      'sciences_education', 'L2', '📖'),
+  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_ANGLAIS_L1',  'ENS — Anglais L1',      'sciences_education', 'L1', '🇬🇧'),
+  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_HIST_L1',     'ENS — Histoire-Géo L1', 'sciences_education', 'L1', '🌍'),
+  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_PHYSIQUE_L1', 'ENS — Physique L1',      'sciences_education', 'L1', '⚡'),
+  ((SELECT id FROM etablissements WHERE code='ENS'), 'ENS_SVT_L1',      'ENS — SVT L1',           'sciences_education', 'L1', '🧬')
 ON CONFLICT DO NOTHING;
 
--- Université de Douala
+-- ── ENSET Douala ─────────────────────────────────────────────
 INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
-  ((SELECT id FROM etablissements WHERE code='UD'), 'UD_DROIT_L1',  'Droit — L1 (Douala)',       'droit_sciences_juridiques','L1','⚖️'),
-  ((SELECT id FROM etablissements WHERE code='UD'), 'UD_DROIT_L2',  'Droit — L2 (Douala)',       'droit_sciences_juridiques','L2','⚖️'),
-  ((SELECT id FROM etablissements WHERE code='UD'), 'UD_ECO_L1',    'Économie — L1 (Douala)',    'economie_gestion','L1','📈'),
-  ((SELECT id FROM etablissements WHERE code='UD'), 'UD_ECO_L2',    'Économie — L2 (Douala)',    'economie_gestion','L2','📈'),
-  ((SELECT id FROM etablissements WHERE code='UD'), 'UD_INFO_L1',   'Informatique — L1 (Douala)','informatique_tech','L1','💻'),
-  ((SELECT id FROM etablissements WHERE code='UD'), 'UD_INFO_L2',   'Informatique — L2 (Douala)','informatique_tech','L2','💻')
+  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GE_L1', 'ENSET — Génie Électrique L1',   'sciences_education', 'L1', '🔌'),
+  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GE_L2', 'ENSET — Génie Électrique L2',   'sciences_education', 'L2', '🔌'),
+  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GI_L1', 'ENSET — Génie Informatique L1', 'sciences_education', 'L1', '💻'),
+  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GI_L2', 'ENSET — Génie Informatique L2', 'sciences_education', 'L2', '💻'),
+  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GM_L1', 'ENSET — Génie Mécanique L1',    'sciences_education', 'L1', '🔧'),
+  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GM_L2', 'ENSET — Génie Mécanique L2',    'sciences_education', 'L2', '🔧'),
+  ((SELECT id FROM etablissements WHERE code='ENSET'), 'ENSET_GC_L1', 'ENSET — Génie Civil L1',        'sciences_education', 'L1', '🏗️')
 ON CONFLICT DO NOTHING;
 
--- Concours nationaux
+-- ── IUT (Douala / Ngaoundéré / Bandjoun) ─────────────────────
 INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
-  ((SELECT id FROM etablissements WHERE code='ENAM'),              'CONCOURS_ENAM',      'Concours ENAM (toutes options)',         'concours_grandes_ecoles','Concours','🏛️'),
-  ((SELECT id FROM etablissements WHERE code='ENSET'),             'CONCOURS_ENSET',     'Concours ENSET',                         'concours_grandes_ecoles','Concours','🔧'),
-  ((SELECT id FROM etablissements WHERE code='ENS'),               'CONCOURS_ENS',       'Concours ENS Yaoundé',                   'concours_grandes_ecoles','Concours','📚'),
-  ((SELECT id FROM etablissements WHERE code='EMIA'),              'CONCOURS_EMIA',      'Concours EMIA',                          'concours_grandes_ecoles','Concours','🎖️'),
-  ((SELECT id FROM etablissements WHERE code='ESSEC'),             'CONCOURS_ESSEC',     'Concours ESSEC Douala',                  'concours_grandes_ecoles','Concours','📈'),
-  ((SELECT id FROM etablissements WHERE code='IRIC'),              'CONCOURS_IRIC',      'Concours IRIC',                          'concours_grandes_ecoles','Concours','🌐'),
-  ((SELECT id FROM etablissements WHERE code='FMSB'),              'CONCOURS_FMSB',      'Concours d''entrée FMSB',                'concours_grandes_ecoles','Concours','🏥'),
-  ((SELECT id FROM etablissements WHERE code='CUSS'),              'CONCOURS_CUSS',      'Concours d''entrée CUSS',                'concours_grandes_ecoles','Concours','🏥'),
-  ((SELECT id FROM etablissements WHERE code='CONCOURS_POLICE'),   'CONCOURS_POLICE_NAT','Concours Police Nationale',              'concours_fonctions_publiques','Concours','👮'),
-  ((SELECT id FROM etablissements WHERE code='CONCOURS_GEND'),     'CONCOURS_GENDARMERIE','Concours Gendarmerie Nationale',        'concours_fonctions_publiques','Concours','🎖️'),
-  ((SELECT id FROM etablissements WHERE code='CONCOURS_FP'),       'CONCOURS_FP_GENERAL','Concours Fonctions Publiques (général)', 'concours_fonctions_publiques','Concours','🏢'),
-  ((SELECT id FROM etablissements WHERE code='CONCOURS_MAGISTRATURE'),'CONCOURS_MAGISTRAT','Concours Magistrature',               'concours_fonctions_publiques','Concours','⚖️')
+  ((SELECT id FROM etablissements WHERE code='IUT_DOUALA'),   'IUT_D_INFO_1', 'IUT-D — Informatique DUT1',         'informatique_tech', 'DUT1', '💻'),
+  ((SELECT id FROM etablissements WHERE code='IUT_DOUALA'),   'IUT_D_INFO_2', 'IUT-D — Informatique DUT2',         'informatique_tech', 'DUT2', '💻'),
+  ((SELECT id FROM etablissements WHERE code='IUT_DOUALA'),   'IUT_D_GEA_1',  'IUT-D — Gestion Entreprises DUT1',  'economie_gestion',  'DUT1', '📊'),
+  ((SELECT id FROM etablissements WHERE code='IUT_DOUALA'),   'IUT_D_TC_1',   'IUT-D — Techniques de Comm DUT1',   'economie_gestion',  'DUT1', '📡'),
+  ((SELECT id FROM etablissements WHERE code='IUT_NGAOU'),    'IUT_N_INFO_1', 'IUT-N — Informatique DUT1',         'informatique_tech', 'DUT1', '💻'),
+  ((SELECT id FROM etablissements WHERE code='IUT_NGAOU'),    'IUT_N_GEA_1',  'IUT-N — Gestion Entreprises DUT1',  'economie_gestion',  'DUT1', '📊'),
+  ((SELECT id FROM etablissements WHERE code='IUT_BANDJOUN'), 'IUT_B_INFO_1', 'IUT-B — Informatique DUT1',         'informatique_tech', 'DUT1', '💻'),
+  ((SELECT id FROM etablissements WHERE code='IUT_BANDJOUN'), 'IUT_B_GEA_1',  'IUT-B — Gestion Entreprises DUT1',  'economie_gestion',  'DUT1', '📊')
+ON CONFLICT DO NOTHING;
+
+-- ── ESSEC + IRIC ─────────────────────────────────────────────
+INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
+  ((SELECT id FROM etablissements WHERE code='ESSEC'), 'ESSEC_GESTION_L1',  'ESSEC — Gestion L1',    'economie_gestion', 'L1', '📈'),
+  ((SELECT id FROM etablissements WHERE code='ESSEC'), 'ESSEC_GESTION_L2',  'ESSEC — Gestion L2',    'economie_gestion', 'L2', '📈'),
+  ((SELECT id FROM etablissements WHERE code='ESSEC'), 'ESSEC_FINANCE_M1',  'ESSEC — Finance M1',    'economie_gestion', 'M1', '💰'),
+  ((SELECT id FROM etablissements WHERE code='ESSEC'), 'ESSEC_MARKETING_M1','ESSEC — Marketing M1',  'economie_gestion', 'M1', '📢'),
+  ((SELECT id FROM etablissements WHERE code='IRIC'),  'IRIC_RI_L1',        'IRIC — Relations Int. L1','sciences_humaines','L1','🌐'),
+  ((SELECT id FROM etablissements WHERE code='IRIC'),  'IRIC_RI_L2',        'IRIC — Relations Int. L2','sciences_humaines','L2','🌐'),
+  ((SELECT id FROM etablissements WHERE code='IRIC'),  'IRIC_RI_M1',        'IRIC — Relations Int. M1','sciences_humaines','M1','🌐')
+ON CONFLICT DO NOTHING;
+
+-- ── CONCOURS NATIONAUX ───────────────────────────────────────
+INSERT INTO filieres (etablissement_id, code, nom, categorie, niveau, icone) VALUES
+  ((SELECT id FROM etablissements WHERE code='ENAM'),               'CONCOURS_ENAM_ADM',   'ENAM — Administration',         'concours_grandes_ecoles',      'Concours', '🏛️'),
+  ((SELECT id FROM etablissements WHERE code='ENAM'),               'CONCOURS_ENAM_DIPL',  'ENAM — Diplomatie',             'concours_grandes_ecoles',      'Concours', '🏛️'),
+  ((SELECT id FROM etablissements WHERE code='ENAM'),               'CONCOURS_ENAM_FISC',  'ENAM — Fiscalité',              'concours_grandes_ecoles',      'Concours', '🏛️'),
+  ((SELECT id FROM etablissements WHERE code='ENSET'),              'CONCOURS_ENSET',      'Concours ENSET',                'concours_grandes_ecoles',      'Concours', '🔧'),
+  ((SELECT id FROM etablissements WHERE code='ENS'),                'CONCOURS_ENS',        'Concours ENS Yaoundé',          'concours_grandes_ecoles',      'Concours', '📚'),
+  ((SELECT id FROM etablissements WHERE code='EMIA'),               'CONCOURS_EMIA',       'Concours EMIA',                 'concours_grandes_ecoles',      'Concours', '🎖️'),
+  ((SELECT id FROM etablissements WHERE code='ESSEC'),              'CONCOURS_ESSEC',      'Concours ESSEC',                'concours_grandes_ecoles',      'Concours', '📈'),
+  ((SELECT id FROM etablissements WHERE code='IRIC'),               'CONCOURS_IRIC',       'Concours IRIC',                 'concours_grandes_ecoles',      'Concours', '🌐'),
+  ((SELECT id FROM etablissements WHERE code='FMSB'),               'CONCOURS_FMSB',       'Concours entrée FMSB',          'concours_grandes_ecoles',      'Concours', '🏥'),
+  ((SELECT id FROM etablissements WHERE code='CUSS'),               'CONCOURS_CUSS',       'Concours entrée CUSS',          'concours_grandes_ecoles',      'Concours', '🏥'),
+  ((SELECT id FROM etablissements WHERE code='CONCOURS_POLICE'),    'CONCOURS_POLICE_NAT', 'Concours Police Nationale',     'concours_fonctions_publiques', 'Concours', '👮'),
+  ((SELECT id FROM etablissements WHERE code='CONCOURS_GEND'),      'CONCOURS_GENDARMERIE','Concours Gendarmerie',          'concours_fonctions_publiques', 'Concours', '🎖️'),
+  ((SELECT id FROM etablissements WHERE code='CONCOURS_FP'),        'CONCOURS_FP_GENERAL', 'Concours Fonctions Publiques',  'concours_fonctions_publiques', 'Concours', '🏢'),
+  ((SELECT id FROM etablissements WHERE code='CONCOURS_MAGISTRATURE'),'CONCOURS_MAGISTRAT','Concours Magistrature',         'concours_fonctions_publiques', 'Concours', '⚖️')
 ON CONFLICT DO NOTHING;
 
 

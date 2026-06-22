@@ -205,15 +205,15 @@ async function chargerEpreuves() {
       .from('epreuves')
       .select(`
         id, matiere, annee, semestre, type_epreuve, a_corrige, nb_vues, nb_telechargements,
-        filieres!inner(id, nom, categorie, icone, etablissement_id,
-          etablissements(nom_court, nom, type))
+        filieres!inner(id, nom, categorie, icone),
+        etablissements(nom_court, nom, type)
       `, { count: 'exact' })
       .eq('visible', true)
       .order('annee', { ascending: false })
       .order('matiere');
 
     if (etat.cat)    query = query.eq('filieres.categorie', etat.cat);
-    if (etat.etab)   query = query.eq('filieres.etablissement_id', etat.etab);
+    if (etat.etab)   query = query.eq('etablissement_id', etat.etab);
     if (etat.type)   query = query.eq('type_epreuve', etat.type);
     if (etat.annee)  query = query.eq('annee', parseInt(etat.annee));
     if (etat.fax === '1') query = query.eq('a_corrige', true);
@@ -249,7 +249,7 @@ async function chargerEpreuves() {
 /* ── Carte épreuve ──────────────────────────────────────────── */
 function rendreCarte(ep) {
   const fil   = ep.filieres;
-  const etab  = fil?.etablissements;
+  const etab  = ep.etablissements;
   const icon  = fil?.icone || CAT_ICONS[fil?.categorie] || '📋';
   const typeL = TYPES_LABELS[ep.type_epreuve] || ep.type_epreuve;
   const faxBadge = ep.a_corrige
