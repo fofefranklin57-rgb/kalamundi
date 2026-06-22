@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Épreuves & Fax — Université — Kalamundi</title>
+  <meta name="description" content="Retrouvez toutes les épreuves universitaires du Cameroun : CC, sessions normales, rattrapages, concours ENAM, ENSET, Police, Médecine. Corrigés (fax) disponibles." />
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <script src="/assets/js/theme-init.js" defer></script>
+  <style>
+    .ep-hero {
+      background: linear-gradient(135deg,#0d2137 0%,#1a3a5c 55%,#1B4332 100%);
+      color:#fff; padding:var(--spacing-2xl) 0 0; text-align:center;
+    }
+    .ep-hero h1 { font-size:clamp(1.6rem,4vw,2.6rem); margin-bottom:6px; }
+    .ep-hero p  { opacity:.8; font-size:var(--font-size-sm); margin-bottom:var(--spacing-lg); }
+
+    /* Barre de filtres */
+    .ep-filtres {
+      background:var(--bg-card); border-bottom:1px solid var(--border-color);
+      padding:var(--spacing-md) 0; position:sticky; top:0; z-index:100;
+    }
+    .ep-filtres .container {
+      display:flex; gap:var(--spacing-sm); flex-wrap:wrap; align-items:center;
+    }
+    .f-select {
+      padding:8px 12px; border:1.5px solid var(--border-color);
+      border-radius:var(--border-radius-md); background:var(--bg-card);
+      color:var(--text-primary); font-size:var(--font-size-sm); cursor:pointer;
+      min-width:140px; flex:1;
+    }
+    .f-select:focus { outline:none; border-color:var(--color-primary); }
+    .f-search {
+      flex:2; min-width:180px; padding:8px 14px;
+      border:1.5px solid var(--border-color); border-radius:var(--border-radius-md);
+      background:var(--bg-card); color:var(--text-primary); font-size:var(--font-size-sm);
+    }
+    .f-search:focus { outline:none; border-color:var(--color-primary); }
+    .f-reset {
+      padding:8px 16px; border:none; background:var(--color-primary);
+      color:#fff; border-radius:var(--border-radius-md); cursor:pointer;
+      font-size:var(--font-size-sm); font-weight:600; white-space:nowrap;
+    }
+
+    /* Onglets catégorie */
+    .ep-cats {
+      background:var(--bg-card); padding:var(--spacing-sm) 0;
+      border-bottom:1px solid var(--border-color); overflow-x:auto;
+    }
+    .ep-cats__inner {
+      display:flex; gap:var(--spacing-xs); padding:0 var(--spacing-md); width:max-content;
+    }
+    .cat-btn {
+      padding:6px 14px; border:1.5px solid var(--border-color);
+      border-radius:var(--border-radius-full); font-size:12px; font-weight:600;
+      background:var(--bg-card); color:var(--text-secondary); cursor:pointer;
+      white-space:nowrap; transition:.2s;
+    }
+    .cat-btn:hover, .cat-btn.active {
+      background:var(--color-primary); color:#fff; border-color:var(--color-primary);
+    }
+
+    /* Grille épreuves */
+    .ep-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+      gap:var(--spacing-md);
+      padding:var(--spacing-xl) 0;
+    }
+    .ep-card {
+      background:var(--bg-card); border:1px solid var(--border-color);
+      border-radius:var(--border-radius-lg); padding:var(--spacing-md);
+      display:flex; flex-direction:column; gap:var(--spacing-sm);
+      transition:.2s; text-decoration:none; color:inherit;
+    }
+    .ep-card:hover {
+      border-color:var(--color-primary);
+      box-shadow:0 4px 16px rgba(27,67,50,.12);
+      transform:translateY(-2px);
+    }
+    .ep-card__header { display:flex; align-items:flex-start; gap:var(--spacing-sm); }
+    .ep-card__icon {
+      font-size:1.8rem; flex-shrink:0;
+      width:44px; height:44px; display:flex; align-items:center; justify-content:center;
+      background:var(--bg-secondary); border-radius:var(--border-radius-md);
+    }
+    .ep-card__meta { flex:1; }
+    .ep-card__matiere { font-weight:700; font-size:var(--font-size-md); line-height:1.3; }
+    .ep-card__filiere { font-size:12px; color:var(--text-secondary); margin-top:2px; }
+    .ep-card__badges { display:flex; flex-wrap:wrap; gap:6px; }
+    .badge {
+      display:inline-block; padding:2px 8px; border-radius:var(--border-radius-full);
+      font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+    }
+    .badge--annee  { background:#e0f2fe; color:#075985; }
+    .badge--type   { background:#f0fdf4; color:#166534; }
+    .badge--fax    { background:#fef9c3; color:#854d0e; }
+    .badge--fax-ia { background:#f3e8ff; color:#6b21a8; }
+    .badge--sem    { background:#f1f5f9; color:#475569; }
+    .ep-card__footer {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-top:auto; padding-top:var(--spacing-sm);
+      border-top:1px solid var(--border-color);
+    }
+    .ep-card__etab { font-size:11px; color:var(--text-light); }
+    .ep-card__cta  {
+      font-size:12px; font-weight:700; color:var(--color-primary);
+      text-decoration:none; padding:4px 10px; border:1.5px solid var(--color-primary);
+      border-radius:var(--border-radius-md); transition:.2s;
+    }
+    .ep-card__cta:hover { background:var(--color-primary); color:#fff; }
+
+    /* Répétiteur CTA */
+    .rep-cta-bar {
+      background:linear-gradient(90deg,#1B4332,#2D6A4F);
+      color:#fff; padding:var(--spacing-lg) 0; text-align:center;
+      margin-top:var(--spacing-xl);
+    }
+    .rep-cta-bar h3 { margin-bottom:var(--spacing-sm); font-size:var(--font-size-lg); }
+    .rep-cta-bar p  { opacity:.85; font-size:var(--font-size-sm); margin-bottom:var(--spacing-md); }
+
+    /* Vide */
+    .vide { text-align:center; padding:4rem 1rem; color:var(--text-secondary); }
+    .vide__icon { font-size:3.5rem; margin-bottom:var(--spacing-md); }
+    .vide h3 { margin-bottom:var(--spacing-sm); }
+
+    /* Skeleton */
+    .skeleton { animation:pulse 1.5s ease infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .skel-card {
+      background:var(--border-color); border-radius:var(--border-radius-lg);
+      height:160px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">Kalamundi</a>
+      <nav class="navbar__nav" id="nav-menu">
+        <a href="/index.html"         class="navbar__link">Accueil</a>
+        <a href="/pages/library.html" class="navbar__link">Catalogue</a>
+        <a href="/pages/education.html#etudiant" class="navbar__link navbar__link--active">Etudiant</a>
+      </nav>
+      <span id="theme-slot"></span>
+      <div class="navbar__actions" id="navbar-actions"></div>
+      <button class="navbar__toggle" id="nav-toggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="ep-hero">
+    <div class="container">
+      <div style="font-size:12px;opacity:.7;margin-bottom:6px;text-transform:uppercase;letter-spacing:.1em">Espace Etudiant</div>
+      <h1>Epreuves & Fax — Universite</h1>
+      <p>Sujets + corriges de CC, sessions normales, rattrapages et concours<br>
+         UY1 · UY2 · UD · FMSB · ENAM · ENSET · Police · Gendarmerie…</p>
+    </div>
+    <!-- Stats dynamiques -->
+    <div style="display:flex;justify-content:center;gap:var(--spacing-xl);padding:var(--spacing-lg) 0 0;flex-wrap:wrap;opacity:.9">
+      <div style="text-align:center"><div id="stat-epreuves" style="font-size:2rem;font-weight:800">—</div><div style="font-size:11px;opacity:.75;margin-top:2px">Epreuves</div></div>
+      <div style="text-align:center"><div id="stat-fax" style="font-size:2rem;font-weight:800">—</div><div style="font-size:11px;opacity:.75;margin-top:2px">Corriges (fax)</div></div>
+      <div style="text-align:center"><div id="stat-filieres" style="font-size:2rem;font-weight:800">—</div><div style="font-size:11px;opacity:.75;margin-top:2px">Filieres</div></div>
+    </div>
+    <!-- Tabs catégorie -->
+    <div class="ep-cats" style="margin-top:var(--spacing-lg)">
+      <div class="ep-cats__inner" id="cats-bar">
+        <button class="cat-btn active" data-cat="">Tout</button>
+        <button class="cat-btn" data-cat="droit_sciences_juridiques">Droit</button>
+        <button class="cat-btn" data-cat="medecine_sante">Medecine</button>
+        <button class="cat-btn" data-cat="sciences_exactes">Sciences</button>
+        <button class="cat-btn" data-cat="economie_gestion">Economie</button>
+        <button class="cat-btn" data-cat="informatique_tech">Informatique</button>
+        <button class="cat-btn" data-cat="lettres_langues">Lettres</button>
+        <button class="cat-btn" data-cat="sciences_humaines">Sc. Humaines</button>
+        <button class="cat-btn" data-cat="sciences_education">ENS / Education</button>
+        <button class="cat-btn" data-cat="concours_grandes_ecoles">Grandes Ecoles</button>
+        <button class="cat-btn" data-cat="concours_fonctions_publiques">Fonctions Publiques</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="ep-filtres">
+    <div class="container">
+      <input class="f-search" type="search" id="f-search" placeholder="Rechercher matiere, filiere, etablissement..." />
+      <select class="f-select" id="f-etab">
+        <option value="">Tous les etablissements</option>
+      </select>
+      <select class="f-select" id="f-type">
+        <option value="">Tous les types</option>
+        <option value="cc">Controle Continu (CC)</option>
+        <option value="session_normale">Session Normale</option>
+        <option value="rattrapage">Rattrapage</option>
+        <option value="concours">Concours</option>
+        <option value="partiel">Partiel</option>
+        <option value="td">TD</option>
+      </select>
+      <select class="f-select" id="f-annee">
+        <option value="">Toutes les annees</option>
+      </select>
+      <select class="f-select" id="f-fax">
+        <option value="">Avec ou sans fax</option>
+        <option value="1">Avec corrige (fax)</option>
+        <option value="0">Sans corrige</option>
+      </select>
+      <button class="f-reset" id="f-reset-btn">Reinitialiser</button>
+    </div>
+  </div>
+
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Résultats -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--spacing-md) 0;flex-wrap:wrap;gap:8px">
+        <div id="ep-count" style="font-size:var(--font-size-sm);color:var(--text-secondary)">Chargement…</div>
+        <a href="/pages/repetiteur.html" class="btn btn--accent btn--sm">
+          Reviser avec le Super Repetiteur
+        </a>
+      </div>
+
+      <div class="ep-grid" id="ep-grid">
+        <!-- Skeletons initiaux -->
+        ${Array(8).fill('<div class="skel-card skeleton"></div>').join('')}
+      </div>
+
+      <div id="ep-vide" class="vide" style="display:none">
+        <div class="vide__icon">📭</div>
+        <h3>Aucune epreuve trouvee</h3>
+        <p>Essaie d'autres filtres ou reviens bientot — nous ajoutons des epreuves chaque semaine.</p>
+        <a href="/pages/repetiteur.html" class="btn btn--accent" style="margin-top:var(--spacing-md)">
+          En attendant, reviser avec l'IA
+        </a>
+      </div>
+
+      <div id="ep-pagination" style="display:flex;justify-content:center;gap:var(--spacing-sm);padding:var(--spacing-xl) 0"></div>
+
+    </div>
+
+    <!-- CTA Super Répétiteur -->
+    <div class="rep-cta-bar">
+      <div class="container">
+        <h3>Tu as lu le sujet — maintenant revise !</h3>
+        <p>Le Super Repetiteur genere des questions personnalisees pour ta filiere et ta matiere.</p>
+        <a href="/pages/repetiteur.html" class="btn btn--outline" style="color:#fff;border-color:#fff;margin-right:var(--spacing-sm)">
+          Lancer le Repetiteur
+        </a>
+        <a href="/pages/examen-sim.html" class="btn" style="background:#D4A017;color:#000;border-color:#D4A017">
+          Simuler un examen
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script type="module" src="/assets/js/epreuves.js" defer></script>
+</body>
+</html>

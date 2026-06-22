@@ -13,6 +13,8 @@ const MATIERE = getParam('matiere') || '';
 const EXAMEN  = getParam('examen')  || 'BAC';
 const SERIE   = getParam('serie')   || null;
 const NB_Q    = parseInt(getParam('nb') || '10');
+const MODE    = getParam('mode')    || '';       // 'universite' | ''
+const NIVEAU  = getParam('niveau')  || '';       // 'L1','L2','PCEM1'…
 
 /* ── État ───────────────────────────────────────────────────── */
 let utilisateur  = null;
@@ -135,7 +137,7 @@ async function chargerQuestionsIA() {
     <div style="text-align:center;padding:4rem 1rem;color:var(--text-secondary)">
       <div style="font-size:3rem;margin-bottom:1rem">🤖</div>
       <h3 style="color:var(--color-primary)">Super Répétiteur IA</h3>
-      <p style="margin-bottom:1rem">Aucune question en base pour <strong>${MATIERE}</strong>.<br>
+      <p style="margin-bottom:1rem">Aucune question en base pour <strong>${MATIERE}</strong>${NIVEAU ? ` (${NIVEAU})` : ''}.<br>
          Je génère ${NB_Q} questions personnalisées avec l'IA…</p>
       <div class="spinner" style="margin:0 auto"></div>
     </div>`;
@@ -144,7 +146,7 @@ async function chargerQuestionsIA() {
     const res = await fetch('/api/generate-questions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ matiere: MATIERE, examen: EXAMEN, serie: SERIE || null, nb: NB_Q }),
+      body: JSON.stringify({ matiere: MATIERE, examen: EXAMEN, serie: SERIE || null, nb: NB_Q, mode: MODE, niveau: NIVEAU }),
     });
 
     if (!res.ok) throw new Error(`Erreur ${res.status}`);

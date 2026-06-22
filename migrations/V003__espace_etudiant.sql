@@ -68,36 +68,26 @@ CREATE TABLE IF NOT EXISTS filieres (
   etablissement_id UUID REFERENCES etablissements(id) ON DELETE SET NULL,
   code             TEXT NOT NULL,
   nom              TEXT NOT NULL,
-  categorie        TEXT NOT NULL CHECK (categorie IN (
-                     'droit_sciences_juridiques',
-                     'medecine_sante',
-                     'sciences_exactes',
-                     'sciences_humaines',
-                     'lettres_langues',
-                     'economie_gestion',
-                     'informatique_tech',
-                     'sciences_education',
-                     'agronomie',
-                     'architecture',
-                     'concours_grandes_ecoles',
-                     'concours_fonctions_publiques',
-                     'autre'
-                   )),
-  niveau           TEXT CHECK (niveau IN (
-                     'L1','L2','L3',
-                     'M1','M2',
-                     'Doctorat',
-                     'PCEM1','PCEM2','DCEM1','DCEM2','DCEM3','DCEM4',
-                     'BTS1','BTS2',
-                     'DUT1','DUT2',
-                     'Concours',
-                     'Prépa'
-                   )),
+  categorie        TEXT NOT NULL,
+  niveau           TEXT,
   description      TEXT,
-  icone            TEXT DEFAULT '🎓',
+  icone            TEXT DEFAULT '',
   actif            BOOLEAN DEFAULT true,
   created_at       TIMESTAMPTZ DEFAULT now()
 );
+
+ALTER TABLE filieres ADD CONSTRAINT filieres_categorie_check CHECK (categorie IN (
+  'droit_sciences_juridiques','medecine_sante','sciences_exactes',
+  'sciences_humaines','lettres_langues','economie_gestion',
+  'informatique_tech','sciences_education','agronomie',
+  'architecture','concours_grandes_ecoles','concours_fonctions_publiques','autre'
+));
+
+ALTER TABLE filieres ADD CONSTRAINT filieres_niveau_check CHECK (niveau IN (
+  'L1','L2','L3','M1','M2','Doctorat',
+  'PCEM1','PCEM2','DCEM1','DCEM2','DCEM3','DCEM4',
+  'BTS1','BTS2','DUT1','DUT2','Concours','Prepa'
+));
 
 ALTER TABLE filieres ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "filieres_public_read" ON filieres FOR SELECT USING (actif = true);

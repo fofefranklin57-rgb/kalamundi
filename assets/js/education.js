@@ -3,8 +3,10 @@
    Gestion des onglets avec iframes lazy-loaded
    ============================================================ */
 
+import { injecterPub } from './pub.js';
+
 /* ── Mapping onglets ────────────────────────────────────────── */
-const ONGLETS = ['annales', 'simulateur', 'repetiteur', 'ecole']
+const ONGLETS = ['annales', 'simulateur', 'repetiteur', 'ecole', 'etudiant']
 
 /* ── Init navbar hub ────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -83,7 +85,7 @@ function chargerIframe(tab) {
       const selecteurs = [
         '#navbar', '.navbar',
         '.annales-hero', '.sim-hero', '.rep-hero', '.ecole-hero',
-        '.edu-hero', 'footer', '.promo-etudiant',
+        '.ep-hero', '.edu-hero', 'footer', '.promo-etudiant',
       ]
       selecteurs.forEach(sel => {
         doc.querySelectorAll(sel).forEach(el => { el.style.display = 'none' })
@@ -132,3 +134,5 @@ function initDepuisHash() {
     if (ONGLETS.includes(h)) activerOnglet(h)
   })
 }
+
+injecterPub('education');

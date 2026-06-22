@@ -539,12 +539,9 @@ function rendreSimulateur() {
   const zone = document.getElementById('zone-simulateur');
 
   if (!programme) {
-    zone.innerHTML = `<div class="vide">
-      <div class="vide__icon">📅</div>
-      <h3>Créez d'abord votre programme</h3>
-      <p>Le simulateur s'adapte à votre série et vos matières.</p>
-      <button class="btn btn--accent" onclick="document.querySelector('[data-panel=programme]').click()">Créer mon programme</button>
-    </div>`;
+    /* Mode libre — accessible à tous, y compris étudiants universitaires */
+    zone.innerHTML = rendreSimulateurLibre();
+    initSimulateurLibreEvents();
     return;
   }
 
@@ -672,3 +669,315 @@ function rendreResultats() {
         </div>`;
     }).join('')}`;
 }
+
+/* ============================================================
+   MODE LIBRE — Universite + BAC sans programme
+   Accessible à tous (connectés ou non) depuis fax.html, epreuves.html
+   ============================================================ */
+
+/* Matières universitaires par catégorie */
+const UNIV_MATIERES = {
+  'Droit / Sciences Juridiques': [
+    'Droit civil','Droit des obligations','Droit commercial','Droit des affaires',
+    'Droit du travail','Droit constitutionnel','Droit administratif','Droit penal',
+    'Droit OHADA','Droit international prive','Institutions judiciaires',
+    'Droit des societes','Fiscalite','Procedure civile',
+  ],
+  'Medecine / Sante': [
+    'Anatomie','Physiologie','Biochimie','Histologie-Embryologie',
+    'Semiologie medicale','Pharmacologie','Pathologie generale','Microbiologie',
+    'Parasitologie','Chirurgie generale','Gynecologie-Obstetrique',
+    'Pediatrie','Medecine interne','Sante publique','PCEM1','PCEM2',
+  ],
+  'Sciences Exactes': [
+    'Analyse mathematique','Algebre','Probabilites-Statistiques',
+    'Mecanique classique','Electromagnetisme','Thermodynamique',
+    'Chimie generale','Chimie organique','Optique','Informatique scientifique',
+    'Physique quantique','Chimie analytique',
+  ],
+  'Economie / Gestion': [
+    'Microeconomie','Macroeconomie','Comptabilite generale',
+    'Comptabilite analytique','Finance d\'entreprise','Marketing',
+    'Management','Statistiques economiques','Econometrie',
+    'Gestion des ressources humaines','Commerce international',
+    'Fiscalite des entreprises','Audit comptable',
+  ],
+  'Informatique / Technologie': [
+    'Algorithmique','Programmation C','Programmation Java','Python',
+    'Base de donnees','Reseaux informatiques','Systemes d\'exploitation',
+    'Genie logiciel','Intelligence artificielle','Securite informatique',
+    'Architecture des ordinateurs','Web development',
+  ],
+  'Lettres / Langues': [
+    'Litterature francaise','Litterature africaine','Grammaire avancee',
+    'Linguistique','Traduction francais-anglais','Anglais avance',
+    'Civilisation americaine','Litterature anglophone','Stylistique',
+    'Dissertation litteraire','Communication ecrite',
+  ],
+  'Sciences Humaines': [
+    'Sociologie generale','Psychologie sociale','Histoire contemporaine',
+    'Geographie humaine','Philosophie politique','Epistemologie',
+    'Anthropologie','Demographie','Science politique','Relations internationales',
+  ],
+  'ENS / Sciences de l\'Education': [
+    'Psychologie de l\'education','Pedagogie generale','Didactique',
+    'Evaluation des apprentissages','Methodes de recherche en education',
+    'Technologie educative','Mathematiques (ENSET)','Physique (ENS)',
+    'Chimie (ENS)','SVT (ENS)','Francais (ENS)',
+  ],
+  'Concours Grandes Ecoles': [
+    'Culture generale','Logique','Problemes economiques et sociaux',
+    'Droit public','Finances publiques','Administration','Redaction administrative',
+    'Anglais (concours)','Mathematiques (concours)','Physique (concours)',
+  ],
+  'Fonctions Publiques': [
+    'Culture generale','Instruction civique','Droit administratif',
+    'Logique et raisonnement','Mathematiques de base',
+    'Biologie (Police/Gendarmerie)','Chimie (concours)','Physique (concours)',
+    'Francais (concours)','Anglais (concours)','Aptitude physique (theorie)',
+  ],
+};
+
+const UNIV_THEMES = {
+  'Droit civil': ['Personnes','Famille','Biens','Obligations','Contrats','Responsabilite'],
+  'Microeconomie': ['Offre et demande','Elasticites','Concurrence parfaite','Monopole','Jeux'],
+  'Anatomie': ['Anatomie topographique','Squelette','Muscles','Systeme nerveux','Vaisseaux'],
+  'Analyse mathematique': ['Suites','Limites','Derivees','Integrales','Series','Equations diff.'],
+  'Algorithmique': ['Complexite','Tri','Graphes','Recursivite','Structures de donnees'],
+  'Litterature francaise': ['Classicisme','Romantisme','Realisme','Existentialisme','Nouveau roman'],
+  'Macroeconomie': ['PIB','Inflation','Chomage','Politique monetaire','Politique budgetaire'],
+  'Physiologie': ['Systeme nerveux','Cardio-vasculaire','Respiratoire','Digestif','Endocrinien'],
+};
+
+function rendreSimulateurLibre() {
+  const urlParams   = new URLSearchParams(location.search);
+  const modeUniv    = urlParams.get('mode') === 'universite';
+  const preMatiere  = urlParams.get('matiere') || '';
+  const preFiliere  = urlParams.get('filiere') || '';
+  const preCat      = urlParams.get('cat')     || '';
+
+  /* Déterminer la catégorie initiale à afficher */
+  let catInit = '';
+  if (preCat) {
+    const mapping = {
+      droit_sciences_juridiques:    'Droit / Sciences Juridiques',
+      medecine_sante:               'Medecine / Sante',
+      sciences_exactes:             'Sciences Exactes',
+      economie_gestion:             'Economie / Gestion',
+      informatique_tech:            'Informatique / Technologie',
+      lettres_langues:              'Lettres / Langues',
+      sciences_humaines:            'Sciences Humaines',
+      sciences_education:           'ENS / Sciences de l\'Education',
+      concours_grandes_ecoles:      'Concours Grandes Ecoles',
+      concours_fonctions_publiques: 'Fonctions Publiques',
+    };
+    catInit = mapping[preCat] || '';
+  }
+
+  const modeActif = modeUniv ? 'universite' : 'lycee';
+
+  return `
+    <div>
+      <!-- Switcher Lycée / Université -->
+      <div style="display:flex;gap:8px;margin-bottom:var(--spacing-lg)">
+        <button class="btn${modeActif==='lycee'?' btn--accent':' btn--outline'}" id="btn-mode-lycee">
+          BAC / Probatoire / BEPC
+        </button>
+        <button class="btn${modeActif==='universite'?' btn--accent':' btn--outline'}" id="btn-mode-univ">
+          Universite & Grandes Ecoles
+        </button>
+      </div>
+
+      <!-- === SECTION LYCÉE === -->
+      <div id="section-lycee" style="display:${modeActif==='lycee'?'block':'none'}">
+        <p style="color:var(--text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--spacing-md)">
+          Choisis ton examen, ta serie et ta matiere pour une simulation immediate.
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--spacing-sm);margin-bottom:var(--spacing-md)">
+          <div class="form-group" style="margin:0">
+            <label style="font-size:12px">Examen</label>
+            <select id="libre-examen" class="form-control" style="width:100%;padding:8px">
+              <option value="BAC">BAC</option>
+              <option value="Probatoire">Probatoire</option>
+              <option value="BEPC">BEPC</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0" id="libre-groupe-serie">
+            <label style="font-size:12px">Serie</label>
+            <select id="libre-serie" class="form-control" style="width:100%;padding:8px">
+              <option value="C">C</option><option value="D">D</option>
+              <option value="A">A</option><option value="A4">A4</option>
+              <option value="B">B</option><option value="G1">G1</option>
+              <option value="G2">G2</option><option value="E">E</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:12px">Matiere</label>
+            <select id="libre-matiere" class="form-control" style="width:100%;padding:8px"></select>
+          </div>
+        </div>
+        <button class="btn btn--accent" id="btn-libre-sim" style="width:100%">
+          Lancer la simulation
+        </button>
+        <p style="font-size:11px;color:var(--text-secondary);margin-top:var(--spacing-sm)">
+          Crée un programme d'étude pour que le Répétiteur adapte le planning a ton niveau.
+          <button class="btn btn--ghost btn--sm" onclick="document.querySelector('[data-panel=programme]').click()">Créer mon programme</button>
+        </p>
+      </div>
+
+      <!-- === SECTION UNIVERSITÉ === -->
+      <div id="section-universite" style="display:${modeActif==='universite'?'block':'none'}">
+        ${preMatiere ? `
+          <div style="background:linear-gradient(90deg,#1B433215,#2D6A4F15);border:1px solid var(--color-primary);border-radius:var(--border-radius-md);padding:var(--spacing-md);margin-bottom:var(--spacing-md);display:flex;align-items:center;gap:var(--spacing-md)">
+            <span style="font-size:1.5rem">📚</span>
+            <div>
+              <div style="font-weight:700">${preMatiere}</div>
+              <div style="font-size:12px;color:var(--text-secondary)">${preFiliere}</div>
+            </div>
+            <a href="/pages/examen-sim.html?matiere=${encodeURIComponent(preMatiere)}&mode=universite"
+               class="btn btn--accent btn--sm" style="margin-left:auto">
+              Simuler cette matiere
+            </a>
+          </div>` : ''}
+
+        <p style="color:var(--text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--spacing-md)">
+          Choisis ta filiere et ta matiere pour une simulation avec questions generees par l'IA.
+        </p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--spacing-sm);margin-bottom:var(--spacing-md)">
+          <div class="form-group" style="margin:0">
+            <label style="font-size:12px">Domaine / Filiere</label>
+            <select id="univ-cat" class="form-control" style="width:100%;padding:8px">
+              ${Object.keys(UNIV_MATIERES).map(c =>
+                `<option value="${c}"${catInit===c?' selected':''}>${c}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:12px">Matiere</label>
+            <select id="univ-matiere" class="form-control" style="width:100%;padding:8px"></select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:12px">Niveau</label>
+            <select id="univ-niveau" class="form-control" style="width:100%;padding:8px">
+              <option value="L1">L1</option><option value="L2">L2</option>
+              <option value="L3">L3</option><option value="M1">M1</option>
+              <option value="M2">M2</option><option value="Doctorat">Doctorat</option>
+              <option value="PCEM1">PCEM1</option><option value="PCEM2">PCEM2</option>
+              <option value="Prepa">Classe Preparatoire</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Cartes matières de la catégorie sélectionnée -->
+        <div id="univ-matieres-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--spacing-sm);margin-bottom:var(--spacing-md)"></div>
+
+        <button class="btn btn--accent" id="btn-univ-sim" style="width:100%">
+          Lancer la simulation IA
+        </button>
+        <p style="font-size:11px;color:var(--text-secondary);margin-top:var(--spacing-sm)">
+          Les questions sont generees par le Super Repetiteur (Claude claude-haiku-4-5) si la base n'en contient pas.
+        </p>
+      </div>
+    </div>`;
+}
+
+function initSimulateurLibreEvents() {
+  /* --- Mode switcher --- */
+  document.getElementById('btn-mode-lycee')?.addEventListener('click', () => {
+    document.getElementById('section-lycee').style.display = 'block';
+    document.getElementById('section-universite').style.display = 'none';
+    document.getElementById('btn-mode-lycee').className = 'btn btn--accent';
+    document.getElementById('btn-mode-univ').className  = 'btn btn--outline';
+  });
+  document.getElementById('btn-mode-univ')?.addEventListener('click', () => {
+    document.getElementById('section-lycee').style.display = 'none';
+    document.getElementById('section-universite').style.display = 'block';
+    document.getElementById('btn-mode-lycee').className = 'btn btn--outline';
+    document.getElementById('btn-mode-univ').className  = 'btn btn--accent';
+    rendreMatieresUniv();
+  });
+
+  /* --- Section lycée : mise à jour matières --- */
+  const selExamen = document.getElementById('libre-examen');
+  const selSerie  = document.getElementById('libre-serie');
+
+  function mettreAJourMatieresLycee() {
+    const ex  = selExamen?.value || 'BAC';
+    const ser = ex === 'BEPC' ? '_' : (selSerie?.value || 'C');
+    document.getElementById('libre-groupe-serie').style.display = ex === 'BEPC' ? 'none' : '';
+    const mats = SERIES_CONFIG[ex]?.[ser] || [];
+    const sel  = document.getElementById('libre-matiere');
+    if (!sel) return;
+    sel.innerHTML = mats.map(m => `<option value="${m}">${m}</option>`).join('');
+  }
+  selExamen?.addEventListener('change', mettreAJourMatieresLycee);
+  selSerie?.addEventListener('change', mettreAJourMatieresLycee);
+  mettreAJourMatieresLycee();
+
+  document.getElementById('btn-libre-sim')?.addEventListener('click', () => {
+    const ex  = document.getElementById('libre-examen')?.value || 'BAC';
+    const ser = document.getElementById('libre-serie')?.value  || 'C';
+    const mat = document.getElementById('libre-matiere')?.value;
+    if (!mat) return;
+    location.href = `/pages/examen-sim.html?matiere=${encodeURIComponent(mat)}&examen=${ex}&serie=${ser}`;
+  });
+
+  /* --- Section université : mise à jour matières --- */
+  document.getElementById('univ-cat')?.addEventListener('change', rendreMatieresUniv);
+
+  document.getElementById('btn-univ-sim')?.addEventListener('click', () => {
+    const mat    = document.getElementById('univ-matiere')?.value;
+    const niveau = document.getElementById('univ-niveau')?.value || 'L1';
+    if (!mat) return;
+    location.href = `/pages/examen-sim.html?matiere=${encodeURIComponent(mat)}&mode=universite&niveau=${niveau}`;
+  });
+
+  /* Pré-remplir depuis URL params */
+  const urlParams  = new URLSearchParams(location.search);
+  const preMatiere = urlParams.get('matiere');
+  const modeUniv   = urlParams.get('mode') === 'universite';
+
+  if (modeUniv) {
+    /* Basculer en mode université */
+    document.getElementById('section-lycee').style.display = 'none';
+    document.getElementById('section-universite').style.display = 'block';
+    document.getElementById('btn-mode-lycee').className = 'btn btn--outline';
+    document.getElementById('btn-mode-univ').className  = 'btn btn--accent';
+    rendreMatieresUniv();
+    /* Pré-sélectionner la matière dans le select */
+    if (preMatiere) {
+      setTimeout(() => {
+        const sel = document.getElementById('univ-matiere');
+        if (sel) {
+          const opt = [...sel.options].find(o => o.value === preMatiere);
+          if (opt) sel.value = preMatiere;
+        }
+      }, 100);
+    }
+  }
+}
+
+function rendreMatieresUniv() {
+  const cat   = document.getElementById('univ-cat')?.value || Object.keys(UNIV_MATIERES)[0];
+  const mats  = UNIV_MATIERES[cat] || [];
+  const sel   = document.getElementById('univ-matiere');
+  const grid  = document.getElementById('univ-matieres-grid');
+
+  if (sel) sel.innerHTML = mats.map(m => `<option value="${m}">${m}</option>`).join('');
+  if (grid) {
+    grid.innerHTML = mats.map(m => `
+      <button onclick="window._lancerUniv('${m.replace(/'/g, "\\'")}')"
+              style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--border-radius-md);padding:12px;text-align:left;cursor:pointer;font-size:var(--font-size-sm);transition:.2s"
+              onmouseover="this.style.borderColor='var(--color-primary)'"
+              onmouseout="this.style.borderColor='var(--border-color)'">
+        ${m}
+      </button>`).join('');
+  }
+}
+
+window._lancerUniv = function(mat) {
+  const niveau = document.getElementById('univ-niveau')?.value || 'L1';
+  location.href = `/pages/examen-sim.html?matiere=${encodeURIComponent(mat)}&mode=universite&niveau=${niveau}`;
+};
+

@@ -20,22 +20,26 @@ export async function onRequestPost({ request, env }) {
   try { body = await request.json(); }
   catch { return json({ error: 'Corps JSON invalide' }, 400, corsHeaders); }
 
-  const { matiere, examen, serie, nb = 10 } = body;
-  if (!matiere || !examen) return json({ error: 'matiere et examen requis' }, 400, corsHeaders);
+  const { matiere, examen, serie, nb = 10, mode = '', niveau = '' } = body;
+  if (!matiere) return json({ error: 'matiere requise' }, 400, corsHeaders);
 
-  const nbQ = Math.min(Math.max(parseInt(nb, 10) || 10, 5), 20);
+  const nbQ       = Math.min(Math.max(parseInt(nb, 10) || 10, 5), 20);
+  const isUniv    = mode === 'universite';
+  const niveauStr = niveau ? ` — Niveau ${niveau}` : '';
+  const contexte  = isUniv
+    ? `enseignant universitaire camerounais qui prépare des étudiants (${examen || 'Université'}${niveauStr})`
+    : `professeur expert au Cameroun qui prépare des élèves aux examens officiels`;
 
-  const prompt = `Tu es un professeur expert au Cameroun qui prépare des élèves aux examens officiels.
+  const prompt = `Tu es un ${contexte}.
 
 Génère exactement ${nbQ} questions QCM pour :
 - Matière : ${matiere}
-- Examen : ${examen}${serie ? ` (Série ${serie})` : ''}
-- Niveau : lycée camerounais
+- ${isUniv ? `Niveau universitaire${niveauStr}` : `Examen : ${examen}${serie ? ` (Série ${serie})` : ''} — lycée camerounais`}
 
 Règles strictes :
 1. Chaque question a exactement 4 choix (A, B, C, D)
 2. Un seul choix correct
-3. Questions variées en difficulté et thèmes
+3. Questions variées en difficulté et thèmes${isUniv ? ' — niveau universitaire rigoureux' : ''}
 4. Formulation claire, sans ambiguïté
 5. Réponse en JSON uniquement, aucun texte avant/après
 
@@ -94,6 +98,8 @@ Format JSON attendu (tableau de ${nbQ} objets) :
     matiere,
     examen,
     serie:         serie || null,
+    mode:          mode  || null,
+    niveau:        niveau || null,
     theme:         q.theme || matiere,
     enonce:        q.enonce,
     choix:         q.choix,
