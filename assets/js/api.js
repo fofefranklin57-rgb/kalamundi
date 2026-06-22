@@ -131,6 +131,7 @@ export const api = {
       .from('oeuvres')
       .select('*')
       .eq('auteur_id', auteurId)
+      .eq('visible', true)
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data;
