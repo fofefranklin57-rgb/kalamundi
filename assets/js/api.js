@@ -906,7 +906,8 @@ export const api = {
       supabase
         .from('oeuvres')
         .select('id, titre, nb_lectures, note_moyenne, statut, visible')
-        .eq('auteur_id', auteurId),
+        .eq('auteur_id', auteurId)
+        .eq('visible', true),
       api.getTotalRevenus(auteurId),
     ]);
     if (oeuvres.error) throw oeuvres.error;
