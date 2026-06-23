@@ -159,11 +159,20 @@ export const api = {
   },
 
   async supprimerOeuvre(id) {
-    const { error } = await supabase
-      .from('oeuvres')
-      .update({ visible: false })
-      .eq('id', id);
-    if (error) throw error;
+    // Via Pages Function server-side (service role key — bypass RLS garanti)
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('Non authentifié.');
+
+    const res = await fetch('/api/delete-oeuvre', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ oeuvreId: id }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Erreur suppression.');
   },
 
   async incrementerLectures(oeuvreId) {
