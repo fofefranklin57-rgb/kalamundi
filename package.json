@@ -1,5 +1,12 @@
 {
+  "scripts": {
+    "check": "node scripts/check-js.mjs"
+  },
   "devDependencies": {
     "sharp": "^0.34.5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.107.0",
+    "pdfjs-dist": "^6.0.227"
   }
 }

@@ -7,10 +7,11 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'node:crypto';
 
 const SUPABASE_URL = 'https://iobieffnaauecyukecds.supabase.co';
-const SUPABASE_KEY = 'sb_secret_ighJK-990TP2_9gCC7TmUw_rm9N2cDi';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SERVICE_KEY;
+if (!SUPABASE_KEY) throw new Error('SUPABASE_SERVICE_KEY manquant dans l environnement.');
 const supabase     = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const AUTEUR_SYSTEME_ID = '00000000-0000-0000-0000-000000000001';
+const AUTEUR_SYSTEME_ID = 'cd117018-5e89-4d2c-96d6-4f1a6be4a236';
 const DOAB_API          = 'https://directory.doabooks.org/rest/search';
 const MAX_OEUVRES       = 30;
 const DELAI_MS          = 600;
@@ -39,10 +40,17 @@ function dcGetAll(meta, key) {
   return [];
 }
 
-function estLicenceCC(meta) {
-  const champs = ['dc.rights', 'dc.rights.license', 'dc.rights.uri'];
+function estLicenceOuverte(meta) {
+  // DOAB = Directory of Open Access Books — tout le contenu est open access par définition
+  // Le champ dc.rights vaut souvent "open access" plutôt que "CC-BY"
+  const champs = ['dc.rights', 'dc.rights.license', 'dc.rights.uri', 'dc.rights.holder'];
   const tout   = champs.flatMap(k => dcGetAll(meta, k)).join(' ').toLowerCase();
-  return tout.includes('creative') || tout.includes('cc-by') || tout.includes('cc0') || tout.includes('creativecommons');
+  // Accepter open access, creative commons, cc, ou absence de restriction
+  return tout.length === 0 ||
+    tout.includes('open access') ||
+    tout.includes('creative') ||
+    tout.includes('cc-by') || tout.includes('cc0') || tout.includes('creativecommons') ||
+    tout.includes('public domain');
 }
 
 function mapLangue(meta) {
@@ -136,13 +144,17 @@ async function main() {
       await sleep(DELAI_MS);
 
       const meta   = livre.metadata ?? [];
-      if (!estLicenceCC(meta)) continue;
+      if (!estLicenceOuverte(meta)) continue;
 
       const titre  = (dcGet(meta, 'dc.title') || livre.name || '').slice(0, 200).trim();
       if (!titre)  continue;
 
-      const auteur  = dcGetAll(meta, 'dc.contributor.author').join(', ')
-                   || dcGet(meta, 'dc.creator') || 'Auteur inconnu';
+      const auteur  = (
+        dcGetAll(meta, 'dc.contributor.author').join(', ') ||
+        dcGetAll(meta, 'dc.contributor.editor').join(', ') ||
+        dcGet(meta, 'dc.contributor') ||
+        dcGet(meta, 'dc.creator') || 'Auteur inconnu'
+      );
       const desc    = dcGet(meta, 'dc.description.abstract') || dcGet(meta, 'dc.description') || '';
       const editeur = dcGet(meta, 'dc.publisher') || '';
       const handle  = dcGet(meta, 'dc.identifier.uri') || '';

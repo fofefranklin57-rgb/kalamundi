@@ -8,7 +8,7 @@
      - Page offline            → fallback si tout échoue
    ============================================================ */
 
-const VERSION        = 'kala-v4';
+const VERSION        = 'kala-v5';
 const CACHE_SHELL    = `${VERSION}-shell`;
 const CACHE_API      = `${VERSION}-api`;
 const CACHE_IMAGES   = `${VERSION}-images`;
@@ -105,8 +105,11 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   if (url.protocol === 'chrome-extension:') return;
 
-  /* Ignorer les navigations HTML — laisser le navigateur gérer les redirects */
-  if (request.mode === 'navigate') return;
+  /* ── Navigations HTML → réseau puis fallback offline ── */
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirstNavigation(request));
+    return;
+  }
 
   /* ── CDN statique (supabase-js) → Cache First ── */
   if (CDN_ORIGINS.some(origin => url.hostname.includes(origin))) {
@@ -168,6 +171,23 @@ async function networkFirst(request, cacheName) {
     return cached || new Response(JSON.stringify({ error: 'offline' }), {
       status: 503,
       headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+/* Navigation HTML — réseau prioritaire, cache/offline si connexion absente */
+async function networkFirstNavigation(request) {
+  const cache = await caches.open(CACHE_SHELL);
+  try {
+    const response = await fetch(request);
+    if (response.ok && !response.redirected) cache.put(request, response.clone());
+    return response;
+  } catch {
+    const cached = await cache.match(request);
+    const offline = await caches.match('/offline.html');
+    return cached || offline || new Response('Hors ligne', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
   }
 }

@@ -6,8 +6,7 @@
 
    Usage :
      node scripts/import_annales_scraper.mjs
-   Avec clé déjà dans l'env ou :
-     $env:SUPABASE_SERVICE_KEY="sb_secret_..."; node scripts/import_annales_scraper.mjs
+   Avec SUPABASE_SERVICE_KEY déjà défini dans l'environnement.
    ============================================================ */
 
 import { createClient }  from '@supabase/supabase-js'

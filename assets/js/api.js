@@ -159,10 +159,26 @@ export const api = {
   },
 
   async supprimerOeuvre(id) {
-    // Via Pages Function server-side (service role key — bypass RLS garanti)
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) throw new Error('Non authentifié.');
 
+    const { error: updateError } = await supabase
+      .from('oeuvres')
+      .update({ visible: false, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('auteur_id', session.user.id)
+      .select('id')
+      .single();
+    if (!updateError) return;
+
+    console.warn('Suppression directe indisponible, fallback RPC.', updateError);
+
+    const { error: rpcError } = await supabase.rpc('supprimer_oeuvre', { p_oeuvre_id: id });
+    if (!rpcError) return;
+
+    console.warn('RPC supprimer_oeuvre indisponible, fallback Pages Function.', rpcError);
+
+    // Fallback historique via Pages Function server-side.
     const res = await fetch('/api/delete-oeuvre', {
       method: 'POST',
       headers: {
@@ -172,7 +188,7 @@ export const api = {
       body: JSON.stringify({ oeuvreId: id }),
     });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur suppression.');
+    if (!res.ok) throw new Error(json.error || rpcError.message || 'Erreur suppression.');
   },
 
   async incrementerLectures(oeuvreId) {

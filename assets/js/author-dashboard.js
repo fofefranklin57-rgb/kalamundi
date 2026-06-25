@@ -494,8 +494,9 @@ async function confirmerSuppression() {
     rendreOeuvres(etat.oeuvres);
     toastSucces('Œuvre supprimée.');
     fermerModal();
-  } catch {
-    toastErreur('Impossible de supprimer cette œuvre.');
+  } catch (err) {
+    console.error('Erreur suppression œuvre :', err);
+    toastErreur(err.message || 'Impossible de supprimer cette œuvre.');
   } finally {
     btn.classList.remove('btn--loading');
     btn.disabled = false;

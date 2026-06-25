@@ -6,7 +6,8 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'node:crypto';
 
 const SUPABASE_URL = 'https://iobieffnaauecyukecds.supabase.co';
-const SUPABASE_KEY = 'sb_secret_ighJK-990TP2_9gCC7TmUw_rm9N2cDi';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SERVICE_KEY;
+if (!SUPABASE_KEY) throw new Error('SUPABASE_SERVICE_KEY manquant dans l environnement.');
 const supabase     = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const AUTEUR_SYSTEME_ID = 'cd117018-5e89-4d2c-96d6-4f1a6be4a236';
