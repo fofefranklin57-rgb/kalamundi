@@ -6,6 +6,7 @@
 import { getSession, supabase } from './auth.js';
 import { api } from './api.js';
 import { injecterPub } from './pub.js';
+import { initNotificationsPush } from './notifications.js';
 
 /* ============================================================
    Init
@@ -36,6 +37,7 @@ window._installerApp = async function () {
 
 document.addEventListener('DOMContentLoaded', async () => {
   enregistrerSW();
+  initNotificationsPush().catch(() => {});
   const session = await initNavbar();
 
   /* Charger vedettes immédiatement (above the fold) */

@@ -38,6 +38,7 @@ const SHELL_URLS = [
   '/assets/js/api.js',
   '/assets/js/utils.js',
   '/assets/js/i18n.js',
+  '/assets/js/notifications.js',
   '/assets/js/library.js',
   '/assets/js/login.js',
   '/assets/js/publish.js',

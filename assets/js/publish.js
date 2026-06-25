@@ -548,6 +548,9 @@ qs('#btn-publier')?.addEventListener('click', async () => {
     afficher(qs('#post-publication'));
     qs('#voir-oeuvre').href = `/pages/work.html?id=${oeuvre.id}`;
 
+    api.notifierNouvelleOeuvre(oeuvre.id)
+      .catch(err => console.warn('Notification publication non envoyee :', err));
+
     effacerBrouillon();
     toast('Œuvre publiée avec succès ! 🎉', 'success', 5000);
 

@@ -147,6 +147,23 @@ export const api = {
     return data;
   },
 
+  async notifierNouvelleOeuvre(oeuvreId) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('Non authentifie.');
+
+    const res = await fetch('/api/notify-publication', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ oeuvreId }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || 'Erreur notification publication.');
+    return json;
+  },
+
   async updateOeuvre(id, champs) {
     const { data, error } = await supabase
       .from('oeuvres')
