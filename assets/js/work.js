@@ -90,6 +90,7 @@ async function chargerOeuvre() {
     // Meta
     document.getElementById('page-title').textContent = `${oeuvre.titre} — Kalamundi`;
     document.title = `${oeuvre.titre} — Kalamundi`;
+    _injecterMetaOG(oeuvre);
 
     // Breadcrumb
     const bc = document.getElementById('breadcrumb-titre');
@@ -185,6 +186,53 @@ async function chargerOeuvre() {
     document.getElementById('work-titre').textContent = 'Œuvre introuvable';
     toastErreur('Impossible de charger cette œuvre.');
   }
+}
+
+/* ============================================================
+   Meta OG — partage réseaux sociaux
+   ============================================================ */
+
+function _injecterMetaOG(oeuvre) {
+  const pageUrl  = window.location.href;
+  const titre    = oeuvre.titre || 'Kalamundi';
+  const auteur   = oeuvre.profiles?.nom || '';
+  const desc     = (oeuvre.resume || `Lisez "${titre}" sur Kalamundi, la plateforme littéraire africaine.`).slice(0, 200);
+  const image    = oeuvre.couverture_url || 'https://kalamundi.pages.dev/assets/img/og-default.png';
+
+  const metas = {
+    'og:type':               'book',
+    'og:title':              `${titre}${auteur ? ` — ${auteur}` : ''}`,
+    'og:description':        desc,
+    'og:url':                pageUrl,
+    'og:image':              image,
+    'og:site_name':          'Kalamundi',
+    'twitter:card':          'summary_large_image',
+    'twitter:title':         `${titre}${auteur ? ` — ${auteur}` : ''}`,
+    'twitter:description':   desc,
+    'twitter:image':         image,
+    'description':           desc,
+  };
+
+  Object.entries(metas).forEach(([name, content]) => {
+    const isOg      = name.startsWith('og:') || name.startsWith('twitter:');
+    const attr      = isOg ? 'property' : 'name';
+    let el = document.querySelector(`meta[${attr}="${name}"]`);
+    if (!el) {
+      el = document.createElement('meta');
+      el.setAttribute(attr, name);
+      document.head.appendChild(el);
+    }
+    el.setAttribute('content', content);
+  });
+
+  // Lien canonique
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.rel = 'canonical';
+    document.head.appendChild(canonical);
+  }
+  canonical.href = pageUrl;
 }
 
 /* ============================================================
