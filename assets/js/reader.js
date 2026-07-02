@@ -45,6 +45,11 @@ const LANGUES_NOMS = {
   es: '🇪🇸 Espagnol', pt: '🇧🇷 Portugais', de: '🇩🇪 Allemand',
 };
 
+function largeurLectureInitiale() {
+  const largeur = parseInt(lsGet('reader_width') || '920', 10);
+  return largeur < 720 ? 920 : largeur;
+}
+
 /* ============================================================
    ÉTAT DU LECTEUR
    ============================================================ */
@@ -55,7 +60,7 @@ const etat = {
   langueAffichee: lsGet('reader_langue') || 'original',
   fontSize:       parseInt(lsGet('reader_fontsize') || '18'),
   lineHeight:     parseFloat(lsGet('reader_lh') || '1.9'),
-  maxWidth:       parseInt(lsGet('reader_width') || '680'),
+  maxWidth:       largeurLectureInitiale(),
   theme:          lsGet('reader_theme') || 'light',
   chapitres:      [],
   oeuvre:         null,
@@ -344,8 +349,8 @@ async function chargerChapitre(numero, sansAnimation = false) {
   contentEl.classList.remove('is-loading');
   contentEl.classList.add('is-visible');
 
-  // Appliquer la largeur max du texte
-  contentEl.style.maxWidth  = `${etat.maxWidth}px`;
+  // Appliquer la largeur de lecture. Le cadre papier reste fluide, le texte se règle via --reader-width.
+  contentEl.style.maxWidth  = 'none';
   contentEl.style.setProperty('--reader-width', `${etat.maxWidth}px`);
   contentEl.style.fontSize  = `${etat.fontSize}px`;
   contentEl.style.lineHeight = etat.lineHeight;
@@ -1167,9 +1172,10 @@ document.querySelectorAll('.width-btn').forEach(btn => {
     document.querySelectorAll('.width-btn').forEach(b => b.classList.remove('is-active'));
     btn.classList.add('is-active');
     etat.maxWidth = parseInt(btn.dataset.width);
-    document.getElementById('reader-content').style.maxWidth = `${etat.maxWidth}px`;
+    document.getElementById('reader-content').style.maxWidth = 'none';
     document.getElementById('reader-content').style.setProperty('--reader-width', `${etat.maxWidth}px`);
     lsSet('reader_width', etat.maxWidth);
+    if (!etat.couvertureVisible) chargerChapitre(etat.chapitreNum, true);
   });
 });
 
@@ -1211,7 +1217,7 @@ function appliquerPreferences() {
   }
 
   // Largeur
-  document.getElementById('reader-content').style.maxWidth = `${etat.maxWidth}px`;
+  document.getElementById('reader-content').style.maxWidth = 'none';
   document.getElementById('reader-content').style.setProperty('--reader-width', `${etat.maxWidth}px`);
   const wBtn = document.querySelector(`.width-btn[data-width="${etat.maxWidth}"]`);
   if (wBtn) {
@@ -1353,9 +1359,11 @@ function _paginerContenu(contentEl) {
   const footer   = document.querySelector('.reader-bottombar');
   const headerH  = header?.offsetHeight ?? 56;
   const footerH  = footer?.offsetHeight ?? 56;
-  const PADDING  = 72; // padding vertical reader-main (top 36 + bottom 36)
-  const GAP      = 28; // marge estimée entre paragraphes
-  const hauteurMax = Math.max(300, window.innerHeight - headerH - footerH - PADDING);
+  const style = getComputedStyle(contentEl);
+  const paddingY = parseFloat(style.paddingTop || '0') + parseFloat(style.paddingBottom || '0');
+  const hauteurCadre = contentEl.clientHeight || Math.max(420, window.innerHeight - headerH - footerH - 56);
+  const GAP = 18; // marge estimée entre paragraphes
+  const hauteurMax = Math.max(280, hauteurCadre - paddingY - 38);
 
   // Snapshot des hauteurs (éléments visibles dans le DOM)
   const pages    = [];
