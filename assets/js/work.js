@@ -26,17 +26,21 @@ let commentaireReponseId = null;
     return;
   }
 
-  utilisateur = await getUser();
+  // Lancer l'œuvre ET l'auth en parallèle — ne pas attendre l'auth pour afficher
+  const [, userResult] = await Promise.all([
+    chargerOeuvre(),
+    getUser().then(async u => {
+      utilisateur = u;
+      if (u) {
+        // getProfil en arrière-plan — ne bloque pas l'affichage
+        api.getProfil(u.id).catch(() => {});
+      }
+      return u;
+    }),
+    chargerCommentaires(),
+  ]);
 
-  // S'assurer que le profil existe en base (important pour les connexions Google OAuth)
-  // Sans cette ligne, l'insert dans commentaires échoue sur la FK commentaires_user_id_fkey
-  if (utilisateur) {
-    try {
-      await api.getProfil(utilisateur.id);
-    } catch { /* profil introuvable même après tentative de création → on continue quand même */ }
-  }
-
-  // Visiteur non connecté arrivant via lien partagé → bienvenue.html avec contexte livre
+  // Visiteur non connecté arrivant via lien partagé
   if (!utilisateur && getParam('ref') === 'share') {
     const titre  = getParam('titre') || '';
     const auteur = getParam('auteur') || '';
@@ -44,11 +48,6 @@ let commentaireReponseId = null;
       `/pages/bienvenue.html?livre_id=${oeuvreId}&titre=${encodeURIComponent(titre)}&auteur=${encodeURIComponent(auteur)}#objectifs`;
     return;
   }
-
-  await Promise.all([
-    chargerOeuvre(),
-    chargerCommentaires(),
-  ]);
 
   if (utilisateur) {
     document.getElementById('comment-form').classList.remove('hidden');
@@ -176,13 +175,13 @@ async function chargerOeuvre() {
       }
     }
 
-    // Actions
-    await rendreActions(oeuvre);
+    // Actions + Chapitres en parallèle
+    await Promise.all([
+      rendreActions(oeuvre),
+      chargerChapitres(oeuvre),
+    ]);
 
-    // Chapitres
-    await chargerChapitres(oeuvre);
-
-    // Recommandations (ne bloque pas le chargement principal)
+    // Recommandations en arrière-plan
     chargerRecommandations(oeuvre.genre, oeuvre.id);
 
   } catch (err) {
@@ -359,7 +358,8 @@ function formatPrixXaf(prix) {
 async function chargerChapitres(oeuvre) {
   const listEl = document.getElementById('chapitres-list');
   try {
-    const chapitres = await api.getChapitres(oeuvre.id);
+    // Chapitres déjà inclus dans getOeuvre — pas de requête supplémentaire
+    const chapitres = oeuvre.chapitres || [];
     document.getElementById('stat-chapitres').textContent = chapitres.length;
 
     if (!chapitres.length) {

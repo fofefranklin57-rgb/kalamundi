@@ -152,10 +152,12 @@ export const api = {
       .from('oeuvres')
       .select(`
         *, frequence_publication, date_debut_publication,
-        profiles!oeuvres_auteur_id_fkey(id, nom, photo_url, pays, bio, niveau_auteur, badge_fondateur)
+        profiles!oeuvres_auteur_id_fkey(id, nom, photo_url, pays, bio, niveau_auteur, badge_fondateur),
+        chapitres(id, numero, titre, created_at)
       `)
       .eq('id', id)
       .eq('visible', true)
+      .order('numero', { referencedTable: 'chapitres', ascending: true })
       .single();
     if (error) throw error;
     return data;
