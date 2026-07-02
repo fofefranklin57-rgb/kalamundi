@@ -282,18 +282,23 @@ async function chargerChapitre(numero, sansAnimation = false) {
   contentEl.innerHTML = '';
   loadingEl.style.display = 'flex';
 
-  const chapitre = etat.chapitres.find(c => c.numero === numero);
+  let chapitre = etat.chapitres.find(c => Number(c.numero) === Number(numero));
   if (!chapitre) {
-    toastErreur('Chapitre introuvable.');
-    loadingEl.style.display = 'none';
-    return;
+    chapitre = etat.chapitres[0];
+    if (!chapitre) {
+      toastErreur('Aucun chapitre disponible pour cette œuvre.');
+      loadingEl.style.display = 'none';
+      return;
+    }
+    etat.chapitreNum = Number(chapitre.numero) || 1;
+    toast('Chapitre demandé indisponible — ouverture du premier chapitre.', 'info');
   }
 
   // Charger le texte — réseau d'abord, IndexedDB en fallback hors-ligne
   let contenu = '';
   try {
     const ch = await api.getChapitre(chapitre.id);
-    contenu = ch.contenu_texte;
+    contenu = ch.contenu_texte || ch.contenu || '';
   } catch {
     // Tentative lecture hors-ligne
     try {
@@ -314,6 +319,11 @@ async function chargerChapitre(numero, sansAnimation = false) {
       loadingEl.style.display = 'none';
       return;
     }
+  }
+  if (!contenu?.trim()) {
+    toastErreur('Ce chapitre ne contient pas encore de texte.');
+    loadingEl.style.display = 'none';
+    return;
   }
 
   // Traduire si nécessaire

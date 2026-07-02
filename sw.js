@@ -8,7 +8,7 @@
      - Page offline            → fallback si tout échoue
    ============================================================ */
 
-const VERSION        = 'kala-v7';
+const VERSION        = 'kala-v8';
 const CACHE_SHELL    = `${VERSION}-shell`;
 const CACHE_API      = `${VERSION}-api`;
 const CACHE_IMAGES   = `${VERSION}-images`;
@@ -54,6 +54,7 @@ const SHELL_URLS = [
   '/assets/js/upload.js',
   '/assets/js/reader.js',
   '/assets/js/work.js',
+  '/assets/js/cover-utils.js',
   '/manifest.json',
   '/offline.html',
 ];

@@ -280,7 +280,16 @@ export const api = {
         .eq('visible', true)
         .or(`date_publication.is.null,date_publication.lte.${new Date().toISOString()}`);
     }
-    const { data, error } = await query;
+    let { data, error } = await query;
+    if (error && (colonneManquante(error, 'date_publication') || colonneManquante(error, 'visible') || colonneManquante(error, 'type_element'))) {
+      const retry = await supabase
+        .from('chapitres')
+        .select('id, numero, titre, created_at')
+        .eq('oeuvre_id', oeuvreId)
+        .order('numero');
+      data = (retry.data || []).map(ch => ({ ...ch, visible: true, date_publication: null, type_element: 'chapitre' }));
+      error = retry.error;
+    }
     if (error) throw error;
     return data;
   },
@@ -292,17 +301,26 @@ export const api = {
       .eq('id', chapitreId)
       .single();
     if (error) throw error;
-    return data;
+    return { ...data, contenu_texte: data?.contenu_texte || data?.contenu || '' };
   },
 
   async getChapitresOffline(oeuvreId) {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('chapitres')
       .select('numero, titre, contenu, contenu_texte, visible, date_publication')
       .eq('oeuvre_id', oeuvreId)
       .eq('visible', true)
       .or(`date_publication.is.null,date_publication.lte.${new Date().toISOString()}`)
       .order('numero');
+    if (error && (colonneManquante(error, 'contenu') || colonneManquante(error, 'date_publication') || colonneManquante(error, 'visible'))) {
+      const retry = await supabase
+        .from('chapitres')
+        .select('numero, titre, contenu_texte')
+        .eq('oeuvre_id', oeuvreId)
+        .order('numero');
+      data = retry.data;
+      error = retry.error;
+    }
     if (error) throw error;
     return (data || []).map(ch => ({
       numero: ch.numero,
@@ -424,25 +442,49 @@ export const api = {
   /* ---- Commentaires & Notes ----------------------------- */
 
   async getCommentaires(oeuvreId) {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('commentaires')
       .select(`
         id, user_id, parent_id, contenu, note, created_at,
         profiles!commentaires_user_id_fkey(nom, photo_url)
       `)
       .eq('oeuvre_id', oeuvreId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .limit(120);
+    if (error && colonneManquante(error, 'parent_id')) {
+      const retry = await supabase
+        .from('commentaires')
+        .select(`
+          id, user_id, contenu, note, created_at,
+          profiles!commentaires_user_id_fkey(nom, photo_url)
+        `)
+        .eq('oeuvre_id', oeuvreId)
+        .order('created_at', { ascending: false })
+        .limit(80);
+      data = (retry.data || []).map(c => ({ ...c, parent_id: null }));
+      error = retry.error;
+    }
     if (error) throw error;
     return data;
   },
 
   async ajouterCommentaire(userId, oeuvreId, contenu, note = null, parentId = null) {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('commentaires')
       .insert({ user_id: userId, oeuvre_id: oeuvreId, contenu, note, parent_id: parentId })
       .select(`id, user_id, parent_id, contenu, note, created_at,
                profiles!commentaires_user_id_fkey(nom, photo_url)`)
       .single();
+    if (error && colonneManquante(error, 'parent_id')) {
+      const retry = await supabase
+        .from('commentaires')
+        .insert({ user_id: userId, oeuvre_id: oeuvreId, contenu, note })
+        .select(`id, user_id, contenu, note, created_at,
+                 profiles!commentaires_user_id_fkey(nom, photo_url)`)
+        .single();
+      data = retry.data ? { ...retry.data, parent_id: null } : retry.data;
+      error = retry.error;
+    }
     if (error) throw error;
 
     // Recalculer la note moyenne via RPC (SECURITY DEFINER — bypass RLS)
