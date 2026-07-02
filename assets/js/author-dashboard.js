@@ -6,6 +6,7 @@
 import { protegerRoute, resetPassword, getUser } from './auth.js';
 import { api } from './api.js';
 import { formatNombre, formatMontant, formatDateCourt, toastSucces, toastErreur, toast, truncate } from './utils.js';
+import { normaliserUrlImage } from './cover-utils.js';
 
 /* ============================================================
    CONSTANTES
@@ -286,10 +287,12 @@ function rendreOeuvres(oeuvres) {
       </div>`;
     return;
   }
-  conteneur.innerHTML = oeuvres.map(o => `
+  conteneur.innerHTML = oeuvres.map(o => {
+    const coverUrl = normaliserUrlImage(o.couverture_url);
+    return `
     <div class="oeuvre-row" data-id="${o.id}">
-      ${o.couverture_url
-        ? `<img src="${escapeHtml(o.couverture_url)}" alt="" class="oeuvre-row__cover" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=&quot;oeuvre-row__cover--placeholder&quot;>📖</div>'">`
+      ${coverUrl
+        ? `<img src="${escapeHtml(coverUrl)}" alt="" class="oeuvre-row__cover" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=&quot;oeuvre-row__cover--placeholder&quot;>📖</div>'">`
         : '<div class="oeuvre-row__cover--placeholder">📖</div>'}
       <div class="oeuvre-row__info">
         <div class="oeuvre-row__titre">${escapeHtml(o.titre || 'Sans titre')}</div>
@@ -307,7 +310,8 @@ function rendreOeuvres(oeuvres) {
         <button class="btn btn--outline btn--sm btn-supprimer"
           data-id="${o.id}" data-titre="${o.titre || 'Sans titre'}" title="Supprimer">🗑</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   conteneur.querySelectorAll('.btn-supprimer').forEach(btn =>
     btn.addEventListener('click', () => ouvrirModalSupprimer(btn.dataset.id, btn.dataset.titre)));

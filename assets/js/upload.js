@@ -30,7 +30,7 @@ export async function lireFichier(fichier) {
 async function lireTxt(fichier) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
+    reader.onload = (e) => resolve(nettoyerTexteImporte(e.target.result));
     reader.onerror = () => reject(new Error('Impossible de lire le fichier.'));
     reader.readAsText(fichier, 'UTF-8');
   });
@@ -45,7 +45,7 @@ async function lireDocx(fichier) {
   }
   const buffer = await fichier.arrayBuffer();
   const result = await window.mammoth.extractRawText({ arrayBuffer: buffer });
-  return result.value;
+  return nettoyerTexteImporte(result.value);
 }
 
 /* ---- PDF -------------------------------------------------- */
@@ -76,7 +76,7 @@ async function lirePdf(fichier) {
     pages.push(lignes.trim());
   }
   // Séparer les pages par un marqueur explicite — préservé dans le lecteur
-  return pages.join('\n---PAGE---\n').trim();
+  return nettoyerTexteImporte(pages.join('\n---PAGE---\n'));
 }
 
 /* ---- EPUB ------------------------------------------------- */
@@ -98,7 +98,7 @@ async function lireEpub(fichier) {
     if (doc) texte += doc.body?.innerText || '';
     item.unload();
   }
-  return texte.trim();
+  return nettoyerTexteImporte(texte);
 }
 
 /* ---- ODT -------------------------------------------------- */
@@ -113,14 +113,57 @@ async function lireOdt(fichier) {
   const xml    = await zip.file('content.xml').async('text');
   const parser = new DOMParser();
   const doc    = parser.parseFromString(xml, 'application/xml');
-  return Array.from(doc.querySelectorAll('text|p, text\\:p'))
+  const texte = Array.from(doc.querySelectorAll('text|p, text\\:p'))
     .map(el => el.textContent)
     .join('\n')
     .trim() || extraireTexteXML(xml);
+  return nettoyerTexteImporte(texte);
 }
 
 function extraireTexteXML(xml) {
   return xml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/* ============================================================
+   Nettoyage import : retire les premières pages de couverture
+   ============================================================ */
+
+export function nettoyerTexteImporte(texte) {
+  const source = String(texte || '').replace(/\u0000/g, '').trim();
+  if (!source) return '';
+  return supprimerPremiereCouverture(source).trim();
+}
+
+function supprimerPremiereCouverture(texte) {
+  const pages = texte.split(/\n---PAGE---\n/);
+  if (pages.length > 1 && estProbableCouverture(pages[0], pages[1])) {
+    return pages.slice(1).join('\n---PAGE---\n');
+  }
+
+  const blocs = texte.split(/\n{3,}/);
+  if (blocs.length > 1 && estProbableCouverture(blocs[0], blocs[1])) {
+    return blocs.slice(1).join('\n\n');
+  }
+
+  return texte;
+}
+
+function estProbableCouverture(premierBloc, blocSuivant = '') {
+  const brut = String(premierBloc || '').trim();
+  if (!brut) return false;
+
+  const lignes = brut.split('\n').map(l => l.trim()).filter(Boolean);
+  const propre = brut.replace(/\s+/g, ' ').trim();
+  const suivant = String(blocSuivant || '').replace(/\s+/g, ' ').trim();
+
+  if (/\b(chapitre|chapter|prologue|partie|acte)\b\s*([0-9ivx]+)?/i.test(propre)) return false;
+  if (propre.length > 900 || lignes.length > 14) return false;
+
+  const ponctuation = (propre.match(/[.!?;]/g) || []).length;
+  const motsCouverture = /\b(auteur|author|roman|nouvelle|po[eé]sie|essai|copyright|tous droits|isbn|edition|éditeur|kalamundi)\b/i.test(propre);
+  const suiteLecture = /\b(chapitre|chapter|prologue|partie|premi[eè]re partie)\b/i.test(suivant) || suivant.length > propre.length * 1.2;
+
+  return ponctuation <= 3 && (motsCouverture || suiteLecture || lignes.length <= 8);
 }
 
 /* ============================================================
@@ -183,24 +226,28 @@ function chargerScript(src) {
    ============================================================ */
 
 export function decouperEnChapitres(texte) {
-  // Cherche des séparateurs courants : "Chapitre", "Chapter", numéros romains
-  const regex = /\n\s*(chapitre\s+\d+|chapter\s+\d+|partie\s+\d+|[IVXivx]+\.|—\s*\d+\s*—|\*{3})\s*\n/gi;
-  const parties = texte.split(regex);
+  const source = String(texte || '').trim();
+  if (!source) return [{ numero: 1, titre: null, contenu: '' }];
 
-  if (parties.length <= 1) {
-    return [{ numero: 1, titre: null, contenu: texte.trim() }];
-  }
+  const regex = /^\s*(chapitre\s+\d+[^\n]*|chapter\s+\d+[^\n]*|partie\s+\d+[^\n]*|prologue|épilogue|epilogue|[IVXivx]+\.|—\s*\d+\s*—|\*{3})\s*$/gim;
+  const matches = [...source.matchAll(regex)];
+  if (!matches.length) return [{ numero: 1, titre: null, contenu: source }];
 
   const chapitres = [];
-  let numero = 1;
-  for (let i = 0; i < parties.length; i += 2) {
-    const titre   = parties[i + 1]?.trim() || null;
-    const contenu = parties[i]?.trim();
-    if (contenu) {
-      chapitres.push({ numero: numero++, titre, contenu });
-    }
+  const avantPremier = source.slice(0, matches[0].index).trim();
+  if (avantPremier && avantPremier.length > 180) {
+    chapitres.push({ numero: chapitres.length + 1, titre: 'Avant-propos', contenu: avantPremier });
   }
-  return chapitres;
+
+  matches.forEach((match, index) => {
+    const debut = match.index + match[0].length;
+    const fin = index + 1 < matches.length ? matches[index + 1].index : source.length;
+    const titre = match[1].trim();
+    const contenu = source.slice(debut, fin).trim();
+    if (contenu) chapitres.push({ numero: chapitres.length + 1, titre, contenu });
+  });
+
+  return chapitres.length ? chapitres : [{ numero: 1, titre: null, contenu: source }];
 }
 
 export { formatTailleFichier };

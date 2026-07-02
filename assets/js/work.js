@@ -9,6 +9,7 @@ import { injecterPub } from './pub.js';
 import { estSauvegarde, sauvegarderLivre, supprimerLivre } from './offline.js';
 import { getParam, formatNombre, formatDate, toast, toastErreur, toastSucces } from './utils.js';
 import { genererCouverture } from './cover-generator.js';
+import { echapperAttr, normaliserUrlImage } from './cover-utils.js';
 
 const oeuvreId = getParam('id');
 let noteSelectionnee = 0;
@@ -128,11 +129,12 @@ async function chargerOeuvre() {
     const auteurCov = oeuvre.profiles?.nom || '';
     const genreCov  = (oeuvre.genre || '').toLowerCase();
     const coverGen  = genererCouverture(oeuvre.titre, auteurCov, genreCov, 300, 420);
-    if (oeuvre.couverture_url) {
-      coverEl.innerHTML = `<img src="${oeuvre.couverture_url}" alt="Couverture ${oeuvre.titre}"
+    const coverUrl = normaliserUrlImage(oeuvre.couverture_url);
+    if (coverUrl) {
+      coverEl.innerHTML = `<img src="${echapperAttr(coverUrl)}" alt="Couverture ${echapperAttr(oeuvre.titre)}"
         onerror="this.onerror=null;this.src='${coverGen}'" />`;
     } else {
-      coverEl.innerHTML = `<img src="${coverGen}" alt="Couverture générée — ${oeuvre.titre}" />`;
+      coverEl.innerHTML = `<img src="${coverGen}" alt="Couverture générée — ${echapperAttr(oeuvre.titre)}" />`;
     }
 
     // Résumé
@@ -198,7 +200,7 @@ function _injecterMetaOG(oeuvre) {
   const titre    = oeuvre.titre || 'Kalamundi';
   const auteur   = oeuvre.profiles?.nom || '';
   const desc     = (oeuvre.resume || `Lisez "${titre}" sur Kalamundi, la plateforme littéraire africaine.`).slice(0, 200);
-  const image    = oeuvre.couverture_url || 'https://kalamundi.pages.dev/assets/img/og-default.png';
+  const image    = normaliserUrlImage(oeuvre.couverture_url) || 'https://kalamundi.pages.dev/assets/img/og-default.png';
 
   const metas = {
     'og:type':               'book',
@@ -659,7 +661,7 @@ async function chargerRecommandations(genre, oeuvreActuelleId) {
     grid.innerHTML = filtrees.map(o => `
       <a href="/pages/work.html?id=${o.id}" class="book-card" style="text-decoration:none;display:flex;flex-direction:column;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.07);transition:transform 0.15s;">
         <div style="height:200px;background:linear-gradient(135deg,#1B4332,#2D6A4F);display:flex;align-items:center;justify-content:center;font-size:48px;flex-shrink:0;">
-          ${o.couverture_url ? `<img src="${o.couverture_url}" alt="${o.titre}" style="width:100%;height:100%;object-fit:cover;" />` : '📖'}
+          ${normaliserUrlImage(o.couverture_url) ? `<img src="${echapperAttr(normaliserUrlImage(o.couverture_url))}" alt="${echapperAttr(o.titre)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='📖'" />` : '📖'}
         </div>
         <div style="padding:10px;">
           <div style="font-weight:600;font-size:13px;color:var(--color-primary);line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${o.titre}</div>

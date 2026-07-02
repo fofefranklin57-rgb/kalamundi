@@ -8,6 +8,7 @@ import { getUser, supabase } from './auth.js';
 import { injecterPub } from './pub.js';
 import { getLivre } from './offline.js';
 import { genererCouverture } from './cover-generator.js';
+import { echapperAttr, normaliserUrlImage } from './cover-utils.js';
 import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
 import { traduire, viderCacheTraduction, rendreOptionLangues, LANGUES_LECTURE } from './translate.js';
 import { activerProtections } from './security.js';
@@ -63,6 +64,7 @@ const etat = {
   couvertureVisible: true,
   pages:          0,   // nombre de pages dans le chapitre courant (après pagination)
   pageCourante:   1,   // page courante (1-indexed)
+  pageInitiale:   1,
 };
 
 /* ============================================================
@@ -112,12 +114,14 @@ function afficherCouverture() {
   const emoji   = GENRE_EMOJIS[genre]   || '📖';
   const auteur  = oeuvre.profiles?.nom  || 'Auteur inconnu';
   const pays    = oeuvre.profiles?.pays  || '';
+  const coverUrl = normaliserUrlImage(oeuvre.couverture_url);
 
   // Fond dynamique : si pas de couverture → dégradé couleur genre
   const bgEl = document.getElementById('cover-bg');
-  if (oeuvre.couverture_url) {
-    bgEl.style.backgroundImage = `url('${oeuvre.couverture_url}')`;
-    bgEl.style.background      = `url('${oeuvre.couverture_url}') center/cover no-repeat`;
+  if (coverUrl) {
+    const cssUrl = coverUrl.replace(/'/g, "\\'");
+    bgEl.style.backgroundImage = `url('${cssUrl}')`;
+    bgEl.style.background      = `url('${cssUrl}') center/cover no-repeat`;
   } else {
     bgEl.style.background = `linear-gradient(160deg, ${couleur} 0%, color-mix(in srgb, ${couleur} 50%, #000) 100%)`;
   }
@@ -127,11 +131,11 @@ function afficherCouverture() {
   const coverGenerated = genererCouverture(
     oeuvre.titre, auteur, (oeuvre.genre || '').toLowerCase(), 220, 308
   );
-  if (oeuvre.couverture_url) {
-    bookEl.innerHTML = `<img src="${oeuvre.couverture_url}" alt="Couverture de ${oeuvre.titre}"
+  if (coverUrl) {
+    bookEl.innerHTML = `<img src="${echapperAttr(coverUrl)}" alt="Couverture de ${echapperAttr(oeuvre.titre)}"
       onerror="this.onerror=null;this.src='${coverGenerated}'" />`;
   } else {
-    bookEl.innerHTML = `<img src="${coverGenerated}" alt="Couverture générée — ${oeuvre.titre}" />`;
+    bookEl.innerHTML = `<img src="${coverGenerated}" alt="Couverture générée — ${echapperAttr(oeuvre.titre)}" />`;
   }
 
   // Métadonnées
@@ -162,9 +166,9 @@ function afficherCouverture() {
 
   // TOC : couverture miniature (générée si absente ou cassée)
   const tocCover   = document.getElementById('toc-cover');
-  const tocCoverSrc = oeuvre.couverture_url || coverGenerated;
+  const tocCoverSrc = coverUrl || coverGenerated;
   tocCover.innerHTML = `
-    <img src="${tocCoverSrc}" alt="Couverture"
+    <img src="${echapperAttr(tocCoverSrc)}" alt="Couverture"
       onerror="this.onerror=null;this.src='${coverGenerated}'" />
     <div class="reader-toc__cover-overlay">
       <div class="reader-toc__cover-title">${oeuvre.titre}</div>
@@ -213,6 +217,7 @@ async function entrerDansLecteur() {
     : null;
 
   const chapDepart = prog?.chapitre_courant > 1 ? prog.chapitre_courant : etat.chapitreNum;
+  etat.pageInitiale = Math.max(1, Number(prog?.page_courante || 1));
 
   await chargerChapitre(chapDepart, true /* premier chargement — pas d'animation titre */);
   api.incrementerLectures(etat.oeuvreId).catch(() => {});
@@ -348,13 +353,12 @@ async function chargerChapitre(numero, sansAnimation = false) {
   mettreAJourChapitre(numero, chapitre.id);
   _rafraichirBoutonMarquePage();
 
-  // UI — la position/progression est mise à jour dans _paginerContenu via _mettreAJourPositionPage
+  // UI — la position/progression est mise à jour après pagination
   mettreAJourNavigation();
   mettreAJourTOC();
   mettreAJourNavPanelChapitres();
   remplirNavPanelTitres();
   remplirNavPanelPages(); // liste les pages du chapitre après pagination
-  sauvegarderProgression();
   rendreInfosTopbar();
 
   // Scroll haut
@@ -362,6 +366,12 @@ async function chargerChapitre(numero, sansAnimation = false) {
 
   // Pagination : découper le texte en pages de hauteur écran
   _paginerContenu(contentEl);
+  if (sansAnimation && etat.pageInitiale > 1 && etat.pageInitiale <= etat.pages) {
+    _allerPage(etat.pageInitiale, { sauvegarder: false });
+    etat.pageInitiale = 1;
+  } else {
+    sauvegarderProgression();
+  }
   mettreAJourNavigation();
   _mettreAJourPositionPage();
 }
@@ -1056,7 +1066,7 @@ async function sauvegarderProgression() {
   try {
     await api.sauvegarderProgression(
       etat.utilisateur.id, etat.oeuvreId,
-      etat.chapitreNum, 1, sessionId
+      etat.chapitreNum, etat.pageCourante || 1, sessionId
     );
   } catch {}
 
@@ -1378,7 +1388,7 @@ function _paginerContenu(contentEl) {
 }
 
 /** Affiche la page `num` du chapitre courant */
-function _allerPage(num) {
+function _allerPage(num, options = {}) {
   if (num < 1 || num > etat.pages) return;
   const direction = num > etat.pageCourante ? 'next' : 'prev';
 
@@ -1410,6 +1420,7 @@ function _allerPage(num) {
   _mettreAJourPositionPage();
   _mettreAJourScrollProgress();
   mettreAJourNavPanelPages(); // synchronise la page surlignée dans le volet
+  if (options.sauvegarder !== false) sauvegarderProgression();
 }
 
 /** Page suivante, puis chapitre suivant si on est à la dernière page */

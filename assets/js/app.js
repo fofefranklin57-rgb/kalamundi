@@ -7,6 +7,7 @@ import { getSession, supabase } from './auth.js';
 import { api } from './api.js';
 import { injecterPub } from './pub.js';
 import { initNotificationsPush } from './notifications.js';
+import { echapperAttr, normaliserUrlImage } from './cover-utils.js';
 
 /* ============================================================
    Init
@@ -254,12 +255,14 @@ function renderSpotlight(auteurs) {
     const couleur  = couleurs[(a.nom || '').charCodeAt(0) % couleurs.length];
     const initiale = (a.nom || '?').charAt(0).toUpperCase();
 
-    const avatar = a.photo_url
-      ? `<img src="${a.photo_url}" alt="${a.nom}" class="spotlight__avatar-img" />`
+    const avatarUrl = normaliserUrlImage(a.photo_url);
+    const avatar = avatarUrl
+      ? `<img src="${echapperAttr(avatarUrl)}" alt="${echapperAttr(a.nom)}" class="spotlight__avatar-img" />`
       : `<div class="spotlight__avatar-fallback" style="background:${couleur}">${initiale}</div>`;
 
-    const coverOeuvre = oeuvre?.couverture_url
-      ? `<img src="${oeuvre.couverture_url}" alt="${oeuvre.titre}" class="spotlight__cover-img" />`
+    const coverUrl = normaliserUrlImage(oeuvre?.couverture_url);
+    const coverOeuvre = coverUrl
+      ? `<img src="${echapperAttr(coverUrl)}" alt="${echapperAttr(oeuvre.titre)}" class="spotlight__cover-img" onerror="this.outerHTML='<div class=&quot;spotlight__cover-fallback&quot; style=&quot;background:${couleur}&quot;><span>${(oeuvre?.titre || '?').charAt(0)}</span></div>'" />`
       : `<div class="spotlight__cover-fallback" style="background:${couleur}"><span>${(oeuvre?.titre || '?').charAt(0)}</span></div>`;
 
     const badges = [
@@ -359,11 +362,12 @@ function renderBookMini(oeuvre) {
   const couleurs = ['#1B4332','#2D6A4F','#A97C0E','#1a3a5c','#5c1a1a','#2c4a1a'];
   const couleur  = couleurs[titre.charCodeAt(0) % couleurs.length];
   const initiale = titre.charAt(0).toUpperCase();
+  const coverUrl = normaliserUrlImage(oeuvre.couverture_url);
 
-  const cover = oeuvre.couverture_url
-    ? `<img src="${oeuvre.couverture_url}" alt="${titre}" loading="lazy" class="book-mini__img" data-fallback-color="${couleur}" data-fallback-initiale="${initiale}">`
+  const cover = coverUrl
+    ? `<img src="${echapperAttr(coverUrl)}" alt="${echapperAttr(titre)}" loading="lazy" class="book-mini__img" data-fallback-color="${couleur}" data-fallback-initiale="${initiale}">`
     : '';
-  const fallback = `<div class="book-mini__fallback" style="background:${couleur};display:${oeuvre.couverture_url ? 'none' : 'flex'}">
+  const fallback = `<div class="book-mini__fallback" style="background:${couleur};display:${coverUrl ? 'none' : 'flex'}">
     <span>${initiale}</span>
   </div>`;
 
@@ -385,9 +389,10 @@ function renderCard(oeuvre) {
   const note    = oeuvre.note_moyenne;
   const lectures = oeuvre.nb_lectures || 0;
   const statut  = oeuvre.statut || 'gratuit';
+  const coverUrl = normaliserUrlImage(oeuvre.couverture_url);
 
-  const cover = oeuvre.couverture_url
-    ? `<img src="${oeuvre.couverture_url}" alt="Couverture de ${titre}" class="card__cover" loading="lazy">`
+  const cover = coverUrl
+    ? `<img src="${echapperAttr(coverUrl)}" alt="Couverture de ${echapperAttr(titre)}" class="card__cover" loading="lazy" onerror="this.outerHTML='<div class=&quot;card__cover card__cover--placeholder&quot;>📖</div>'">`
     : `<div class="card__cover card__cover--placeholder">📖</div>`;
 
   const etoiles = note
@@ -491,10 +496,11 @@ async function chargerScolaire(niveau = 'tous') {
       const cle = matiere.toLowerCase();
       const couleur = couleurs[cle] || couleurs.autre;
       const initiale = titre.charAt(0).toUpperCase();
-      const cover = o.couverture_url
-        ? `<img src="${o.couverture_url}" alt="${titre}" loading="lazy" class="book-mini__img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      const coverUrl = normaliserUrlImage(o.couverture_url);
+      const cover = coverUrl
+        ? `<img src="${echapperAttr(coverUrl)}" alt="${echapperAttr(titre)}" loading="lazy" class="book-mini__img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
         : '';
-      const fallback = `<div class="book-mini__fallback" style="background:${couleur};display:${o.couverture_url ? 'none' : 'flex'}"><span>${initiale}</span></div>`;
+      const fallback = `<div class="book-mini__fallback" style="background:${couleur};display:${coverUrl ? 'none' : 'flex'}"><span>${initiale}</span></div>`;
       const badge = niveau_ ? `<span style="font-size:10px;background:var(--accent-light,#e8f5e9);color:var(--primary);border-radius:4px;padding:1px 6px;font-weight:600">${niveau_}</span>` : '';
       return `
         <a href="/pages/work.html?id=${o.id}" class="book-mini">

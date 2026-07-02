@@ -269,7 +269,7 @@ function normaliserCouverture(url = '') {
   if (!propre) return '';
   if (propre.startsWith('//')) return `https:${propre}`;
   if (propre.startsWith('http://')) return propre.replace(/^http:\/\//, 'https://');
-  return propre;
+  return propre.replace(/\s/g, '%20');
 }
 
 /* ============================================================
