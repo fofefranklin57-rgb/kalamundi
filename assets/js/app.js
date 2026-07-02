@@ -39,10 +39,12 @@ window._installerApp = async function () {
 document.addEventListener('DOMContentLoaded', async () => {
   enregistrerSW();
   initNotificationsPush().catch(() => {});
-  const session = await initNavbar();
 
-  /* Charger vedettes immédiatement (above the fold) */
-  await chargerVedettes();
+  /* Navbar + vedettes en parallèle — ne pas attendre l'auth pour afficher le contenu */
+  const [session] = await Promise.all([
+    initNavbar(),
+    chargerVedettes(),
+  ]);
 
   /* Lazy load sections sous le fold via IntersectionObserver */
   const lazyLoad = (elementId, fn) => {
@@ -160,7 +162,7 @@ async function initNavbar() {
     <div class="hero__stat"><span class="hero__stat-value">50+</span><span class="hero__stat-label">langues</span></div>
   `;
 
-  chargerStats();
+  // chargerStats() supprimé — total récupéré dans chargerVedettes()
   return session;
 }
 
@@ -183,13 +185,19 @@ async function chargerStats() {
 async function chargerVedettes() {
   const grid = document.getElementById('grid-vedettes');
   try {
-    const { data } = await api.getOeuvres({ limit: 12, tri: 'lectures' });
+    const { data, total } = await api.getOeuvres({ limit: 12, tri: 'lectures' });
+
+    // Mettre à jour le compteur hero sans requête supplémentaire
+    const el = document.getElementById('stat-oeuvres');
+    if (el && total != null) el.textContent = total > 999 ? Math.floor(total / 1000) + 'k+' : total || '0';
+
     if (!data?.length) {
       grid.innerHTML = videState('Aucune œuvre disponible pour l\'instant.');
       return;
     }
     const html = data.map(renderBookMini).join('');
-    grid.innerHTML = html + html;
+    // Dupliquer pour carrousel infini — lazy load sur la 2e copie
+    grid.innerHTML = html + data.map(o => renderBookMini(o, true)).join('');
     grid.addEventListener('click', () => grid.classList.toggle('paused'));
     gererErreurImages(grid);
   } catch (err) {
@@ -211,7 +219,7 @@ async function chargerNouveautes() {
       return;
     }
     const html = data.map(renderBookMini).join('');
-    grid.innerHTML = html + html;
+    grid.innerHTML = html + data.map(o => renderBookMini(o, true)).join('');
     grid.addEventListener('click', () => grid.classList.toggle('paused'));
     gererErreurImages(grid);
   } catch (err) {
@@ -355,7 +363,7 @@ function gererErreurImages(container) {
    Rendu carte œuvre
    ============================================================ */
 
-function renderBookMini(oeuvre) {
+function renderBookMini(oeuvre, lazyDuplicate = false) {
   const titre  = oeuvre.titre || 'Sans titre';
   const auteur = oeuvre.profiles?.nom || 'Auteur inconnu';
   const genre  = oeuvre.genre || '';
@@ -364,8 +372,10 @@ function renderBookMini(oeuvre) {
   const initiale = titre.charAt(0).toUpperCase();
   const coverUrl = normaliserUrlImage(oeuvre.couverture_url);
 
+  // Doublons du carrousel → lazy loading, aria-hidden pour accessibilité
+  const lazyAttr = lazyDuplicate ? 'loading="lazy" aria-hidden="true"' : 'loading="lazy"';
   const cover = coverUrl
-    ? `<img src="${echapperAttr(coverUrl)}" alt="${echapperAttr(titre)}" loading="lazy" class="book-mini__img" data-fallback-color="${couleur}" data-fallback-initiale="${initiale}">`
+    ? `<img src="${echapperAttr(coverUrl)}" alt="${echapperAttr(titre)}" ${lazyAttr} class="book-mini__img" data-fallback-color="${couleur}" data-fallback-initiale="${initiale}">`
     : '';
   const fallback = `<div class="book-mini__fallback" style="background:${couleur};display:${coverUrl ? 'none' : 'flex'}">
     <span>${initiale}</span>

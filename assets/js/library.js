@@ -120,7 +120,7 @@ const NOMS_IMPORTS = new Set([
   'creative commons',
 ]);
 
-const FETCH_LIMIT = 240;
+const FETCH_LIMIT = 60;
 
 /* ============================================================
    ÉTAT DES FILTRES

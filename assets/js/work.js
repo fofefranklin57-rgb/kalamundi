@@ -29,14 +29,7 @@ let commentaireReponseId = null;
   // Lancer l'œuvre ET l'auth en parallèle — ne pas attendre l'auth pour afficher
   const [, userResult] = await Promise.all([
     chargerOeuvre(),
-    getUser().then(async u => {
-      utilisateur = u;
-      if (u) {
-        // getProfil en arrière-plan — ne bloque pas l'affichage
-        api.getProfil(u.id).catch(() => {});
-      }
-      return u;
-    }),
+    getUser().then(u => { utilisateur = u; return u; }),
     chargerCommentaires(),
   ]);
 

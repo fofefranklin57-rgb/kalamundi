@@ -8,33 +8,23 @@
      - Page offline            → fallback si tout échoue
    ============================================================ */
 
-const VERSION        = 'kala-v8';
+const VERSION        = 'kala-v9';
 const CACHE_SHELL    = `${VERSION}-shell`;
 const CACHE_API      = `${VERSION}-api`;
 const CACHE_IMAGES   = `${VERSION}-images`;
 
-/* Fichiers mis en cache à l'installation (app shell) */
+/* Shell minimal — uniquement les ressources critiques du chemin initial.
+   Les autres pages/CSS/JS sont mis en cache au premier accès (Cache First on hit). */
 const SHELL_URLS = [
   '/',
   '/pages/library.html',
-  '/pages/abonnements.html',
   '/pages/login.html',
-  '/pages/publish.html',
-  '/pages/communautes.html',
-  '/pages/author-dashboard.html',
-  '/pages/owner.html',
   '/pages/work.html',
   '/pages/reader.html',
   '/assets/css/base.css',
   '/assets/css/layout.css',
   '/assets/css/components.css',
   '/assets/css/home.css',
-  '/assets/css/library.css',
-  '/assets/css/login.css',
-  '/assets/css/publish.css',
-  '/assets/css/communautes.css',
-  '/assets/css/dashboard.css',
-  '/assets/css/reader.css',
   '/assets/css/themes/light.css',
   '/assets/css/themes/dark.css',
   '/assets/css/themes/sepia.css',
@@ -43,18 +33,8 @@ const SHELL_URLS = [
   '/assets/js/auth.js',
   '/assets/js/api.js',
   '/assets/js/utils.js',
-  '/assets/js/i18n.js',
-  '/assets/js/notifications.js',
-  '/assets/js/library.js',
-  '/assets/js/offline.js',
-  '/assets/js/login.js',
-  '/assets/js/publish.js',
-  '/assets/js/communautes.js',
-  '/assets/js/owner.js',
-  '/assets/js/upload.js',
-  '/assets/js/reader.js',
   '/assets/js/work.js',
-  '/assets/js/cover-utils.js',
+  '/assets/js/reader.js',
   '/manifest.json',
   '/offline.html',
 ];
