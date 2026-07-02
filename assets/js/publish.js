@@ -352,6 +352,8 @@ qs('#par-chapitres')?.addEventListener('change', (e) => {
   if (e.target.checked) mettreAJourApercuPlanning();
 });
 
+qs('#groupe-chapitres-details')?.classList.toggle('hidden', !qs('#par-chapitres')?.checked);
+
 qs('#frequence-publication')?.addEventListener('change', mettreAJourApercuPlanning);
 qs('#date-debut-publication')?.addEventListener('change', mettreAJourApercuPlanning);
 
@@ -530,9 +532,16 @@ qs('#btn-publier')?.addEventListener('click', async () => {
     const typeElement   = qs('#type-element-chapitre')?.value || 'chapitre';
     const titreChapitre = qs('#titre-chapitre')?.value?.trim() || null;
 
-    const chapitres = parChapitres
+    const decoupageAuto = etat.mode === 'upload' && contenu.length > 12000;
+    const doitDecouper = parChapitres || decoupageAuto;
+
+    const chapitres = doitDecouper
       ? decouperEnChapitres(contenu)
       : [{ numero: 1, titre: titreChapitre, contenu }];
+
+    if (decoupageAuto && !parChapitres && chapitres.length > 1) {
+      toast(`Découpage automatique : ${chapitres.length} chapitres créés.`, 'info', 5000);
+    }
 
     const datesPublication = calculerDatesPublication(chapitres.length, parChapitres ? frequence : 'immediate', dateDebut);
 
@@ -544,7 +553,7 @@ qs('#btn-publier')?.addEventListener('click', async () => {
         numero:           ch.numero,
         titre:            ch.titre,
         contenu_texte:    ch.contenu,
-        type_element:     parChapitres ? (ch.type_element || 'chapitre') : typeElement,
+        type_element:     doitDecouper ? (ch.type_element || 'chapitre') : typeElement,
         date_publication: datePubli,
         visible:          datePubli === null || new Date(datePubli) <= new Date(),
       });
