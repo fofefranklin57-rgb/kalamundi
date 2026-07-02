@@ -11,6 +11,18 @@ export const SPLIT_AUTEUR_PREMIUM = 0.50; // 50% auteur sur ventes premium
 export const SPLIT_KALAMUNDI_PREMIUM = 0.50; // 50% Kalamundi
 // Pub : 100% Kalamundi, aucun reversement auteur
 
+function colonneManquante(error, colonne) {
+  const msg = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`;
+  return msg.includes(colonne) || error?.code === '42703';
+}
+
+function sansChamp(obj, champ) {
+  if (!obj || !(champ in obj)) return obj;
+  const copie = { ...obj };
+  delete copie[champ];
+  return copie;
+}
+
 /* ============================================================
    PROFILS
    ============================================================ */
@@ -108,7 +120,29 @@ export const api = {
     if (recherche) query = query.ilike('titre', `%${recherche}%`);
     if (exclureSysteme) query = query.neq('auteur_id', '00000000-0000-0000-0000-000000000001');
 
-    const { data, error, count } = await query;
+    let { data, error, count } = await query;
+    if (error && colonneManquante(error, 'chapitres_gratuits')) {
+      query = supabase
+        .from('oeuvres')
+        .select(`
+          id, titre, genre, resume, langue_originale, statut, prix,
+          couverture_url, nb_lectures, note_moyenne, public_cible,
+          created_at, auteur_id,
+          profiles!oeuvres_auteur_id_fkey(nom, photo_url, pays, niveau_auteur)
+        `, { count: 'exact' })
+        .eq('visible', true)
+        .order(orderCol, { ascending: false })
+        .range((page - 1) * limit, page * limit - 1);
+      if (genre)    query = query.eq('genre', genre);
+      if (langue)   query = query.eq('langue_originale', langue);
+      if (statut)   query = query.eq('statut', statut);
+      if (recherche) query = query.ilike('titre', `%${recherche}%`);
+      if (exclureSysteme) query = query.neq('auteur_id', '00000000-0000-0000-0000-000000000001');
+      const retry = await query;
+      data = (retry.data || []).map(o => ({ ...o, chapitres_gratuits: 0 }));
+      error = retry.error;
+      count = retry.count;
+    }
     if (error) throw error;
     return { data, total: count };
   },
@@ -139,11 +173,20 @@ export const api = {
   },
 
   async creerOeuvre(champs) {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('oeuvres')
       .insert(champs)
       .select()
       .single();
+    if (error && colonneManquante(error, 'chapitres_gratuits')) {
+      const retry = await supabase
+        .from('oeuvres')
+        .insert(sansChamp(champs, 'chapitres_gratuits'))
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
     if (error) throw error;
     return data;
   },
@@ -166,12 +209,22 @@ export const api = {
   },
 
   async updateOeuvre(id, champs) {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('oeuvres')
       .update({ ...champs, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single();
+    if (error && colonneManquante(error, 'chapitres_gratuits')) {
+      const retry = await supabase
+        .from('oeuvres')
+        .update({ ...sansChamp(champs, 'chapitres_gratuits'), updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
     if (error) throw error;
     return data;
   },
@@ -1295,12 +1348,22 @@ export const api = {
   /* ---- Stats dashboard auteur --------------------------- */
 
   async getStatsAuteur(auteurId) {
-    const [oeuvres, revenus] = await Promise.all([
-      supabase
+    let oeuvresQuery = supabase
         .from('oeuvres')
         .select('id, titre, genre, couverture_url, nb_lectures, note_moyenne, statut, prix, chapitres_gratuits, visible, created_at')
         .eq('auteur_id', auteurId)
-        .eq('visible', true),
+        .eq('visible', true);
+    let oeuvres = await oeuvresQuery;
+    if (oeuvres.error && colonneManquante(oeuvres.error, 'chapitres_gratuits')) {
+      oeuvres = await supabase
+        .from('oeuvres')
+        .select('id, titre, genre, couverture_url, nb_lectures, note_moyenne, statut, prix, visible, created_at')
+        .eq('auteur_id', auteurId)
+        .eq('visible', true);
+      if (oeuvres.data) oeuvres.data = oeuvres.data.map(o => ({ ...o, chapitres_gratuits: 0 }));
+    }
+    const [, revenus] = await Promise.all([
+      Promise.resolve(oeuvres),
       api.getTotalRevenus(auteurId),
     ]);
     if (oeuvres.error) throw oeuvres.error;
