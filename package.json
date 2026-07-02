@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "check": "node scripts/check-js.mjs"
+    "check": "node scripts/check-js.mjs",
+    "chapters:repair": "node scripts/redecouper_chapitres.mjs"
   },
   "devDependencies": {
     "sharp": "^0.34.5"

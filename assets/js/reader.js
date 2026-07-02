@@ -1057,6 +1057,8 @@ function mettreAJourNavigation() {
 
 document.getElementById('btn-prev')?.addEventListener('click', _pagePrev);
 document.getElementById('btn-next')?.addEventListener('click', _pageNext);
+document.getElementById('reader-page-prev-zone')?.addEventListener('click', _pagePrev);
+document.getElementById('reader-page-next-zone')?.addEventListener('click', _pageNext);
 
 /* ============================================================
    PROGRESSION — scroll dans le chapitre (plus précis que X/Y)
@@ -1395,6 +1397,8 @@ function _paginerContenu(contentEl) {
 
   etat.pages       = pages.length;
   etat.pageCourante = 1;
+  contentEl.dataset.currentPage = '1';
+  contentEl.classList.toggle('is-left-page', false);
 }
 
 /** Affiche la page `num` du chapitre courant */
@@ -1425,6 +1429,11 @@ function _allerPage(num, options = {}) {
   }
 
   etat.pageCourante = num;
+  const contentEl = document.getElementById('reader-content');
+  if (contentEl) {
+    contentEl.dataset.currentPage = String(num);
+    contentEl.classList.toggle('is-left-page', num % 2 === 0);
+  }
   window.scrollTo({ top: 0 });
   mettreAJourNavigation();
   _mettreAJourPositionPage();

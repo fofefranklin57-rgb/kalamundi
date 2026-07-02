@@ -658,7 +658,7 @@ export const api = {
       .upload(chemin, fichier, { upsert: true, contentType: fichier.type });
     if (error) throw error;
     const { data } = supabase.storage.from('couvertures').getPublicUrl(chemin);
-    return data.publicUrl;
+    return `${data.publicUrl}?v=${Date.now()}`;
   },
 
   async uploadFichierOeuvre(oeuvreId, fichier) {

@@ -6,6 +6,7 @@
 import { api } from './api.js';
 import { debounce, getParam, formatNombre, truncate } from './utils.js';
 import { genererCouverture } from './cover-generator.js';
+import { echapperAttr, normaliserUrlImage } from './cover-utils.js';
 import { injecterPub } from './pub.js';
 
 /* ============================================================
@@ -256,20 +257,13 @@ function estContenuImporte(o) {
     || resume.includes('domaine public');
 }
 
-function echapperAttr(valeur = '') {
+function echapperHtml(valeur = '') {
   return String(valeur)
     .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-function normaliserCouverture(url = '') {
-  const propre = String(url || '').trim();
-  if (!propre) return '';
-  if (propre.startsWith('//')) return `https:${propre}`;
-  if (propre.startsWith('http://')) return propre.replace(/^http:\/\//, 'https://');
-  return propre.replace(/\s/g, '%20');
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 /* ============================================================
@@ -293,7 +287,7 @@ function carteOeuvre(o) {
   const auteurNom = o.profiles?.nom || '';
   const genreKey  = (o.genre || '').toLowerCase();
   const coverFallbackB64 = genererCouverture(o.titre, auteurNom, genreKey, 300, 420);
-  const coverUrl = normaliserCouverture(o.couverture_url);
+  const coverUrl = normaliserUrlImage(o.couverture_url);
   const couverture = coverUrl
     ? `<img src="${echapperAttr(coverUrl)}" alt="Couverture — ${echapperAttr(o.titre)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"
            onerror="this.onerror=null;this.src='${coverFallbackB64}'" />`
@@ -331,16 +325,16 @@ function carteOeuvre(o) {
         <div class="book-card__genre" style="color:${cfg.couleur}">${cfg.label}</div>
 
         <!-- Titre principal (dc:title) -->
-        <h3 class="book-card__title">${o.titre}</h3>
+        <h3 class="book-card__title">${echapperHtml(o.titre)}</h3>
 
         <!-- Auteur + pays (dc:creator) -->
         <div class="book-card__author">
-          ${auteur}${pays ? ` · <span class="book-card__pays">${pays}</span>` : ''}
+          ${echapperHtml(auteur)}${pays ? ` · <span class="book-card__pays">${echapperHtml(pays)}</span>` : ''}
           ${estAfricain ? badgeAfrique : ''}
         </div>
 
         <!-- Résumé (dc:description) -->
-        ${o.resume ? `<p class="book-card__resume">${truncate(o.resume, 100)}</p>` : ''}
+        ${o.resume ? `<p class="book-card__resume">${echapperHtml(truncate(o.resume, 100))}</p>` : ''}
 
         <!-- Métadonnées bibliographiques -->
         <div class="book-card__meta">
