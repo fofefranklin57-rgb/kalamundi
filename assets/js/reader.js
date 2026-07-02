@@ -50,6 +50,10 @@ function largeurLectureInitiale() {
   return largeur < 720 ? 920 : largeur;
 }
 
+function estModeDoublePage() {
+  return window.innerWidth >= 980 && etat.maxWidth >= 900;
+}
+
 /* ============================================================
    ÉTAT DU LECTEUR
    ============================================================ */
@@ -373,7 +377,6 @@ async function chargerChapitre(numero, sansAnimation = false) {
   mettreAJourTOC();
   mettreAJourNavPanelChapitres();
   remplirNavPanelTitres();
-  remplirNavPanelPages(); // liste les pages du chapitre après pagination
   rendreInfosTopbar();
 
   // Scroll haut
@@ -389,6 +392,7 @@ async function chargerChapitre(numero, sansAnimation = false) {
   }
   mettreAJourNavigation();
   _mettreAJourPositionPage();
+  remplirNavPanelPages();
 }
 
 /* ============================================================
@@ -859,79 +863,27 @@ function remplirNavPanelPages() {
     return;
   }
 
-  // 1 colonne — vignette 210px de large
-  const THUMB_W  = 210;
-  const contentW = etat.maxWidth || 680;
-  const SCALE    = THUMB_W / contentW;
-
-  const header  = document.querySelector('header');
-  const footer  = document.querySelector('.reader-bottombar');
-  const headerH = header?.offsetHeight ?? 56;
-  const footerH = footer?.offsetHeight ?? 56;
-  const contentH = Math.max(300, window.innerHeight - headerH - footerH - 72);
-  const THUMB_H  = Math.round(contentH * SCALE);
-
+  const frag = document.createDocumentFragment();
   for (let i = 1; i <= etat.pages; i++) {
-    const sourcePage = document.querySelector(`.reader-book-page[data-page="${i}"]`);
-    const actif      = i === etat.pageCourante;
-
-    const wrapper = document.createElement('div');
-    wrapper.className = `nav-thumb${actif ? ' is-current' : ''}`;
+    const wrapper = document.createElement('button');
+    wrapper.type = 'button';
+    wrapper.className = `nav-page-chip${i === etat.pageCourante ? ' is-current' : ''}`;
     wrapper.dataset.page = String(i);
-    wrapper.title = `Page ${i}`;
-
-    // Viewport : fenêtre de taille fixe avec overflow:hidden
-    const viewport = document.createElement('div');
-    viewport.className = 'nav-thumb__viewport';
-    viewport.style.cssText = `width:${THUMB_W}px;height:${THUMB_H}px;overflow:hidden;position:relative;`;
-
-    if (sourcePage) {
-      // Inner : le vrai contenu de la page, réduit via zoom CSS
-      // Wrappé dans .reader-content pour que toutes les règles CSS s'appliquent
-      const inner = document.createElement('div');
-      inner.className = 'reader-content nav-thumb__inner';
-      inner.style.cssText = [
-        `zoom:${SCALE}`,          // réduit le rendu — le texte reste lisible
-        `width:${contentW}px`,
-        `max-width:none`,
-        `padding:${etat.fontSize * 1.2}px ${etat.fontSize * 1.5}px`,
-        `font-size:${etat.fontSize}px`,
-        `line-height:${etat.lineHeight}`,
-        `pointer-events:none`,
-        `position:relative`,
-        `background:var(--bg-main)`,
-      ].join(';');
-
-      // Cloner les enfants (paragraphes, titres…) du .reader-book-page
-      Array.from(sourcePage.children).forEach(child => {
-        const c = child.cloneNode(true);
-        inner.appendChild(c);
-      });
-
-      viewport.appendChild(inner);
-    } else {
-      viewport.style.background = 'var(--bg-secondary)';
-    }
-
-    const label = document.createElement('div');
-    label.className = 'nav-thumb__label';
-    label.textContent = String(i);
-
-    wrapper.appendChild(viewport);
-    wrapper.appendChild(label);
+    wrapper.textContent = i === etat.pages && etat.chapitreNum >= etat.chapitres.length ? `Fin · ${i}` : `Page ${i}`;
     wrapper.addEventListener('click', () => {
       _allerPage(i);
       if (window.innerWidth <= 900) fermerNavPanel();
     });
-    listEl.appendChild(wrapper);
+    frag.appendChild(wrapper);
   }
+  listEl.appendChild(frag);
 }
 
 function mettreAJourNavPanelPages() {
-  document.querySelectorAll('#nav-pages-list .nav-thumb').forEach(item => {
+  document.querySelectorAll('#nav-pages-list .nav-page-chip').forEach(item => {
     item.classList.toggle('is-current', parseInt(item.dataset.page) === etat.pageCourante);
   });
-  const courant = document.querySelector('#nav-pages-list .nav-thumb.is-current');
+  const courant = document.querySelector('#nav-pages-list .nav-page-chip.is-current');
   courant?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
@@ -1052,9 +1004,10 @@ function _visiteurBloque() {
 
 function mettreAJourNavigation() {
   const bloque       = _visiteurBloque();
-  const premiumBloque = chapitrePremiumBloqueSync(etat.chapitreNum + (etat.pageCourante >= etat.pages ? 1 : 0));
+  const dernierePageVisible = estModeDoublePage() ? Math.min(etat.pageCourante + 1, etat.pages) : etat.pageCourante;
+  const premiumBloque = chapitrePremiumBloqueSync(etat.chapitreNum + (dernierePageVisible >= etat.pages ? 1 : 0));
   const premierePage = etat.pageCourante <= 1 && etat.chapitreNum <= 1;
-  const dernierePage = etat.pageCourante >= etat.pages && etat.chapitreNum >= etat.chapitres.length;
+  const dernierePage = dernierePageVisible >= etat.pages && etat.chapitreNum >= etat.chapitres.length;
 
   document.getElementById('btn-prev').disabled = premierePage;
   document.getElementById('btn-next').disabled = (dernierePage || bloque || premiumBloque);
@@ -1398,7 +1351,7 @@ function _paginerContenu(contentEl) {
     const div = document.createElement('div');
     div.className = 'reader-book-page';
     div.dataset.page = String(i + 1);
-    if (i !== 0) div.hidden = true;
+    if (i !== 0 && !(estModeDoublePage() && i === 1)) div.hidden = true;
     pg.forEach(el => div.appendChild(el));
     contentEl.appendChild(div);
   });
@@ -1414,6 +1367,7 @@ function _paginerContenu(contentEl) {
   etat.pageCourante = 1;
   contentEl.dataset.currentPage = '1';
   contentEl.classList.toggle('is-left-page', false);
+  contentEl.classList.toggle('has-spread', estModeDoublePage());
 }
 
 function _creerQuatriemeCouverturePage(numeroPage) {
@@ -1452,6 +1406,9 @@ function _allerPage(num, options = {}) {
   if (num < 1 || num > etat.pages) return;
   const direction = num > etat.pageCourante ? 'next' : 'prev';
   const pageActuelle = document.querySelector(`.reader-book-page[data-page="${etat.pageCourante}"]`);
+  const feuilleActuelle = estModeDoublePage() && direction === 'next'
+    ? (document.querySelector(`.reader-book-page[data-page="${etat.pageCourante + 1}"]`) || pageActuelle)
+    : pageActuelle;
 
   // Contrôle visiteur — bloquer après LIMIT_VISITEUR_PAGES
   if (!etat.utilisateur && num > etat.pageCourante) {
@@ -1467,6 +1424,7 @@ function _allerPage(num, options = {}) {
   // Masquer page courante, afficher nouvelle
   const pages = document.querySelectorAll('.reader-book-page');
   pages.forEach(p => { p.hidden = true; });
+  const doublePage = estModeDoublePage();
   const cible = document.querySelector(`.reader-book-page[data-page="${num}"]`);
   if (cible) {
     cible.hidden = false;
@@ -1474,13 +1432,21 @@ function _allerPage(num, options = {}) {
     void cible.offsetWidth;
     cible.classList.add(direction === 'next' ? 'is-turning-next' : 'is-turning-prev');
   }
+  if (doublePage) {
+    const droite = document.querySelector(`.reader-book-page[data-page="${num + 1}"]`);
+    if (droite) {
+      droite.hidden = false;
+      droite.classList.remove('is-turning-next', 'is-turning-prev');
+    }
+  }
 
   etat.pageCourante = num;
   const contentEl = document.getElementById('reader-content');
   if (contentEl) {
     contentEl.dataset.currentPage = String(num);
     contentEl.classList.toggle('is-left-page', num % 2 === 0);
-    _jouerFeuilletage(contentEl, pageActuelle, direction);
+    contentEl.classList.toggle('has-spread', doublePage);
+    _jouerFeuilletage(contentEl, feuilleActuelle, direction);
   }
   window.scrollTo({ top: 0 });
   mettreAJourNavigation();
@@ -1504,8 +1470,10 @@ function _jouerFeuilletage(contentEl, pageActuelle, direction) {
 
 /** Page suivante, puis chapitre suivant si on est à la dernière page */
 function _pageNext() {
-  if (etat.pageCourante < etat.pages) {
-    _allerPage(etat.pageCourante + 1);
+  const pas = estModeDoublePage() ? 2 : 1;
+  const derniereVisible = estModeDoublePage() ? Math.min(etat.pageCourante + 1, etat.pages) : etat.pageCourante;
+  if (derniereVisible < etat.pages) {
+    _allerPage(etat.pageCourante + pas);
   } else if (chapitrePremiumBloqueSync(etat.chapitreNum + 1)) {
     _afficherModalPaiement();
   } else if (!_visiteurBloque() && etat.chapitreNum < etat.chapitres.length) {
@@ -1522,7 +1490,7 @@ function _pageNext() {
 /** Page précédente, puis chapitre précédent si on est à la première page */
 function _pagePrev() {
   if (etat.pageCourante > 1) {
-    _allerPage(etat.pageCourante - 1);
+    _allerPage(Math.max(1, etat.pageCourante - (estModeDoublePage() ? 2 : 1)));
   } else if (etat.chapitreNum > 1) {
     chargerChapitre(etat.chapitreNum - 1);
   }
@@ -1533,7 +1501,9 @@ function _mettreAJourPositionPage() {
   const el = document.getElementById('reader-position');
   if (!el) return;
   if (etat.pages > 1) {
-    el.innerHTML = `Page <strong>${etat.pageCourante}</strong> / ${etat.pages}
+    const fin = estModeDoublePage() ? Math.min(etat.pageCourante + 1, etat.pages) : etat.pageCourante;
+    const label = fin > etat.pageCourante ? `${etat.pageCourante}-${fin}` : String(etat.pageCourante);
+    el.innerHTML = `Page <strong>${label}</strong> / ${etat.pages}
       <span style="color:var(--text-light);margin-left:6px;">· Ch. ${etat.chapitreNum}/${etat.chapitres.length}</span>`;
   } else {
     el.innerHTML = `Ch. <strong>${etat.chapitreNum}</strong> / ${etat.chapitres.length}`;

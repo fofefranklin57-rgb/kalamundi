@@ -295,11 +295,20 @@ export const api = {
   },
 
   async getChapitre(chapitreId) {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('chapitres')
-      .select('*')
+      .select('id, oeuvre_id, numero, titre, contenu, contenu_texte, type_element, visible, date_publication')
       .eq('id', chapitreId)
       .single();
+    if (error && colonneManquante(error, 'contenu')) {
+      const retry = await supabase
+        .from('chapitres')
+        .select('id, oeuvre_id, numero, titre, contenu_texte, type_element, visible, date_publication')
+        .eq('id', chapitreId)
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
     if (error) throw error;
     return { ...data, contenu_texte: data?.contenu_texte || data?.contenu || '' };
   },
