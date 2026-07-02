@@ -1941,10 +1941,10 @@ body.theme-sepia .reader-nav-panel { background: var(--sepia-surface); }
 
 body.reader-body {
   background:
-    linear-gradient(180deg, rgba(245, 242, 230, 0.94) 0%, rgba(230, 237, 226, 0.96) 46%, rgba(190, 169, 132, 0.22) 100%),
-    repeating-linear-gradient(90deg, rgba(27,67,50,0.045) 0 1px, transparent 1px 42px),
-    #eef2ea;
-  background-size: auto, 42px 100%, auto;
+    linear-gradient(90deg, rgba(80,55,34,0.10) 0 1px, transparent 1px 100%),
+    radial-gradient(circle at 50% -20%, rgba(212,160,23,0.14), transparent 34rem),
+    #edf1ea;
+  background-size: 36px 100%, auto, auto;
 }
 
 .reader-topbar {
@@ -2003,43 +2003,11 @@ body.reader-body {
   inset: 0;
   z-index: -1;
   background:
-    linear-gradient(180deg, rgba(13,43,31,0.08) 0 18%, transparent 42%),
-    repeating-linear-gradient(90deg,
-      rgba(27,67,50,0.12) 0 14px,
-      rgba(45,106,79,0.10) 14px 32px,
-      rgba(169,124,14,0.12) 32px 44px,
-      rgba(77,61,45,0.08) 44px 62px,
-      transparent 62px 84px),
-    linear-gradient(180deg, transparent 0 68%, rgba(113,76,42,0.20) 68%, rgba(79,52,31,0.24) 100%);
-  background-size: auto, 360px 34%, auto;
-  background-repeat: no-repeat, repeat-x, no-repeat;
-  opacity: 0.38;
+    linear-gradient(90deg, rgba(55,35,20,0.10) 0 1px, transparent 1px 100%),
+    repeating-linear-gradient(90deg, rgba(27,67,50,0.16) 0 18px, rgba(45,106,79,0.14) 18px 35px, rgba(169,124,14,0.16) 35px 48px, transparent 48px 68px);
+  background-size: 44px 100%, 320px 100%;
+  opacity: 0.22;
   pointer-events: none;
-}
-
-.reader-library-room::before,
-.reader-library-room::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  pointer-events: none;
-}
-
-.reader-library-room::before {
-  top: 32%;
-  height: 10px;
-  background: linear-gradient(90deg, transparent, rgba(72,49,30,0.18), transparent);
-}
-
-.reader-library-room::after {
-  bottom: 0;
-  height: 30%;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.10), transparent 38%),
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.045) 0 1px, transparent 1px 18px),
-    linear-gradient(90deg, rgba(82,55,32,0.22), rgba(160,118,67,0.16), rgba(82,55,32,0.20));
-  box-shadow: inset 0 18px 34px rgba(49,36,22,0.08);
 }
 
 .reader-content {
@@ -2270,9 +2238,7 @@ body.reader-body {
 }
 
 body.theme-dark.reader-body {
-  background:
-    linear-gradient(180deg, #111811 0%, #101410 58%, #16110c 100%),
-    repeating-linear-gradient(90deg, rgba(212,160,23,0.035) 0 1px, transparent 1px 42px);
+  background: radial-gradient(circle at 50% -20%, rgba(212,160,23,0.10), transparent 34rem), #101410;
 }
 
 body.theme-dark .reader-content {
@@ -2284,13 +2250,11 @@ body.theme-dark .reader-content {
 body.theme-dark .reader-content p { color: #e6e2d6; }
 
 body.theme-dark .reader-library-room {
-  opacity: 0.18;
+  opacity: 0.14;
 }
 
 body.theme-sepia.reader-body {
-  background:
-    linear-gradient(180deg, #efe3c9 0%, #e6dcc5 54%, #cab18a 100%),
-    repeating-linear-gradient(90deg, rgba(94,62,32,0.055) 0 1px, transparent 1px 42px);
+  background: radial-gradient(circle at 50% -20%, rgba(128,83,32,0.16), transparent 34rem), #e9dfc7;
 }
 
 body.theme-sepia .reader-content {
