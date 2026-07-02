@@ -22,6 +22,7 @@
       <div class="navbar__nav" id="navbar-nav">
         <a href="/index.html" class="navbar__link">Accueil</a>
         <a href="/pages/library.html" class="navbar__link">Bibliothèque</a>
+        <a href="/pages/abonnements.html" class="navbar__link">Abonnements</a>
         <a href="/pages/publish.html" class="navbar__link navbar__link--active">Publier</a>
       </div>
       <span id="theme-slot"></span>
@@ -404,10 +405,16 @@
 
         <!-- Prix (si premium) -->
         <div class="form-group hidden" id="groupe-prix">
-          <label class="form-label form-label--required" for="prix">Prix (en USD)</label>
+          <label class="form-label form-label--required" for="prix">Prix (en FCFA)</label>
           <input class="form-input" type="number" id="prix" name="prix"
-            min="0.99" max="99.99" step="0.01" placeholder="Ex : 2.99" />
-          <span class="form-hint">Minimum 0,99 USD — Maximum 99,99 USD</span>
+            min="100" max="50000" step="50" placeholder="Ex : 300" />
+          <span class="form-hint">Conseillé : 300 à 1 000 FCFA pour une œuvre amateur.</span>
+          <div style="margin-top:var(--spacing-md)">
+            <label class="form-label" for="chapitres-gratuits">Chapitres gratuits avant paiement</label>
+            <input class="form-input" type="number" id="chapitres-gratuits"
+              min="0" max="20" step="1" value="3" />
+            <span class="form-hint">Le lecteur découvre le livre, puis Kalamundi lui propose de payer pour continuer.</span>
+          </div>
         </div>
 
         <!-- Licence -->

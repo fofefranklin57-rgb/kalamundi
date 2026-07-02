@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, { rootMargin: '200px' });
     obs.observe(el);
   };
-  lazyLoad('section-scolaire',         () => chargerScolaire('tous'));
   lazyLoad('section-nouveautes',       () => chargerNouveautes());
   lazyLoad('section-nouveaux-talents', () => chargerNouveauxTalents());
 
@@ -114,6 +113,8 @@ async function initNavbar() {
           <a href="/pages/author-profile.html?id=${user.id}" class="nav-avatar__item">👤 Mon profil</a>
           <a href="/pages/author-dashboard.html" class="nav-avatar__item">📊 Tableau de bord</a>
           <a href="/pages/library.html" class="nav-avatar__item">📚 Ma bibliothèque</a>
+          <a href="/pages/abonnements.html" class="nav-avatar__item">💎 Abonnements</a>
+          <a href="/offline.html" class="nav-avatar__item">📵 Mode hors-ligne</a>
           <div class="nav-avatar__sep"></div>
           <button class="nav-avatar__item nav-avatar__item--danger" id="btn-deconnexion">🚪 Déconnexion</button>
         </div>

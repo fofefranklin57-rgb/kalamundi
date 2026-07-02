@@ -43,9 +43,10 @@ export async function onRequestPost({ request, env }) {
     const titre = oeuvre.titre || 'Nouvelle oeuvre';
     const resume = limiter(oeuvre.resume || 'Une nouvelle oeuvre vient d etre publiee sur Kalamundi.', 180);
 
+    const destinataires = await getDestinataires(env, user.id);
     const result = {
-      onesignal: await envoyerOneSignal({ env, titre, auteur, resume, oeuvreUrl }),
-      email: await envoyerEmails({ env, auteurId: user.id, titre, auteur, resume, oeuvreUrl }),
+      onesignal: await envoyerOneSignal({ env, destinataires, titre, auteur, resume, oeuvreUrl }),
+      email: await envoyerEmails({ env, destinataires, titre, auteur, resume, oeuvreUrl }),
     };
 
     return json({ success: true, result });
@@ -85,49 +86,60 @@ async function getOeuvre(oeuvreId, env) {
   return data?.[0] || null;
 }
 
-async function getDestinatairesEmail(env, auteurId) {
-  const url = `${SUPABASE_URL}/rest/v1/profiles?id=neq.${encodeURIComponent(auteurId)}&email=not.is.null&select=email&limit=1000`;
+async function getDestinataires(env, auteurId) {
+  const url = `${SUPABASE_URL}/rest/v1/profiles?id=neq.${encodeURIComponent(auteurId)}&select=id,email&limit=5000`;
   const res = await fetch(url, {
     headers: {
       apikey: env.SUPABASE_SERVICE_KEY,
       Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
     },
   });
-  if (!res.ok) throw new Error(`Erreur Supabase emails: ${await res.text()}`);
+  if (!res.ok) throw new Error(`Erreur Supabase destinataires: ${await res.text()}`);
   const data = await res.json();
-  return [...new Set((data || []).map(p => p.email).filter(Boolean))];
+  return data || [];
 }
 
-async function envoyerOneSignal({ env, titre, auteur, resume, oeuvreUrl }) {
+async function envoyerOneSignal({ env, destinataires, titre, auteur, resume, oeuvreUrl }) {
   if (!env.ONESIGNAL_APP_ID || !env.ONESIGNAL_REST_API_KEY) {
     return { skipped: true, reason: 'ONESIGNAL_APP_ID ou ONESIGNAL_REST_API_KEY absent.' };
   }
 
-  const res = await fetch('https://onesignal.com/api/v1/notifications', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Basic ${env.ONESIGNAL_REST_API_KEY}`,
-    },
-    body: JSON.stringify({
-      app_id: env.ONESIGNAL_APP_ID,
-      included_segments: ['Subscribed Users'],
-      headings: { fr: 'Nouvelle oeuvre sur Kalamundi', en: 'New work on Kalamundi' },
-      contents: { fr: `${titre} par ${auteur}. ${resume}`, en: `${titre} by ${auteur}. ${resume}` },
-      url: oeuvreUrl,
-      data: { type: 'nouvelle_oeuvre', url: oeuvreUrl },
-    }),
-  });
+  const externalIds = [...new Set(destinataires.map(p => p.id).filter(Boolean))];
+  if (!externalIds.length) return { skipped: true, reason: 'Aucun utilisateur cible OneSignal.' };
 
-  const body = await safeJson(res);
-  return res.ok ? { sent: true, response: body } : { sent: false, status: res.status, response: body };
+  const batches = [];
+  for (const lot of chunk(externalIds, 2000)) {
+    const res = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${env.ONESIGNAL_REST_API_KEY}`,
+      },
+      body: JSON.stringify({
+        app_id: env.ONESIGNAL_APP_ID,
+        include_external_user_ids: lot,
+        channel_for_external_user_ids: 'push',
+        headings: { fr: 'Nouvelle oeuvre sur Kalamundi', en: 'New work on Kalamundi' },
+        contents: { fr: `${titre} par ${auteur}. ${resume}`, en: `${titre} by ${auteur}. ${resume}` },
+        url: oeuvreUrl,
+        data: { type: 'nouvelle_oeuvre', url: oeuvreUrl },
+      }),
+    });
+    batches.push({ ok: res.ok, status: res.status, response: await safeJson(res), count: lot.length });
+  }
+
+  return {
+    sent: batches.every(r => r.ok),
+    total: externalIds.length,
+    batches,
+  };
 }
 
-async function envoyerEmails({ env, auteurId, titre, auteur, resume, oeuvreUrl }) {
+async function envoyerEmails({ env, destinataires, titre, auteur, resume, oeuvreUrl }) {
   if (!env.RESEND_API_KEY) return { skipped: true, reason: 'RESEND_API_KEY absent.' };
 
-  const destinataires = await getDestinatairesEmail(env, auteurId);
-  if (!destinataires.length) return { skipped: true, reason: 'Aucun destinataire email.' };
+  const emails = [...new Set(destinataires.map(p => p.email).filter(Boolean))];
+  if (!emails.length) return { skipped: true, reason: 'Aucun destinataire email.' };
 
   const from = env.NOTIFICATION_FROM_EMAIL || 'Kalamundi <notifications@kalamundi.com>';
   const subject = `Nouvelle oeuvre sur Kalamundi : ${titre}`;
@@ -139,7 +151,7 @@ async function envoyerEmails({ env, auteurId, titre, auteur, resume, oeuvreUrl }
       <p><a href="${oeuvreUrl}" style="background:#1B4332;color:white;padding:10px 14px;border-radius:6px;text-decoration:none">Lire sur Kalamundi</a></p>
     </div>`;
 
-  const lots = chunk(destinataires, 50);
+  const lots = chunk(emails, 50);
   const responses = [];
   for (const lot of lots) {
     const res = await fetch('https://api.resend.com/emails', {
@@ -155,7 +167,7 @@ async function envoyerEmails({ env, auteurId, titre, auteur, resume, oeuvreUrl }
 
   return {
     sent: responses.every(r => r.ok),
-    total: destinataires.length,
+    total: emails.length,
     batches: responses,
   };
 }

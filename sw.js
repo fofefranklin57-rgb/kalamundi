@@ -8,7 +8,7 @@
      - Page offline            → fallback si tout échoue
    ============================================================ */
 
-const VERSION        = 'kala-v5';
+const VERSION        = 'kala-v7';
 const CACHE_SHELL    = `${VERSION}-shell`;
 const CACHE_API      = `${VERSION}-api`;
 const CACHE_IMAGES   = `${VERSION}-images`;
@@ -17,8 +17,12 @@ const CACHE_IMAGES   = `${VERSION}-images`;
 const SHELL_URLS = [
   '/',
   '/pages/library.html',
+  '/pages/abonnements.html',
   '/pages/login.html',
   '/pages/publish.html',
+  '/pages/communautes.html',
+  '/pages/author-dashboard.html',
+  '/pages/owner.html',
   '/pages/work.html',
   '/pages/reader.html',
   '/assets/css/base.css',
@@ -28,6 +32,8 @@ const SHELL_URLS = [
   '/assets/css/library.css',
   '/assets/css/login.css',
   '/assets/css/publish.css',
+  '/assets/css/communautes.css',
+  '/assets/css/dashboard.css',
   '/assets/css/reader.css',
   '/assets/css/themes/light.css',
   '/assets/css/themes/dark.css',
@@ -40,8 +46,11 @@ const SHELL_URLS = [
   '/assets/js/i18n.js',
   '/assets/js/notifications.js',
   '/assets/js/library.js',
+  '/assets/js/offline.js',
   '/assets/js/login.js',
   '/assets/js/publish.js',
+  '/assets/js/communautes.js',
+  '/assets/js/owner.js',
   '/assets/js/upload.js',
   '/assets/js/reader.js',
   '/assets/js/work.js',

@@ -88,12 +88,12 @@ export const api = {
 
   /* ---- Oeuvres ------------------------------------------ */
 
-  async getOeuvres({ page = 1, limit = 20, genre, langue, statut, recherche, tri = 'recent' } = {}) {
+  async getOeuvres({ page = 1, limit = 20, genre, langue, statut, recherche, tri = 'recent', exclureSysteme = false } = {}) {
     const orderCol = tri === 'lectures' ? 'nb_lectures' : 'created_at';
     let query = supabase
       .from('oeuvres')
       .select(`
-        id, titre, genre, resume, langue_originale, statut, prix,
+        id, titre, genre, resume, langue_originale, statut, prix, chapitres_gratuits,
         couverture_url, nb_lectures, note_moyenne, public_cible,
         created_at, auteur_id,
         profiles!oeuvres_auteur_id_fkey(nom, photo_url, pays, niveau_auteur)
@@ -106,6 +106,7 @@ export const api = {
     if (langue)   query = query.eq('langue_originale', langue);
     if (statut)   query = query.eq('statut', statut);
     if (recherche) query = query.ilike('titre', `%${recherche}%`);
+    if (exclureSysteme) query = query.neq('auteur_id', '00000000-0000-0000-0000-000000000001');
 
     const { data, error, count } = await query;
     if (error) throw error;
@@ -215,12 +216,18 @@ export const api = {
 
   /* ---- Chapitres ---------------------------------------- */
 
-  async getChapitres(oeuvreId) {
-    const { data, error } = await supabase
+  async getChapitres(oeuvreId, { inclureNonPublies = false } = {}) {
+    let query = supabase
       .from('chapitres')
-      .select('id, numero, titre, created_at')
+      .select('id, numero, titre, type_element, visible, date_publication, created_at')
       .eq('oeuvre_id', oeuvreId)
       .order('numero');
+    if (!inclureNonPublies) {
+      query = query
+        .eq('visible', true)
+        .or(`date_publication.is.null,date_publication.lte.${new Date().toISOString()}`);
+    }
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   },
@@ -233,6 +240,22 @@ export const api = {
       .single();
     if (error) throw error;
     return data;
+  },
+
+  async getChapitresOffline(oeuvreId) {
+    const { data, error } = await supabase
+      .from('chapitres')
+      .select('numero, titre, contenu, contenu_texte, visible, date_publication')
+      .eq('oeuvre_id', oeuvreId)
+      .eq('visible', true)
+      .or(`date_publication.is.null,date_publication.lte.${new Date().toISOString()}`)
+      .order('numero');
+    if (error) throw error;
+    return (data || []).map(ch => ({
+      numero: ch.numero,
+      titre: ch.titre,
+      contenu: ch.contenu || ch.contenu_texte || '',
+    }));
   },
 
   async creerChapitre(champs) {
@@ -351,20 +374,20 @@ export const api = {
     const { data, error } = await supabase
       .from('commentaires')
       .select(`
-        id, contenu, note, created_at,
+        id, user_id, parent_id, contenu, note, created_at,
         profiles!commentaires_user_id_fkey(nom, photo_url)
       `)
       .eq('oeuvre_id', oeuvreId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: true });
     if (error) throw error;
     return data;
   },
 
-  async ajouterCommentaire(userId, oeuvreId, contenu, note = null) {
+  async ajouterCommentaire(userId, oeuvreId, contenu, note = null, parentId = null) {
     const { data, error } = await supabase
       .from('commentaires')
-      .insert({ user_id: userId, oeuvre_id: oeuvreId, contenu, note })
-      .select(`id, contenu, note, created_at,
+      .insert({ user_id: userId, oeuvre_id: oeuvreId, contenu, note, parent_id: parentId })
+      .select(`id, user_id, parent_id, contenu, note, created_at,
                profiles!commentaires_user_id_fkey(nom, photo_url)`)
       .single();
     if (error) throw error;
@@ -382,6 +405,99 @@ export const api = {
   async supprimerCommentaire(id) {
     const { error } = await supabase.from('commentaires').delete().eq('id', id);
     if (error) throw error;
+  },
+
+  /* ---- Communautes -------------------------------------- */
+
+  async getCommunautes({ recherche = '', limit = 30 } = {}) {
+    let query = supabase
+      .from('communautes')
+      .select(`
+        id, nom, slug, description, theme, langue, pays, image_url,
+        created_at, createur_id,
+        profiles!communautes_createur_id_fkey(nom, photo_url)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (recherche) query = query.or(`nom.ilike.%${recherche}%,description.ilike.%${recherche}%,theme.ilike.%${recherche}%`);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async creerCommunaute(champs) {
+    const slugBase = (champs.nom || 'communaute')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60);
+    const slug = `${slugBase}-${Date.now().toString(36)}`;
+    const { data, error } = await supabase
+      .from('communautes')
+      .insert({ ...champs, slug })
+      .select()
+      .single();
+    if (error) throw error;
+    await api.rejoindreCommunaute(data.id, champs.createur_id, 'moderateur').catch(() => {});
+    return data;
+  },
+
+  async rejoindreCommunaute(communauteId, userId, role = 'membre') {
+    const { data, error } = await supabase
+      .from('communaute_membres')
+      .upsert({ communaute_id: communauteId, user_id: userId, role }, { onConflict: 'communaute_id,user_id' })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async quitterCommunaute(communauteId, userId) {
+    const { error } = await supabase
+      .from('communaute_membres')
+      .delete()
+      .eq('communaute_id', communauteId)
+      .eq('user_id', userId);
+    if (error) throw error;
+  },
+
+  async getMesCommunautes(userId) {
+    const { data, error } = await supabase
+      .from('communaute_membres')
+      .select('communaute_id, role, communautes(id, nom, slug, theme, image_url)')
+      .eq('user_id', userId)
+      .order('joined_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getPostsCommunaute(communauteId, { limit = 30 } = {}) {
+    const { data, error } = await supabase
+      .from('communaute_posts')
+      .select(`
+        id, contenu, created_at, user_id, oeuvre_id,
+        profiles!communaute_posts_user_id_fkey(nom, photo_url),
+        oeuvres(id, titre, couverture_url)
+      `)
+      .eq('communaute_id', communauteId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data || [];
+  },
+
+  async creerPostCommunaute(champs) {
+    const { data, error } = await supabase
+      .from('communaute_posts')
+      .insert(champs)
+      .select(`id, contenu, created_at, user_id, oeuvre_id,
+               profiles!communaute_posts_user_id_fkey(nom, photo_url),
+               oeuvres(id, titre, couverture_url)`)
+      .single();
+    if (error) throw error;
+    return data;
   },
 
   /* ---- Revenus ------------------------------------------ */
@@ -753,6 +869,250 @@ export const api = {
     } catch(e) { console.warn('adminGetFinance fallback:', e); return vide; }
   },
 
+  async adminGetOwnerInsights() {
+    const fallback = {
+      generatedAt: new Date().toISOString(),
+      kpis: {},
+      segments: {},
+      lists: {},
+      exports: {},
+    };
+    try {
+      const [users, oeuvres, paiements, revenus, commentaires, communautes, posts, bannieres] = await Promise.all([
+        supabase.from('profiles')
+          .select('id, email, nom, role, pays, ville, langue_preferee, niveau_auteur, badge_fondateur, compte_verifie, created_at, abonnement')
+          .then(r => r.error ? { data: [] } : r),
+        supabase.from('oeuvres')
+          .select('id, titre, genre, langue_originale, statut, prix, nb_lectures, note_moyenne, public_cible, visible, created_at, auteur_id, profiles!oeuvres_auteur_id_fkey(nom, pays)')
+          .then(r => r.error ? { data: [] } : r),
+        supabase.from('paiements')
+          .select('id, user_id, oeuvre_id, type, montant, devise, methode, statut, created_at, confirme_at')
+          .then(r => r.error ? { data: [] } : r),
+        supabase.from('revenus')
+          .select('id, auteur_id, oeuvre_id, type, montant, devise, statut, created_at')
+          .then(r => r.error ? { data: [] } : r),
+        supabase.from('commentaires')
+          .select('id, oeuvre_id, user_id, parent_id, note, created_at')
+          .then(r => r.error ? { data: [] } : r),
+        supabase.from('communautes')
+          .select('id, nom, theme, pays, langue, created_at')
+          .then(r => r.error ? { data: [] } : r),
+        supabase.from('communaute_posts')
+          .select('id, communaute_id, user_id, created_at')
+          .then(r => r.error ? { data: [] } : r),
+        supabase.from('pub_bannieres')
+          .select('id, titre, page_cible, actif, impressions, clics, created_at')
+          .then(r => r.error ? { data: [] } : r),
+      ]);
+
+      const now = new Date();
+      const daysAgo = days => new Date(now.getTime() - days * 86400000);
+      const inDays = (date, days) => date && new Date(date) >= daysAgo(days);
+      const sum = rows => rows.reduce((s, r) => s + Number(r.montant || 0), 0);
+      const groupCount = (rows, getter) => {
+        const out = {};
+        rows.forEach(r => {
+          const key = getter(r) || 'Non renseigne';
+          out[key] = (out[key] || 0) + 1;
+        });
+        return Object.entries(out).sort((a, b) => b[1] - a[1]).map(([label, count]) => ({ label, count }));
+      };
+
+      const allUsers = users.data || [];
+      const allOeuvres = oeuvres.data || [];
+      const allPaiements = paiements.data || [];
+      const confirmedPayments = allPaiements.filter(p => p.statut === 'confirme');
+      const allCommentaires = commentaires.data || [];
+      const allBannieres = bannieres.data || [];
+
+      const totalLectures = allOeuvres.reduce((s, o) => s + Number(o.nb_lectures || 0), 0);
+      const premiumOeuvres = allOeuvres.filter(o => o.statut === 'premium');
+      const paidUsers = new Set(confirmedPayments.map(p => p.user_id).filter(Boolean));
+      const active30 = new Set([
+        ...allCommentaires.filter(c => inDays(c.created_at, 30)).map(c => c.user_id),
+        ...confirmedPayments.filter(p => inDays(p.created_at, 30)).map(p => p.user_id),
+        ...allOeuvres.filter(o => inDays(o.created_at, 30)).map(o => o.auteur_id),
+      ].filter(Boolean));
+
+      const revenue30 = sum(confirmedPayments.filter(p => inDays(p.created_at, 30)));
+      const revenue90 = sum(confirmedPayments.filter(p => inDays(p.created_at, 90)));
+      const arpu = allUsers.length ? sum(confirmedPayments) / allUsers.length : 0;
+      const conversion = allUsers.length ? (paidUsers.size / allUsers.length) * 100 : 0;
+      const engagementRate = allUsers.length ? (active30.size / allUsers.length) * 100 : 0;
+
+      const genres = groupCount(allOeuvres, o => o.genre);
+      const paysUsers = groupCount(allUsers, u => u.pays);
+      const roles = groupCount(allUsers, u => u.role);
+      const langues = groupCount(allOeuvres, o => o.langue_originale);
+      const statuts = groupCount(allOeuvres, o => o.statut);
+
+      const lecturesParGenre = Object.values(allOeuvres.reduce((acc, o) => {
+        const key = o.genre || 'Non renseigne';
+        acc[key] ||= { genre: key, oeuvres: 0, lectures: 0, premium: 0 };
+        acc[key].oeuvres += 1;
+        acc[key].lectures += Number(o.nb_lectures || 0);
+        if (o.statut === 'premium') acc[key].premium += 1;
+        return acc;
+      }, {})).sort((a, b) => b.lectures - a.lectures);
+
+      const revenusParType = Object.values(confirmedPayments.reduce((acc, p) => {
+        const key = p.type || 'autre';
+        acc[key] ||= { type: key, transactions: 0, revenu: 0 };
+        acc[key].transactions += 1;
+        acc[key].revenu += Number(p.montant || 0);
+        return acc;
+      }, {})).sort((a, b) => b.revenu - a.revenu);
+
+      const auteurs = Object.values(allOeuvres.reduce((acc, o) => {
+        const id = o.auteur_id || 'unknown';
+        acc[id] ||= {
+          auteur_id: id,
+          nom: o.profiles?.nom || 'Auteur inconnu',
+          pays: o.profiles?.pays || '',
+          oeuvres: 0,
+          lectures: 0,
+          premium: 0,
+          note: 0,
+          notes: 0,
+        };
+        acc[id].oeuvres += 1;
+        acc[id].lectures += Number(o.nb_lectures || 0);
+        if (o.statut === 'premium') acc[id].premium += 1;
+        if (Number(o.note_moyenne || 0) > 0) {
+          acc[id].note += Number(o.note_moyenne);
+          acc[id].notes += 1;
+        }
+        return acc;
+      }, {})).map(a => ({
+        ...a,
+        note_moyenne: a.notes ? Math.round((a.note / a.notes) * 10) / 10 : 0,
+      })).sort((a, b) => b.lectures - a.lectures);
+
+      const topOeuvres = [...allOeuvres]
+        .sort((a, b) => Number(b.nb_lectures || 0) - Number(a.nb_lectures || 0))
+        .slice(0, 50)
+        .map(o => ({
+          id: o.id,
+          titre: o.titre,
+          auteur: o.profiles?.nom || '',
+          pays_auteur: o.profiles?.pays || '',
+          genre: o.genre,
+          langue: o.langue_originale,
+          statut: o.statut,
+          prix: o.prix,
+          lectures: o.nb_lectures || 0,
+          note: o.note_moyenne || 0,
+          created_at: o.created_at,
+        }));
+
+      const adInventory = allBannieres.map(b => {
+        const impressions = Number(b.impressions || 0);
+        const clics = Number(b.clics || 0);
+        return {
+          titre: b.titre,
+          page: b.page_cible || 'all',
+          actif: !!b.actif,
+          impressions,
+          clics,
+          ctr: impressions ? Math.round((clics / impressions) * 1000) / 10 : 0,
+        };
+      }).sort((a, b) => b.impressions - a.impressions);
+
+      const marketableSegments = [
+        ...paysUsers.slice(0, 8).map(p => ({
+          segment: `Lecteurs ${p.label}`,
+          taille: p.count,
+          angle: 'Ciblage géographique pour éditeurs, écoles, annonceurs culturels',
+        })),
+        ...lecturesParGenre.slice(0, 8).map(g => ({
+          segment: `Intérêt ${g.genre}`,
+          taille: g.lectures,
+          angle: 'Inventaire éditorial et sponsoring par genre',
+        })),
+        {
+          segment: 'Utilisateurs actifs 30 jours',
+          taille: active30.size,
+          angle: 'Audience récente pour campagnes premium',
+        },
+        {
+          segment: 'Acheteurs confirmés',
+          taille: paidUsers.size,
+          angle: 'Audience à forte intention commerciale',
+        },
+      ].filter(s => Number(s.taille || 0) > 0);
+
+      return {
+        generatedAt: now.toISOString(),
+        kpis: {
+          usersTotal: allUsers.length,
+          active30: active30.size,
+          engagementRate,
+          paidUsers: paidUsers.size,
+          conversion,
+          totalOeuvres: allOeuvres.length,
+          premiumOeuvres: premiumOeuvres.length,
+          totalLectures,
+          commentsTotal: allCommentaires.length,
+          repliesTotal: allCommentaires.filter(c => c.parent_id).length,
+          revenue30,
+          revenue90,
+          arpu,
+          confirmedRevenue: sum(confirmedPayments),
+          authorPayouts: sum(revenus.data || []),
+          communities: (communautes.data || []).length,
+          communityPosts: (posts.data || []).length,
+        },
+        segments: {
+          paysUsers,
+          roles,
+          genres,
+          langues,
+          statuts,
+          lecturesParGenre,
+          revenusParType,
+          marketableSegments,
+        },
+        lists: {
+          topOeuvres,
+          topAuteurs: auteurs.slice(0, 50),
+          adInventory,
+          recentPayments: confirmedPayments
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 100),
+        },
+        exports: {
+          audience: allUsers.map(u => ({
+            id: u.id,
+            role: u.role,
+            pays: u.pays,
+            ville: u.ville,
+            langue_preferee: u.langue_preferee,
+            abonnement: u.abonnement,
+            compte_verifie: u.compte_verifie,
+            created_at: u.created_at,
+          })),
+          catalogue: topOeuvres,
+          auteurs: auteurs,
+          paiements: allPaiements.map(p => ({
+            id: p.id,
+            user_id: p.user_id,
+            oeuvre_id: p.oeuvre_id,
+            type: p.type,
+            montant: p.montant,
+            devise: p.devise,
+            methode: p.methode,
+            statut: p.statut,
+            created_at: p.created_at,
+          })),
+          segments: marketableSegments,
+        },
+      };
+    } catch (e) {
+      console.warn('adminGetOwnerInsights fallback:', e);
+      return fallback;
+    }
+  },
+
   /* ---- Régie publicitaire ------------------------------- */
 
   async pubGetBannieres() {
@@ -938,7 +1298,7 @@ export const api = {
     const [oeuvres, revenus] = await Promise.all([
       supabase
         .from('oeuvres')
-        .select('id, titre, nb_lectures, note_moyenne, statut, visible')
+        .select('id, titre, genre, couverture_url, nb_lectures, note_moyenne, statut, prix, chapitres_gratuits, visible, created_at')
         .eq('auteur_id', auteurId)
         .eq('visible', true),
       api.getTotalRevenus(auteurId),

@@ -21,6 +21,8 @@
       <div class="navbar__nav" id="navbar-nav">
         <a href="/index.html" class="navbar__link">Accueil</a>
         <a href="/pages/library.html" class="navbar__link">Bibliothèque</a>
+        <a href="/pages/communautes.html" class="navbar__link">Communautés</a>
+        <a href="/pages/abonnements.html" class="navbar__link">Abonnements</a>
         <a href="/pages/publish.html" class="navbar__link">Publier</a>
       </div>
       <span id="theme-slot"></span>
@@ -129,6 +131,7 @@
             </div>
             <div class="form-group">
               <label class="form-label" for="comment-texte">Ton commentaire</label>
+              <div class="reply-target hidden" id="reply-target"></div>
               <textarea class="form-textarea" id="comment-texte"
                 placeholder="Partage ton ressenti — un encouragement peut faire toute la différence pour un auteur..."
                 rows="3" maxlength="1000"></textarea>

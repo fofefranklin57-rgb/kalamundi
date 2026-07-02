@@ -8,6 +8,7 @@
  */
 
 const FAPSHI_BASE = 'https://live.fapshi.com';
+const SUPABASE_URL = 'https://iobieffnaauecyukecds.supabase.co';
 
 export async function onRequestPost({ request, env }) {
   /* CORS */
@@ -15,7 +16,7 @@ export async function onRequestPost({ request, env }) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': origin.includes('kalamundi') ? origin : 'https://kalamundi.com',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 
   let body;
@@ -26,6 +27,12 @@ export async function onRequestPost({ request, env }) {
   }
 
   const { montant, devise, description, userId, oeuvreId, plan, redirectUrl } = body;
+  const authHeader = request.headers.get('Authorization') || '';
+  const jwt = authHeader.replace('Bearer ', '').trim();
+  const user = await getUser(jwt, env);
+  if (!user?.id || user.id !== userId) {
+    return new Response(JSON.stringify({ error: 'Session invalide.' }), { status: 401, headers: corsHeaders });
+  }
 
   /* Montant en XAF (Fapshi travaille en XAF) */
   let montantXAF = parseInt(montant, 10);
@@ -63,6 +70,14 @@ export async function onRequestPost({ request, env }) {
   }
 
   const data = await fapshiRes.json();
+  await enregistrerPaiement({
+    env,
+    userId,
+    oeuvreId,
+    plan,
+    montant: montantXAF,
+    transId: data.transId,
+  }).catch(() => {});
 
   /* Fapshi retourne { link, transId } */
   return new Response(JSON.stringify({ link: data.link, transId: data.transId }), {
@@ -71,13 +86,48 @@ export async function onRequestPost({ request, env }) {
   });
 }
 
+async function enregistrerPaiement({ env, userId, oeuvreId, plan, montant, transId }) {
+  if (!env.SUPABASE_SERVICE_KEY || !userId || !transId) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/paiements`, {
+    method: 'POST',
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      oeuvre_id: oeuvreId || null,
+      type: plan || 'achat_oeuvre',
+      montant,
+      devise: 'XAF',
+      methode: 'fapshi',
+      reference_transaction: transId,
+      statut: 'en_attente',
+    }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+async function getUser(jwt, env) {
+  if (!jwt || !env.SUPABASE_ANON_KEY) return null;
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      apikey: env.SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${jwt}`,
+    },
+  });
+  return res.ok ? res.json() : null;
+}
+
 export async function onRequestOptions() {
   return new Response(null, {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
 }

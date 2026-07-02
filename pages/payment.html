@@ -64,9 +64,8 @@
 
           <div class="payment-body">
 
-            <!-- Choix méthode -->
             <p style="color:var(--text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--spacing-md)">
-              Choisissez votre méthode de paiement :
+              Tous les paiements Kalamundi passent par Fapshi.
             </p>
             <div class="methods">
               <button class="method-btn" onclick="choisirMethode('fapshi')">
@@ -74,27 +73,6 @@
                 <div>
                   <div class="method-btn__label">Fapshi — Mobile Money</div>
                   <div class="method-btn__sub">MTN · Orange · Express Union — Cameroun (automatique)</div>
-                </div>
-              </button>
-              <button class="method-btn" onclick="choisirMethode('mtn')">
-                <span class="method-btn__icon">📱</span>
-                <div>
-                  <div class="method-btn__label">MTN Mobile Money (manuel)</div>
-                  <div class="method-btn__sub">Cameroun — Transfert direct</div>
-                </div>
-              </button>
-              <button class="method-btn" onclick="choisirMethode('om')">
-                <span class="method-btn__icon">🟠</span>
-                <div>
-                  <div class="method-btn__label">Orange Money (manuel)</div>
-                  <div class="method-btn__sub">Afrique francophone</div>
-                </div>
-              </button>
-              <button class="method-btn" onclick="choisirMethode('paypal')">
-                <span class="method-btn__icon">🌐</span>
-                <div>
-                  <div class="method-btn__label">PayPal / Carte bancaire</div>
-                  <div class="method-btn__sub">International — Visa, Mastercard, PayPal</div>
                 </div>
               </button>
             </div>
@@ -119,68 +97,6 @@
                 </p>
               </div>
             </div>
-
-            <!-- Panel MTN MoMo -->
-            <div class="method-panel" id="panel-mtn">
-              <div class="instruction-box">
-                <h3>📱 Paiement MTN Mobile Money</h3>
-                <div class="numero">673 950 019</div>
-                <p style="font-size:var(--font-size-xs);color:var(--text-light);margin-bottom:var(--spacing-sm)">Nom du compte : Kalamundi / Franklin</p>
-                <ol>
-                  <li>Composez <strong>*126#</strong> sur votre téléphone MTN</li>
-                  <li>Choisissez <strong>Transfert d'argent</strong></li>
-                  <li>Entrez le numéro <strong>673 950 019</strong></li>
-                  <li>Entrez le montant exact : <strong id="mtn-montant"></strong></li>
-                  <li>Validez et notez la <strong>référence de transaction</strong></li>
-                </ol>
-              </div>
-              <div id="form-mtn"></div>
-            </div>
-
-            <!-- Panel Orange Money -->
-            <div class="method-panel" id="panel-om">
-              <div class="instruction-box">
-                <h3>🟠 Paiement Orange Money</h3>
-                <div class="numero">673 950 019</div>
-                <p style="font-size:var(--font-size-xs);color:var(--text-light);margin-bottom:var(--spacing-sm)">Carte virtuelle Orange Money — Kalamundi</p>
-                <ol>
-                  <li>Ouvrez l'application <strong>Orange Money</strong></li>
-                  <li>Choisissez <strong>Envoyer de l'argent</strong></li>
-                  <li>Entrez le numéro <strong>673 950 019</strong></li>
-                  <li>Entrez le montant exact : <strong id="om-montant"></strong></li>
-                  <li>Validez et notez la <strong>référence de transaction</strong></li>
-                </ol>
-              </div>
-              <div id="form-om"></div>
-            </div>
-
-            <!-- Panel PayPal -->
-            <div class="method-panel" id="panel-paypal">
-              <div class="instruction-box">
-                <h3>🌐 Paiement PayPal / Carte bancaire</h3>
-                <ol>
-                  <li>Cliquez sur <strong>"Payer avec PayPal"</strong> ci-dessous</li>
-                  <li>Connectez-vous à PayPal ou payez par carte</li>
-                  <li>Entrez le montant exact : <strong id="paypal-montant"></strong></li>
-                  <li>Complétez le paiement et notez l'<strong>ID de transaction PayPal</strong></li>
-                </ol>
-              </div>
-              <div style="margin-bottom:var(--spacing-lg)">
-                <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank" id="paypal-form">
-                  <input type="hidden" name="cmd" value="_xclick">
-                  <input type="hidden" name="business" value="6YGZW846EQMJ2">
-                  <input type="hidden" name="currency_code" value="USD">
-                  <input type="hidden" name="item_name" id="paypal-item-name" value="Kalamundi">
-                  <input type="hidden" name="amount" id="paypal-amount" value="">
-                  <input type="hidden" name="no_shipping" value="1">
-                  <button type="submit" class="btn btn--primary" style="width:100%;font-size:var(--font-size-md);padding:14px">
-                    💳 Payer avec PayPal
-                  </button>
-                </form>
-              </div>
-              <div id="form-paypal"></div>
-            </div>
-
           </div>
         </div>
 
@@ -189,7 +105,7 @@
           <div style="font-size:64px;margin-bottom:var(--spacing-lg)">✅</div>
           <h2 style="color:var(--color-primary);margin-bottom:var(--spacing-md)">Paiement soumis !</h2>
           <p style="color:var(--text-secondary);margin-bottom:var(--spacing-xl)">
-            Votre référence de transaction a été reçue. Notre équipe vérifie et active votre accès sous <strong>24h maximum</strong> (généralement quelques heures).
+            Fapshi a bien reçu le paiement. Votre accès est activé dès que la confirmation automatique arrive.
           </p>
           <a href="/pages/library.html" class="btn btn--primary">Retour au catalogue</a>
         </div>

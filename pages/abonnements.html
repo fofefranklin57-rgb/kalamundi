@@ -56,7 +56,11 @@
     .plan__features li { font-size: var(--font-size-sm); color: var(--text-secondary); display: flex; align-items: flex-start; gap: 8px; }
     .plan__features li::before { content: '✓'; color: var(--color-primary); font-weight: 700; flex-shrink: 0; }
     .plan__cta { margin-top: auto; }
-    .gratuit-badge { background: var(--bg-secondary); border-radius: var(--border-radius-md); padding: var(--spacing-lg); margin-bottom: var(--spacing-xl); text-align: center; }
+    .gratuit-badge { background: var(--bg-secondary); border-radius: 8px; padding: var(--spacing-lg); margin-bottom: var(--spacing-xl); text-align: center; }
+    .plan-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--spacing-md); margin-bottom:var(--spacing-xl); }
+    .plan-strip__item { border:1px solid var(--border-color); border-radius:8px; padding:var(--spacing-md); background:var(--bg-card); }
+    .plan-strip__item strong { color:var(--color-primary); display:block; margin-bottom:4px; }
+    @media(max-width:760px){ .plan-strip{grid-template-columns:1fr;} }
   </style>
 </head>
 <body>
@@ -66,6 +70,7 @@
       <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
       <nav class="navbar__nav" id="nav-menu">
         <a href="/pages/library.html" class="navbar__link">Catalogue</a>
+        <a href="/pages/communautes.html" class="navbar__link">Communautés</a>
         <a href="/pages/abonnements.html" class="navbar__link navbar__link--active">Tarifs</a>
       </nav>
       <div class="navbar__actions" id="navbar-actions"></div>
@@ -81,7 +86,7 @@
       <div class="container text-center">
         <div class="hero__badge">💎 Formules Kalamundi</div>
         <h1 class="hero__title">Choisissez votre formule</h1>
-        <p class="hero__subtitle">Commencez gratuitement. Passez premium quand vous êtes prêt.</p>
+        <p class="hero__subtitle">Lecture gratuite, livres premium, hors-ligne et expérience sans publicité.</p>
       </div>
     </section>
 
@@ -91,39 +96,23 @@
         <div class="gratuit-badge">
           <strong style="color:var(--color-primary)">✅ Accès gratuit inclus pour tous</strong>
           <p style="color:var(--text-secondary);margin-top:4px;font-size:var(--font-size-sm)">
-            Lecture illimitée des œuvres gratuites · Traduction automatique · Publication d'œuvres
+            Lecture des œuvres gratuites · Publication d'œuvres · Communautés · Paiement sécurisé Fapshi
           </p>
         </div>
 
-        <div class="plans-grid">
+        <div class="plan-strip">
+          <div class="plan-strip__item"><strong>📖 Reader+</strong> Pour les lecteurs fidèles : hors-ligne, confort, sans publicité.</div>
+          <div class="plan-strip__item"><strong>✍ Auteur Pro</strong> Pour vendre, suivre ses statistiques et développer son audience.</div>
+          <div class="plan-strip__item"><strong>🏛 Institution</strong> Pour bibliothèques, ONG, clubs de lecture et partenaires culturels.</div>
+        </div>
 
-          <!-- ÉTUDIANT -->
-          <div class="plan-card" style="border-color:#1a3a5c">
-            <div class="plan__icon">🎓</div>
-            <div class="plan__name" style="color:#1a3a5c">Étudiant</div>
-            <div class="plan__price" style="color:#1a3a5c">500 FCFA <span>/ mois</span></div>
-            <div class="plan__desc">Pour les élèves et étudiants du Cameroun. Accès à tous les outils scolaires.</div>
-            <ul class="plan__features">
-              <li>Annales BAC, Probatoire, BEPC (toutes séries)</li>
-              <li>Manuels scolaires OpenStax</li>
-              <li>Mode hors-ligne (lecture sans internet)</li>
-              <li>Espace École — rejoindre une classe</li>
-              <li>Lecture sans publicité</li>
-              <li>Paiement via MTN MoMo ou Orange Money</li>
-            </ul>
-            <div class="plan__cta">
-              <a href="/pages/payment.html?plan=etudiant&montant=500"
-                 class="btn btn--primary" style="width:100%;text-align:center;background:#1a3a5c;border-color:#1a3a5c">
-                Souscrire Étudiant
-              </a>
-            </div>
-          </div>
+        <div class="plans-grid">
 
           <!-- READER+ -->
           <div class="plan-card plan-card--featured">
             <div class="plan__icon">📖</div>
             <div class="plan__name">Reader+</div>
-            <div class="plan__price">2 USD <span>/ mois</span></div>
+            <div class="plan__price">1 000 FCFA <span>/ mois</span></div>
             <div class="plan__desc">Pour les lecteurs passionnés qui veulent accéder à toutes les œuvres premium.</div>
             <ul class="plan__features">
               <li>Accès illimité aux œuvres premium</li>
@@ -133,7 +122,7 @@
               <li>Historique de lecture complet</li>
             </ul>
             <div class="plan__cta">
-              <a href="/pages/payment.html?plan=reader_plus&montant=2" class="btn btn--primary" style="width:100%;text-align:center">
+              <a href="/pages/payment.html?plan=reader_plus&montant=1000" class="btn btn--primary" style="width:100%;text-align:center">
                 Souscrire Reader+
               </a>
             </div>
@@ -143,7 +132,7 @@
           <div class="plan-card">
             <div class="plan__icon">🖊️</div>
             <div class="plan__name">Auteur Pro</div>
-            <div class="plan__price">5 USD <span>/ mois</span></div>
+            <div class="plan__price">2 500 FCFA <span>/ mois</span></div>
             <div class="plan__desc">Pour les auteurs qui veulent développer leur audience et maximiser leurs revenus.</div>
             <ul class="plan__features">
               <li>Tout Reader+ inclus</li>
@@ -154,7 +143,7 @@
               <li>Accès anticipé aux nouvelles fonctionnalités</li>
             </ul>
             <div class="plan__cta">
-              <a href="/pages/payment.html?plan=auteur_pro&montant=5" class="btn btn--accent" style="width:100%;text-align:center">
+              <a href="/pages/payment.html?plan=auteur_pro&montant=2500" class="btn btn--accent" style="width:100%;text-align:center">
                 Souscrire Auteur Pro
               </a>
             </div>
@@ -164,7 +153,7 @@
           <div class="plan-card">
             <div class="plan__icon">🏛️</div>
             <div class="plan__name">Institution</div>
-            <div class="plan__price">20 USD <span>/ mois</span></div>
+            <div class="plan__price">10 000 FCFA <span>/ mois</span></div>
             <div class="plan__desc">Pour les ONG, écoles et bibliothèques. Tarif solidaire disponible sur demande.</div>
             <ul class="plan__features">
               <li>Accès pour toute votre équipe</li>
@@ -175,8 +164,8 @@
               <li>Tarif ONG gratuit sur dossier</li>
             </ul>
             <div class="plan__cta">
-              <a href="/pages/institution.html" class="btn btn--outline" style="width:100%;text-align:center">
-                Contacter pour Institution
+              <a href="/pages/payment.html?plan=institution&montant=10000" class="btn btn--outline" style="width:100%;text-align:center">
+                Souscrire Institution
               </a>
             </div>
           </div>
@@ -189,18 +178,18 @@
           <div style="display:flex;flex-direction:column;gap:var(--spacing-md)">
             <div class="feature-card">
               <div class="feature-card__icon">📱</div>
-              <h3 class="feature-card__title">MTN Mobile Money</h3>
-              <p class="feature-card__text">Pour les utilisateurs au Cameroun. Rapide et sans frais de carte.</p>
+              <h3 class="feature-card__title">Fapshi Mobile Money</h3>
+              <p class="feature-card__text">Paiement sécurisé via Fapshi, compatible avec les principaux moyens locaux.</p>
             </div>
             <div class="feature-card">
               <div class="feature-card__icon">🟠</div>
-              <h3 class="feature-card__title">Orange Money</h3>
-              <p class="feature-card__text">Pour les utilisateurs en Afrique francophone.</p>
+              <h3 class="feature-card__title">Confirmation automatique</h3>
+              <p class="feature-card__text">L’accès est activé après confirmation du paiement.</p>
             </div>
             <div class="feature-card">
               <div class="feature-card__icon">🌐</div>
-              <h3 class="feature-card__title">PayPal / Carte bancaire</h3>
-              <p class="feature-card__text">Pour les utilisateurs internationaux. Visa, Mastercard, PayPal acceptés.</p>
+              <h3 class="feature-card__title">Une seule expérience</h3>
+              <p class="feature-card__text">Les achats d’œuvres premium et les abonnements passent par le même flux.</p>
             </div>
           </div>
         </div>
@@ -211,7 +200,7 @@
     <footer class="footer">
       <div class="container">
         <div class="footer__bottom">
-          © 2025 Kalamundi &nbsp;|&nbsp;
+          © 2026 Kalamundi &nbsp;|&nbsp;
           <a href="/pages/cgu.html" class="footer__link">CGU</a> &nbsp;|&nbsp;
           <a href="/pages/confidentialite.html" class="footer__link">Confidentialité</a>
         </div>

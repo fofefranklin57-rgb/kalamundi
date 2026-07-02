@@ -6,6 +6,7 @@
 import { api } from './api.js';
 import { debounce, getParam, formatNombre, truncate } from './utils.js';
 import { genererCouverture } from './cover-generator.js';
+import { injecterPub } from './pub.js';
 
 /* ============================================================
    RÉFÉRENTIEL GENRE — adapté BISAC
@@ -107,12 +108,26 @@ const PAYS_AFRICAINS = new Set([
   'Centrafrique','Équateur','Guinée équatoriale',
 ]);
 
+const AUTEURS_SYSTEME = new Set([
+  '00000000-0000-0000-0000-000000000001',
+]);
+
+const NOMS_IMPORTS = new Set([
+  'bibliotheque kalamundi',
+  'bibliothèque kalamundi',
+  'domaine public',
+  'creative commons',
+]);
+
+const FETCH_LIMIT = 240;
+
 /* ============================================================
    ÉTAT DES FILTRES
    ============================================================ */
 
 const filtres = {
   categorie: getParam('cat')    || '',
+  collection: getParam('collection') || (getParam('cat') === 'patrimoine' ? 'patrimoine' : 'originaux'),
   genre:     getParam('genre')  || '',
   langue:    getParam('langue') || '',
   statut:    getParam('statut') || '',
@@ -159,14 +174,16 @@ async function chargerOeuvres() {
   }
 
   try {
+    const chargementLarge = filtres.collection !== 'tout';
     const { data: tous, total } = await api.getOeuvres({
-      page:      filtres.page,
-      limit:     LIMIT,
+      page:      chargementLarge ? 1 : filtres.page,
+      limit:     chargementLarge ? FETCH_LIMIT : LIMIT,
       langue:    filtres.langue  || undefined,
       statut:    filtres.statut  || undefined,
       genre:     genreFiltre,
       recherche: filtres.recherche || undefined,
       tri:       filtres.tri,
+      exclureSysteme: filtres.collection === 'originaux',
     });
 
     // Filtrage client pour catégories multi-genres et pays africains
@@ -184,19 +201,32 @@ async function chargerOeuvres() {
       data = data.filter(o => o.profiles?.pays === filtres.pays);
     }
 
+    if (filtres.collection === 'originaux') {
+      data = data.filter(o => !estContenuImporte(o));
+    } else if (filtres.collection === 'patrimoine') {
+      data = data.filter(o => estContenuImporte(o));
+    }
+
     // Compte affiché
-    const nbAffiches = data.length;
+    const totalAffiches = chargementLarge ? data.length : total;
+    const pageData = chargementLarge
+      ? data.slice((filtres.page - 1) * LIMIT, filtres.page * LIMIT)
+      : data;
+    const nbAffiches = pageData.length;
     const countEl = document.getElementById('library-count');
     countEl.textContent = nbAffiches === 0
       ? 'Aucune œuvre trouvée'
-      : `${total} œuvre${total > 1 ? 's' : ''} — ${nbAffiches} affichée${nbAffiches > 1 ? 's' : ''}`;
+      : `${totalAffiches} œuvre${totalAffiches > 1 ? 's' : ''} — ${nbAffiches} affichée${nbAffiches > 1 ? 's' : ''}`;
 
-    if (!data.length) {
+    if (!pageData.length) {
+      const message = filtres.collection === 'originaux'
+        ? 'Les livres importés sont maintenant rangés à part. Publie une œuvre ou passe sur Patrimoine / imports pour les voir.'
+        : 'Aucune œuvre ne correspond à ces filtres.';
       grid.innerHTML = `
         <div class="empty-state" style="grid-column:1/-1">
-          <div class="empty-state__icon">📭</div>
+          <div class="empty-state__icon">📚</div>
           <div class="empty-state__title">Aucune œuvre dans cette catégorie</div>
-          <p class="empty-state__text">Sois le premier à publier dans cette catégorie !</p>
+          <p class="empty-state__text">${message}</p>
           <a href="/pages/publish.html" class="btn btn--primary" style="margin-top:var(--spacing-md)">
             Publier une œuvre
           </a>
@@ -205,13 +235,41 @@ async function chargerOeuvres() {
       return;
     }
 
-    grid.innerHTML = data.map(o => carteOeuvre(o)).join('');
-    rendrePagination(total);
+    grid.innerHTML = pageData.map(o => carteOeuvre(o)).join('');
+    rendrePagination(totalAffiches);
     afficherFiltresActifs();
 
   } catch (err) {
     grid.innerHTML = `<div class="alert alert--error" style="grid-column:1/-1">Erreur de chargement : ${err.message}</div>`;
   }
+}
+
+function estContenuImporte(o) {
+  const nom = (o.profiles?.nom || '').toLowerCase();
+  const resume = (o.resume || '').toLowerCase();
+  return AUTEURS_SYSTEME.has(o.auteur_id)
+    || NOMS_IMPORTS.has(nom)
+    || resume.includes('project gutenberg')
+    || resume.includes('standard ebooks')
+    || resume.includes('openstax')
+    || resume.includes('african storybook')
+    || resume.includes('domaine public');
+}
+
+function echapperAttr(valeur = '') {
+  return String(valeur)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function normaliserCouverture(url = '') {
+  const propre = String(url || '').trim();
+  if (!propre) return '';
+  if (propre.startsWith('//')) return `https:${propre}`;
+  if (propre.startsWith('http://')) return propre.replace(/^http:\/\//, 'https://');
+  return propre;
 }
 
 /* ============================================================
@@ -229,15 +287,17 @@ function carteOeuvre(o) {
   const annee   = o.created_at ? new Date(o.created_at).getFullYear() : '';
   const note    = o.note_moyenne ? `⭐ ${Number(o.note_moyenne).toFixed(1)}` : '';
   const lectures = o.nb_lectures ? `👁 ${formatNombre(o.nb_lectures)}` : '';
+  const estImporte = estContenuImporte(o);
 
   // Couverture : image réelle, générée automatiquement, ou emoji fallback
   const auteurNom = o.profiles?.nom || '';
   const genreKey  = (o.genre || '').toLowerCase();
   const coverFallbackB64 = genererCouverture(o.titre, auteurNom, genreKey, 300, 420);
-  const couverture = o.couverture_url
-    ? `<img src="${o.couverture_url}" alt="Couverture — ${o.titre}" loading="lazy"
+  const coverUrl = normaliserCouverture(o.couverture_url);
+  const couverture = coverUrl
+    ? `<img src="${echapperAttr(coverUrl)}" alt="Couverture — ${echapperAttr(o.titre)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"
            onerror="this.onerror=null;this.src='${coverFallbackB64}'" />`
-    : `<img src="${coverFallbackB64}" alt="Couverture générée — ${o.titre}" loading="lazy" />`;
+    : `<img src="${coverFallbackB64}" alt="Couverture générée — ${echapperAttr(o.titre)}" loading="lazy" decoding="async" />`;
 
   // Badge licence (dc:rights)
   const badgeLicence = o.statut === 'premium'
@@ -248,15 +308,19 @@ function carteOeuvre(o) {
   const badgeAfrique = estAfricain
     ? '<span class="book-badge book-badge--africa">🌍 Afrique</span>'
     : '';
+  const badgeImport = estImporte
+    ? '<span class="book-badge book-badge--import">Patrimoine</span>'
+    : '';
 
   return `
-    <a href="/pages/work.html?id=${o.id}" class="book-card" aria-label="${o.titre} par ${auteur}">
+    <a href="/pages/work.html?id=${o.id}" class="book-card ${estImporte ? 'book-card--import' : 'book-card--original'}" aria-label="${echapperAttr(o.titre)} par ${echapperAttr(auteur)}">
 
       <!-- Couverture avec couleur genre -->
       <div class="book-card__cover" style="--genre-color:${cfg.couleur}">
         ${couverture}
         <div class="book-card__cover-badges">
           ${badgeLicence}
+          ${badgeImport}
         </div>
       </div>
 
@@ -368,6 +432,10 @@ function afficherFiltresActifs() {
   if (filtres.pays) {
     chips.push({ label: `Pays : ${filtres.pays}`, key: 'pays' });
   }
+  if (filtres.collection !== 'originaux') {
+    const label = filtres.collection === 'patrimoine' ? 'Patrimoine / imports' : 'Tout le catalogue';
+    chips.push({ label: `Rayon : ${label}`, key: 'collection' });
+  }
   if (filtres.recherche) {
     chips.push({ label: `"${filtres.recherche}"`, key: 'recherche' });
   }
@@ -382,10 +450,11 @@ function afficherFiltresActifs() {
   el.querySelectorAll('.active-filter-chip').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.dataset.key;
-      filtres[key] = '';
+      filtres[key] = key === 'collection' ? 'originaux' : '';
       if (key === 'langue') document.getElementById('filter-langue').value = '';
       if (key === 'pays')   document.getElementById('filter-pays').value   = '';
       if (key === 'statut') document.querySelector('input[name="statut"][value=""]').checked = true;
+      if (key === 'collection') document.querySelector('input[name="collection"][value="originaux"]').checked = true;
       if (key === 'recherche') document.getElementById('search-input').value = '';
       filtres.page = 1;
       chargerOeuvres();
@@ -433,6 +502,8 @@ function mettreAJourSidebarGenres() {
    ============================================================ */
 
 function syncUI() {
+  document.querySelectorAll('.lib-radio').forEach(r => r.classList.remove('is-active'));
+
   // Onglets catégorie
   document.querySelectorAll('.lib-tab').forEach(tab => {
     tab.classList.toggle('is-active', tab.dataset.cat === filtres.categorie);
@@ -443,6 +514,13 @@ function syncUI() {
   if (filtres.recherche) document.getElementById('search-input').value = filtres.recherche;
   if (filtres.langue)    document.getElementById('filter-langue').value  = filtres.langue;
   if (filtres.pays)      document.getElementById('filter-pays').value    = filtres.pays;
+
+  // Rayon
+  const collectionRadio = document.querySelector(`input[name="collection"][value="${filtres.collection}"]`);
+  if (collectionRadio) {
+    collectionRadio.checked = true;
+    collectionRadio.closest('.lib-radio')?.classList.add('is-active');
+  }
 
   // Tri
   const triRadio = document.querySelector(`input[name="tri"][value="${filtres.tri}"]`);
@@ -472,11 +550,27 @@ document.querySelectorAll('.lib-tab').forEach(tab => {
     filtres.categorie = tab.dataset.cat;
     filtres.genre     = '';
     filtres.page      = 1;
+    filtres.collection = tab.dataset.cat === 'patrimoine' ? 'patrimoine' : 'originaux';
     // Réinitialiser le filtre statut si on quittait "patrimoine"
     if (filtres.statut === 'gratuit' && tab.dataset.cat !== 'patrimoine') {
       filtres.statut = '';
       document.querySelector('input[name="statut"][value=""]').checked = true;
     }
+    syncUI();
+    chargerOeuvres();
+  });
+});
+
+// Rayon catalogue
+document.querySelectorAll('input[name="collection"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    filtres.collection = radio.value;
+    filtres.page = 1;
+    if (radio.value !== 'patrimoine' && filtres.categorie === 'patrimoine') {
+      filtres.categorie = '';
+    }
+    document.querySelectorAll('input[name="collection"]').forEach(r =>
+      r.closest('.lib-radio')?.classList.toggle('is-active', r === radio));
     syncUI();
     chargerOeuvres();
   });
@@ -529,6 +623,7 @@ document.getElementById('search-input')?.addEventListener('input', rechercheDebo
 // Reset
 document.getElementById('reset-filters')?.addEventListener('click', () => {
   filtres.categorie = '';
+  filtres.collection = 'originaux';
   filtres.genre     = '';
   filtres.langue    = '';
   filtres.statut    = '';
@@ -540,6 +635,7 @@ document.getElementById('reset-filters')?.addEventListener('click', () => {
   document.getElementById('filter-langue').value  = '';
   document.getElementById('filter-pays').value    = '';
   document.querySelector('input[name="tri"][value="recent"]').checked  = true;
+  document.querySelector('input[name="collection"][value="originaux"]').checked  = true;
   document.querySelector('input[name="statut"][value=""]').checked     = true;
   syncUI();
   chargerOeuvres();
@@ -549,3 +645,5 @@ document.getElementById('reset-filters')?.addEventListener('click', () => {
 document.getElementById('btn-mobile-filters')?.addEventListener('click', () => {
   document.getElementById('lib-sidebar').classList.toggle('is-open');
 });
+
+injecterPub('library');

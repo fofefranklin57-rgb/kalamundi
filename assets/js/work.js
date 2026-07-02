@@ -13,6 +13,7 @@ import { genererCouverture } from './cover-generator.js';
 const oeuvreId = getParam('id');
 let noteSelectionnee = 0;
 let utilisateur = null;
+let commentaireReponseId = null;
 
 /* ============================================================
    Init
@@ -264,13 +265,22 @@ async function rendreActions(oeuvre) {
     } else {
       actionsEl.innerHTML = `
         <button class="btn btn--accent btn--lg" id="btn-acheter">
-          ⭐ Accéder — ${oeuvre.prix} USD
+          ⭐ Accéder — ${formatPrixXaf(oeuvre.prix)}
         </button>
         <p style="color:rgba(255,255,255,0.6);font-size:var(--font-size-xs);margin-top:4px;">
-          Paiement sécurisé · 50% reversés à l'auteur
+          ${Number(oeuvre.chapitres_gratuits || 0) > 0 ? `${oeuvre.chapitres_gratuits} chapitre(s) gratuit(s) · ` : ''}Paiement sécurisé · 50% reversés à l'auteur
         </p>`;
     }
   }
+
+  document.getElementById('btn-acheter')?.addEventListener('click', () => {
+    if (!utilisateur) {
+      const retour = encodeURIComponent(`/pages/payment.html?oeuvre=${oeuvre.id}`);
+      window.location.href = `/pages/login.html?redirect=${retour}`;
+      return;
+    }
+    window.location.href = `/pages/payment.html?oeuvre=${oeuvre.id}&montant=${encodeURIComponent(oeuvre.prix || 300)}&titre=${encodeURIComponent(oeuvre.titre || 'Kalamundi')}`;
+  });
 
   // Bouton hors-ligne
   document.getElementById('btn-offline')?.addEventListener('click', async (e) => {
@@ -290,19 +300,7 @@ async function rendreActions(oeuvre) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner spinner--sm"></span> Téléchargement…';
     try {
-      // Récupérer tous les chapitres
-      const { data: chapitres, error } = await api.supabase
-        ? api.supabase.from('chapitres').select('numero,titre,contenu').eq('oeuvre_id', oeuvre.id).order('numero')
-        : { data: null, error: 'no supabase' };
-
-      // Fallback : utiliser l'import supabase direct
-      let chaps = chapitres;
-      if (!chaps) {
-        const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
-        const sb = createClient('https://iobieffnaauecyukecds.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvYmllZmZuYWF1ZWN5dWtlY2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDIzNTEsImV4cCI6MjA5NjMxODM1MX0.w1_Zv9VeVvoLlt1H0d7wN8To-A5DAxSfszV0kJ_5NRE');
-        const res = await sb.from('chapitres').select('numero,titre,contenu').eq('oeuvre_id', oeuvre.id).order('numero');
-        chaps = res.data;
-      }
+      const chaps = await api.getChapitresOffline(oeuvre.id);
 
       if (!chaps || !chaps.length) {
         toast('Aucun chapitre disponible pour ce livre.', 'erreur');
@@ -343,9 +341,13 @@ async function rendreActions(oeuvre) {
   });
 }
 
-async function verifierAccesPremium() {
-  // À implémenter avec la table revenus/achats — retourne false par défaut
-  return false;
+async function verifierAccesPremium(oeuvreId) {
+  if (!utilisateur) return false;
+  return api.verifierAccesPremium(utilisateur.id, oeuvreId).catch(() => false);
+}
+
+function formatPrixXaf(prix) {
+  return `${Number(prix || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} FCFA`;
 }
 
 /* ============================================================
@@ -395,24 +397,78 @@ async function chargerCommentaires() {
       return;
     }
 
-    listEl.innerHTML = commentaires.map(c => `
+    listEl.innerHTML = construireArbreCommentaires(commentaires).map(c => `
       <div class="comment-item">
         <div class="avatar avatar--sm avatar--placeholder">
-          ${c.profiles?.nom?.charAt(0).toUpperCase() || '?'}
+          ${escapeHtml(c.profiles?.nom?.charAt(0).toUpperCase() || '?')}
         </div>
         <div class="comment-item__body">
           <div class="comment-item__header">
-            <span class="comment-item__nom">${c.profiles?.nom || 'Anonyme'}</span>
+            <span class="comment-item__nom">${escapeHtml(c.profiles?.nom || 'Anonyme')}</span>
             <span class="comment-item__date">${formatDate(c.created_at)}</span>
           </div>
           ${c.note ? `<div class="stars" style="margin-bottom:4px;">${'★'.repeat(c.note)}${'★'.repeat(5 - c.note).replace(/★/g, '<span class="stars__empty">★</span>')}</div>` : ''}
-          <p class="comment-item__texte">${c.contenu}</p>
+          <p class="comment-item__texte">${escapeHtml(c.contenu)}</p>
+          ${utilisateur ? `<button type="button" class="comment-reply-btn" data-comment-id="${c.id}" data-comment-author="${escapeAttr(c.profiles?.nom || 'Anonyme')}">Répondre</button>` : ''}
+          ${renderReponses(c.reponses || [])}
         </div>
       </div>
     `).join('');
+    brancherBoutonsReponse();
   } catch {
     listEl.innerHTML = '<p style="color:var(--color-error);">Erreur de chargement des commentaires.</p>';
   }
+}
+
+function construireArbreCommentaires(commentaires) {
+  const parId = new Map();
+  const racines = [];
+  commentaires.forEach(c => parId.set(c.id, { ...c, reponses: [] }));
+  commentaires.forEach(c => {
+    const item = parId.get(c.id);
+    const parent = c.parent_id ? parId.get(c.parent_id) : null;
+    if (parent) parent.reponses.push(item);
+    else racines.push(item);
+  });
+  return racines.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function renderReponses(reponses) {
+  if (!reponses.length) return '';
+  return `
+    <div class="comment-replies">
+      ${reponses.map(r => `
+        <div class="comment-reply">
+          <div class="comment-item__header">
+            <span class="comment-item__nom">${escapeHtml(r.profiles?.nom || 'Anonyme')}</span>
+            <span class="comment-item__date">${formatDate(r.created_at)}</span>
+          </div>
+          <p class="comment-item__texte">${escapeHtml(r.contenu)}</p>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function brancherBoutonsReponse() {
+  document.querySelectorAll('.comment-reply-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      commentaireReponseId = btn.dataset.commentId;
+      const auteur = btn.dataset.commentAuthor || 'ce commentaire';
+      const textarea = document.getElementById('comment-texte');
+      const badge = document.getElementById('reply-target');
+      if (badge) {
+        badge.innerHTML = `Réponse à <strong>${escapeHtml(auteur)}</strong> <button type="button" id="cancel-reply">Annuler</button>`;
+        badge.classList.remove('hidden');
+        document.getElementById('cancel-reply')?.addEventListener('click', annulerReponse);
+      }
+      textarea?.focus();
+    });
+  });
+}
+
+function annulerReponse() {
+  commentaireReponseId = null;
+  document.getElementById('reply-target')?.classList.add('hidden');
 }
 
 /* ============================================================
@@ -466,18 +522,25 @@ document.getElementById('btn-commenter')?.addEventListener('click', async () => 
 
   try {
     const nouveau = await api.ajouterCommentaire(
-      utilisateur.id, oeuvreId, texte, noteSelectionnee || null
+      utilisateur.id,
+      oeuvreId,
+      texte,
+      commentaireReponseId ? null : (noteSelectionnee || null),
+      commentaireReponseId
     );
+
+    const etaitReponse = !!commentaireReponseId;
 
     // Réinitialiser le formulaire
     document.getElementById('comment-texte').value = '';
     noteSelectionnee = 0;
+    annulerReponse();
     document.querySelectorAll('.star-rating__star').forEach(s => s.classList.remove('is-active'));
 
-    toastSucces('Avis publié ✓ Merci !');
+    toastSucces(etaitReponse ? 'Réponse publiée ✓' : 'Avis publié ✓ Merci !');
 
-    // Insérer le nouveau commentaire en tête de liste sans rechargement
-    if (nouveau) {
+    // Les réponses ont besoin d'être replacées sous leur commentaire parent.
+    if (nouveau && !nouveau.parent_id) {
       _prependerCommentaire(nouveau);
     } else {
       await chargerCommentaires();
@@ -515,17 +578,32 @@ function _prependerCommentaire(c) {
     </div>
     <div class="comment-item__body">
       <div class="comment-item__header">
-        <span class="comment-item__nom">${c.profiles?.nom || 'Moi'}</span>
+        <span class="comment-item__nom">${escapeHtml(c.profiles?.nom || 'Moi')}</span>
         <span class="comment-item__date">À l'instant</span>
       </div>
       ${c.note ? `<div class="stars" style="margin-bottom:4px;color:var(--color-accent)">${'★'.repeat(c.note)}<span style="color:var(--border-color)">${'★'.repeat(5 - c.note)}</span></div>` : ''}
-      <p class="comment-item__texte">${c.contenu}</p>
+      <p class="comment-item__texte">${escapeHtml(c.contenu)}</p>
+      ${utilisateur ? `<button type="button" class="comment-reply-btn" data-comment-id="${c.id}" data-comment-author="${escapeAttr(c.profiles?.nom || 'Moi')}">Répondre</button>` : ''}
     </div>`;
 
   listEl.prepend(div);
+  brancherBoutonsReponse();
 
   // Animation d'apparition
   requestAnimationFrame(() => div.style.animation = 'fadeIn 0.3s ease');
+}
+
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function escapeAttr(text) {
+  return escapeHtml(text).replace(/`/g, '&#096;');
 }
 
 /* ============================================================

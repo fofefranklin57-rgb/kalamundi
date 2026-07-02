@@ -5,6 +5,7 @@
 
 import { api } from './api.js';
 import { getUser, supabase } from './auth.js';
+import { injecterPub } from './pub.js';
 import { getLivre } from './offline.js';
 import { genererCouverture } from './cover-generator.js';
 import { getParam, lsGet, lsSet, toast, toastErreur } from './utils.js';
@@ -58,6 +59,7 @@ const etat = {
   chapitres:      [],
   oeuvre:         null,
   utilisateur:    null,
+  accesPremium:   false,
   couvertureVisible: true,
   pages:          0,   // nombre de pages dans le chapitre courant (après pagination)
   pageCourante:   1,   // page courante (1-indexed)
@@ -83,6 +85,10 @@ const etat = {
   } catch {
     toastErreur('Impossible de charger cette œuvre.');
     return;
+  }
+
+  if (etat.utilisateur && etat.oeuvre?.statut === 'premium') {
+    etat.accesPremium = await api.verifierAccesPremium(etat.utilisateur.id, etat.oeuvreId).catch(() => false);
   }
 
   // Afficher la couverture en premier
@@ -186,6 +192,7 @@ async function entrerDansLecteur() {
   etat.couvertureVisible = false;
 
   appliquerPreferences();
+  await mettreAJourStatutHorsLigne();
 
   // Init annotations (localStorage + Supabase sync)
   const chapDepart0 = etat.chapitreNum;
@@ -220,11 +227,40 @@ async function entrerDansLecteur() {
   // La progression est gérée par la pagination (pas de scroll)
 }
 
+async function mettreAJourStatutHorsLigne() {
+  const btn = document.getElementById('btn-offline-status');
+  if (!btn) return;
+  const local = await getLivre(etat.oeuvreId).catch(() => null);
+  const horsConnexion = !navigator.onLine;
+  btn.classList.toggle('is-active', !!local);
+  btn.title = local
+    ? `Disponible hors-ligne · ${local.nb_chapitres || 0} chapitre(s)`
+    : 'Sauvegarder ce livre pour lecture hors-ligne';
+  btn.textContent = local ? (horsConnexion ? '📵' : '✅') : '⬇️';
+}
+
+document.getElementById('btn-offline-status')?.addEventListener('click', async () => {
+  const local = await getLivre(etat.oeuvreId).catch(() => null);
+  if (local) {
+    toast(`Disponible hors-ligne · ${local.nb_chapitres || 0} chapitre(s) sauvegardé(s).`, 'success');
+    return;
+  }
+  window.location.href = `/pages/work.html?id=${etat.oeuvreId}#work-actions`;
+});
+
+window.addEventListener('online', mettreAJourStatutHorsLigne);
+window.addEventListener('offline', mettreAJourStatutHorsLigne);
+
 /* ============================================================
    CHARGER UN CHAPITRE
    ============================================================ */
 
 async function chargerChapitre(numero, sansAnimation = false) {
+  if (await chapitrePremiumBloque(numero)) {
+    _afficherModalPaiement();
+    return;
+  }
+
   etat.chapitreNum = numero;
 
   const contentEl  = document.getElementById('reader-content');
@@ -295,6 +331,7 @@ async function chargerChapitre(numero, sansAnimation = false) {
 
   // Appliquer la largeur max du texte
   contentEl.style.maxWidth  = `${etat.maxWidth}px`;
+  contentEl.style.setProperty('--reader-width', `${etat.maxWidth}px`);
   contentEl.style.fontSize  = `${etat.fontSize}px`;
   contentEl.style.lineHeight = etat.lineHeight;
 
@@ -990,11 +1027,12 @@ function _visiteurBloque() {
 
 function mettreAJourNavigation() {
   const bloque       = _visiteurBloque();
+  const premiumBloque = chapitrePremiumBloqueSync(etat.chapitreNum + (etat.pageCourante >= etat.pages ? 1 : 0));
   const premierePage = etat.pageCourante <= 1 && etat.chapitreNum <= 1;
   const dernierePage = etat.pageCourante >= etat.pages && etat.chapitreNum >= etat.chapitres.length;
 
   document.getElementById('btn-prev').disabled = premierePage;
-  document.getElementById('btn-next').disabled = (dernierePage || bloque);
+  document.getElementById('btn-next').disabled = (dernierePage || bloque || premiumBloque);
 }
 
 document.getElementById('btn-prev')?.addEventListener('click', _pagePrev);
@@ -1108,6 +1146,7 @@ document.querySelectorAll('.width-btn').forEach(btn => {
     btn.classList.add('is-active');
     etat.maxWidth = parseInt(btn.dataset.width);
     document.getElementById('reader-content').style.maxWidth = `${etat.maxWidth}px`;
+    document.getElementById('reader-content').style.setProperty('--reader-width', `${etat.maxWidth}px`);
     lsSet('reader_width', etat.maxWidth);
   });
 });
@@ -1151,6 +1190,7 @@ function appliquerPreferences() {
 
   // Largeur
   document.getElementById('reader-content').style.maxWidth = `${etat.maxWidth}px`;
+  document.getElementById('reader-content').style.setProperty('--reader-width', `${etat.maxWidth}px`);
   const wBtn = document.querySelector(`.width-btn[data-width="${etat.maxWidth}"]`);
   if (wBtn) {
     document.querySelectorAll('.width-btn').forEach(b => b.classList.remove('is-active'));
@@ -1340,6 +1380,7 @@ function _paginerContenu(contentEl) {
 /** Affiche la page `num` du chapitre courant */
 function _allerPage(num) {
   if (num < 1 || num > etat.pages) return;
+  const direction = num > etat.pageCourante ? 'next' : 'prev';
 
   // Contrôle visiteur — bloquer après LIMIT_VISITEUR_PAGES
   if (!etat.utilisateur && num > etat.pageCourante) {
@@ -1356,7 +1397,12 @@ function _allerPage(num) {
   const pages = document.querySelectorAll('.reader-book-page');
   pages.forEach(p => { p.hidden = true; });
   const cible = document.querySelector(`.reader-book-page[data-page="${num}"]`);
-  if (cible) cible.hidden = false;
+  if (cible) {
+    cible.hidden = false;
+    cible.classList.remove('is-turning-next', 'is-turning-prev');
+    void cible.offsetWidth;
+    cible.classList.add(direction === 'next' ? 'is-turning-next' : 'is-turning-prev');
+  }
 
   etat.pageCourante = num;
   window.scrollTo({ top: 0 });
@@ -1370,6 +1416,8 @@ function _allerPage(num) {
 function _pageNext() {
   if (etat.pageCourante < etat.pages) {
     _allerPage(etat.pageCourante + 1);
+  } else if (chapitrePremiumBloqueSync(etat.chapitreNum + 1)) {
+    _afficherModalPaiement();
   } else if (!_visiteurBloque() && etat.chapitreNum < etat.chapitres.length) {
     // Déclencher pub interstitielle dans l'APK Android au changement de chapitre
     if (window.KalamundiAds) window.KalamundiAds.onChapterChange();
@@ -1415,13 +1463,23 @@ function _afficherModalAbonnement() {
   const retour = encodeURIComponent(`/pages/reader.html?id=${etat.oeuvreId}&ch=${etat.chapitreNum}`);
   const btnI = document.getElementById('modal-btn-inscription');
   const btnC = document.getElementById('modal-btn-connexion');
-  if (btnI) btnI.href = `/pages/login.html?mode=inscription&next=${retour}`;
-  if (btnC) btnC.href = `/pages/login.html?next=${retour}`;
+  const btnV = document.getElementById('modal-btn-visiteur');
+  document.getElementById('modal-titre').textContent = 'Inscrivez-vous pour continuer';
+  modal.querySelector('p').innerHTML = `
+    Vous avez atteint la limite de lecture gratuite.<br>
+    Créez un compte <strong>gratuit</strong> pour lire l'œuvre en entier, accéder à tout le catalogue et sauvegarder votre progression.`;
+  if (btnI) btnI.href = `/pages/login.html?mode=inscription&redirect=${retour}`;
+  if (btnC) btnC.href = `/pages/login.html?redirect=${retour}`;
+  if (btnI) btnI.textContent = '✨ Créer un compte gratuit';
+  if (btnC) btnC.textContent = 'Se connecter';
+  if (btnV) {
+    btnV.textContent = 'Rester visiteur (chapitre 1 seulement)';
+    btnV.style.display = '';
+  }
 
   modal.style.display = '';
   modal.classList.add('is-open');
 
-  const btnV = document.getElementById('modal-btn-visiteur');
   if (btnV) {
     const newBtn = btnV.cloneNode(true);
     btnV.parentNode.replaceChild(newBtn, btnV);
@@ -1433,3 +1491,51 @@ function _afficherModalAbonnement() {
     });
   }
 }
+
+async function chapitrePremiumBloque(numero) {
+  if (!etat.oeuvre || etat.oeuvre.statut !== 'premium') return false;
+  if (etat.accesPremium) return false;
+  if (etat.utilisateur) {
+    etat.accesPremium = await api.verifierAccesPremium(etat.utilisateur.id, etat.oeuvreId).catch(() => false);
+    if (etat.accesPremium) return false;
+  }
+  return chapitrePremiumBloqueSync(numero);
+}
+
+function chapitrePremiumBloqueSync(numero) {
+  if (!etat.oeuvre || etat.oeuvre.statut !== 'premium' || etat.accesPremium) return false;
+  const gratuits = Number(etat.oeuvre.chapitres_gratuits ?? 0);
+  return Number(numero || 1) > gratuits;
+}
+
+function _afficherModalPaiement() {
+  const modal = document.getElementById('modal-abonnement');
+  if (!modal || !etat.oeuvre) return;
+  const prix = Number(etat.oeuvre.prix || 300).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+  const retour = encodeURIComponent(`/pages/reader.html?id=${etat.oeuvreId}&ch=${etat.chapitreNum}`);
+  const paiement = `/pages/payment.html?oeuvre=${etat.oeuvreId}&montant=${encodeURIComponent(etat.oeuvre.prix || 300)}&titre=${encodeURIComponent(etat.oeuvre.titre || 'Kalamundi')}`;
+
+  document.getElementById('modal-titre').textContent = 'La suite est premium';
+  modal.querySelector('p').innerHTML = `
+    Vous avez lu l'extrait gratuit. La suite de <strong>${etat.oeuvre.titre}</strong> est disponible après paiement.<br>
+    Prix : <strong>${prix} FCFA</strong>.`;
+
+  const btnI = document.getElementById('modal-btn-inscription');
+  const btnC = document.getElementById('modal-btn-connexion');
+  const btnV = document.getElementById('modal-btn-visiteur');
+  if (btnI) {
+    btnI.textContent = etat.utilisateur ? `Payer ${prix} FCFA` : 'Se connecter et payer';
+    btnI.href = etat.utilisateur ? paiement : `/pages/login.html?redirect=${encodeURIComponent(paiement)}`;
+  }
+  if (btnC) {
+    btnC.textContent = 'Retour à la fiche';
+    btnC.href = `/pages/work.html?id=${etat.oeuvreId}`;
+  }
+  if (btnV) btnV.style.display = 'none';
+
+  modal.style.display = '';
+  modal.classList.add('is-open');
+  document.body.style.overflow = 'hidden';
+}
+
+injecterPub('reader');

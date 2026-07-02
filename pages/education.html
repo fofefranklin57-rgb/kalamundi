@@ -117,13 +117,14 @@
     <div class="edu-hero__top container">
       <div class="hero__badge" style="display:inline-block;margin-bottom:8px">🎓 Espace Éducation</div>
       <h1>Tout pour réussir vos examens</h1>
-      <p>BAC · Probatoire · BEPC · GCE — Cameroun et Afrique</p>
+      <p>BAC · Probatoire · BEPC · GCE · Universite — Cameroun et Afrique</p>
     </div>
     <div class="edu-tabs" role="tablist">
       <button class="edu-tab edu-tab--active" data-tab="annales"    role="tab">📝 Annales</button>
       <button class="edu-tab"                 data-tab="simulateur" role="tab">📊 Simulateur</button>
-      <button class="edu-tab"                 data-tab="repetiteur" role="tab">🎯 Répétiteur</button>
-      <button class="edu-tab"                 data-tab="ecole"      role="tab">🏫 Espace École</button>
+      <button class="edu-tab"                 data-tab="repetiteur" role="tab">🎯 Repetiteur</button>
+      <button class="edu-tab"                 data-tab="ecole"      role="tab">🏫 Espace Ecole</button>
+      <button class="edu-tab"                 data-tab="etudiant"   role="tab">🎓 Espace Etudiant</button>
     </div>
   </div>
 
@@ -163,11 +164,21 @@
     <div class="edu-panel" id="panel-ecole">
       <div class="edu-loader" id="loader-ecole">
         <div class="spinner-lg"></div>
-        <span>Chargement de l'espace école…</span>
+        <span>Chargement de l'espace ecole…</span>
       </div>
       <iframe class="edu-iframe" id="iframe-ecole"
               data-src="/pages/ecole.html?hub=1"
-              title="Espace École"></iframe>
+              title="Espace Ecole"></iframe>
+    </div>
+
+    <div class="edu-panel" id="panel-etudiant">
+      <div class="edu-loader" id="loader-etudiant">
+        <div class="spinner-lg"></div>
+        <span>Chargement de l'espace etudiant…</span>
+      </div>
+      <iframe class="edu-iframe" id="iframe-etudiant"
+              data-src="/pages/epreuves.html?hub=1"
+              title="Epreuves et Fax Universite"></iframe>
     </div>
 
   </div>

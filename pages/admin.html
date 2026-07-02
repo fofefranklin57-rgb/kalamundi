@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/assets/css/components.css" />
   <link rel="stylesheet" href="/assets/css/dashboard.css" />
   <style>
-    .admin-grid { display:grid; grid-template-columns:220px 1fr; min-height:calc(100vh - 64px); }
+    .admin-grid { display:grid; grid-template-columns:230px 1fr; min-height:calc(100vh - 64px); }
     .admin-sidebar {
       background:var(--color-primary-dark);
       padding:var(--spacing-lg) 0;
@@ -34,6 +34,8 @@
     .admin-main { padding:var(--spacing-xl); background:var(--bg-secondary); }
     .admin-section { display:none; }
     .admin-section.active { display:block; }
+
+    /* Stat cards */
     .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:var(--spacing-md); margin-bottom:var(--spacing-xl); }
     .stat-card {
       background:white; border-radius:var(--border-radius-lg); padding:var(--spacing-lg);
@@ -42,6 +44,10 @@
     .stat-card__icon { font-size:28px; margin-bottom:8px; }
     .stat-card__val { font-size:2rem; font-weight:700; color:var(--color-primary); }
     .stat-card__label { font-size:var(--font-size-xs); color:var(--text-light); margin-top:4px; }
+    .stat-card--accent .stat-card__val { color:var(--color-accent-dark); }
+    .stat-card--green  .stat-card__val { color:var(--color-success); }
+
+    /* Tables */
     .admin-table { width:100%; border-collapse:collapse; background:white; border-radius:var(--border-radius-lg); overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
     .admin-table th { background:var(--color-primary); color:white; padding:12px 14px; font-size:12px; text-align:left; font-weight:600; letter-spacing:0.5px; }
     .admin-table td { padding:11px 14px; font-size:var(--font-size-sm); border-bottom:1px solid var(--bg-secondary); vertical-align:middle; }
@@ -54,11 +60,58 @@
     .btn-muted   { background:#f1f5f9; color:#64748b; }
     .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--spacing-lg); }
     .section-header h2 { font-size:var(--font-size-2xl); color:var(--color-primary); }
+
+    /* Graphe barres */
+    .bar-chart { display:flex; align-items:flex-end; gap:6px; height:120px; margin:var(--spacing-md) 0; }
+    .bar-chart__col { display:flex; flex-direction:column; align-items:center; flex:1; gap:4px; }
+    .bar-chart__bar { width:100%; background:var(--color-primary-light); border-radius:4px 4px 0 0; min-height:4px; transition:height 0.4s; }
+    .bar-chart__bar:hover { background:var(--color-accent); }
+    .bar-chart__label { font-size:9px; color:var(--text-light); white-space:nowrap; }
+    .bar-chart__val   { font-size:9px; color:var(--text-secondary); font-weight:600; }
+
+    /* Cards grille 2 cols */
+    .cards-2 { display:grid; grid-template-columns:1fr 1fr; gap:var(--spacing-lg); margin-bottom:var(--spacing-lg); }
+    .card-block { background:white; border-radius:var(--border-radius-lg); padding:var(--spacing-lg); box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+    .card-block h3 { font-size:var(--font-size-md); color:var(--color-primary); margin-bottom:var(--spacing-md); font-weight:700; }
+
+    /* Pub */
+    .pub-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:var(--spacing-md); margin-bottom:var(--spacing-lg); }
+    .pub-card { background:white; border-radius:var(--border-radius-lg); overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+    .pub-card__img { width:100%; height:120px; object-fit:cover; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; color:var(--text-light); font-size:13px; }
+    .pub-card__img img { width:100%; height:100%; object-fit:cover; }
+    .pub-card__body { padding:12px; }
+    .pub-card__titre { font-weight:600; font-size:var(--font-size-sm); margin-bottom:4px; }
+    .pub-card__meta { font-size:11px; color:var(--text-light); margin-bottom:8px; }
+    .pub-card__stats { display:flex; gap:12px; font-size:11px; color:var(--text-secondary); margin-bottom:10px; }
+    .pub-card__actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .pub-badge { display:inline-block; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700; }
+    .pub-badge--on  { background:#d1fae5; color:#065f46; }
+    .pub-badge--off { background:#fee2e2; color:#991b1b; }
+
+    /* Config */
+    .config-list { display:flex; flex-direction:column; gap:16px; }
+    .config-row { display:grid; grid-template-columns:1fr 1fr 2fr; align-items:center; gap:12px; background:white; border-radius:var(--border-radius-md); padding:14px 16px; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+    .config-row__cle { font-family:monospace; font-size:12px; color:var(--color-primary); font-weight:700; }
+    .config-row__desc { font-size:12px; color:var(--text-light); }
+    .config-row__input { display:flex; gap:8px; align-items:center; }
+    .config-row__input input { flex:1; padding:6px 10px; border:1px solid var(--border-color); border-radius:var(--border-radius-sm); font-size:13px; }
+
+    /* Modale pub */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:white; border-radius:var(--border-radius-lg); padding:var(--spacing-xl); width:100%; max-width:500px; max-height:90vh; overflow-y:auto; }
+    .modal-box h3 { color:var(--color-primary); margin-bottom:var(--spacing-lg); }
+    .form-group { margin-bottom:var(--spacing-md); }
+    .form-group label { display:block; font-size:var(--font-size-sm); font-weight:600; margin-bottom:6px; color:var(--text-secondary); }
+    .form-group input, .form-group select { width:100%; padding:9px 12px; border:1px solid var(--border-color); border-radius:var(--border-radius-sm); font-size:var(--font-size-sm); }
+
     @media(max-width:768px) {
       .admin-grid { grid-template-columns:1fr; }
-      .admin-sidebar { position:static; height:auto; flex-direction:row; display:flex; overflow-x:auto; padding:var(--spacing-sm); }
+      .admin-sidebar { position:static; height:auto; display:flex; overflow-x:auto; padding:var(--spacing-sm); }
       .sidebar__section { padding:0; margin:0 4px; }
       .sidebar__label { display:none; }
+      .cards-2 { grid-template-columns:1fr; }
+      .config-row { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -82,6 +135,18 @@
         <div class="sidebar__label">Vue d'ensemble</div>
         <button class="sidebar__btn active" data-section="stats" onclick="showSection('stats',this)">
           📊 Tableau de bord
+        </button>
+      </div>
+      <div class="sidebar__section">
+        <div class="sidebar__label">Business</div>
+        <button class="sidebar__btn" data-section="finance" onclick="showSection('finance',this)">
+          💰 Finance & Revenus
+        </button>
+        <button class="sidebar__btn" data-section="croissance" onclick="showSection('croissance',this)">
+          📈 Croissance
+        </button>
+        <button class="sidebar__btn" data-section="pub" onclick="showSection('pub',this)">
+          📢 Régie Publicitaire
         </button>
       </div>
       <div class="sidebar__section">
@@ -111,6 +176,12 @@
           <span class="badge-count" id="badge-institutions" style="display:none">0</span>
         </button>
       </div>
+      <div class="sidebar__section">
+        <div class="sidebar__label">Système</div>
+        <button class="sidebar__btn" data-section="config" onclick="showSection('config',this)">
+          ⚙️ Configuration
+        </button>
+      </div>
     </aside>
 
     <!-- MAIN -->
@@ -131,10 +202,47 @@
         <div style="background:white;border-radius:var(--border-radius-lg);padding:var(--spacing-lg);box-shadow:0 2px 8px rgba(0,0,0,0.06)">
           <h3 style="color:var(--color-primary);margin-bottom:var(--spacing-md)">Actions rapides</h3>
           <div style="display:flex;gap:var(--spacing-md);flex-wrap:wrap">
-            <button class="btn btn--primary" onclick="showSection('signalements',document.querySelector('[data-section=signalements]'))">Voir les signalements</button>
-            <button class="btn btn--outline" onclick="showSection('institutions',document.querySelector('[data-section=institutions]'))">Valider les institutions</button>
-            <button class="btn btn--ghost" onclick="showSection('oeuvres',document.querySelector('[data-section=oeuvres]'))">Gérer les œuvres</button>
+            <button class="btn btn--primary" onclick="showSection('finance',document.querySelector('[data-section=finance]'))">💰 Voir les revenus</button>
+            <button class="btn btn--outline" onclick="showSection('signalements',document.querySelector('[data-section=signalements]'))">🚨 Signalements</button>
+            <button class="btn btn--outline" onclick="showSection('institutions',document.querySelector('[data-section=institutions]'))">🏛️ Valider institutions</button>
+            <button class="btn btn--ghost"   onclick="showSection('pub',document.querySelector('[data-section=pub]'))">📢 Gérer les pubs</button>
           </div>
+        </div>
+      </section>
+
+      <!-- FINANCE -->
+      <section class="admin-section" id="section-finance">
+        <div class="section-header">
+          <h2>Finance & Revenus</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerFinance()">↻ Actualiser</button>
+        </div>
+        <div id="finance-content">
+          <div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>
+        </div>
+      </section>
+
+      <!-- CROISSANCE -->
+      <section class="admin-section" id="section-croissance">
+        <div class="section-header">
+          <h2>Croissance</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerCroissance()">↻ Actualiser</button>
+        </div>
+        <div id="croissance-content">
+          <div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>
+        </div>
+      </section>
+
+      <!-- PUB -->
+      <section class="admin-section" id="section-pub">
+        <div class="section-header">
+          <h2>Régie Publicitaire</h2>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn--ghost btn--sm" onclick="chargerPub()">↻ Actualiser</button>
+            <button class="btn btn--primary btn--sm" onclick="ouvrirModalePub()">+ Nouvelle bannière</button>
+          </div>
+        </div>
+        <div id="pub-content">
+          <div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>
         </div>
       </section>
 
@@ -192,11 +300,72 @@
         <div id="table-institutions"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
       </section>
 
+      <!-- CONFIG -->
+      <section class="admin-section" id="section-config">
+        <div class="section-header">
+          <h2>Configuration plateforme</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerConfig()">↻ Actualiser</button>
+        </div>
+        <p style="color:var(--text-light);font-size:var(--font-size-sm);margin-bottom:var(--spacing-lg)">
+          Modifiez les paramètres globaux de la plateforme. Les changements sont appliqués immédiatement.
+        </p>
+        <div id="config-content">
+          <div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>
+        </div>
+      </section>
+
     </main>
   </div>
 
+  <!-- MODALE — Créer/éditer bannière pub -->
+  <div class="modal-overlay" id="modal-pub" onclick="fermerModalePub(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <h3 id="modal-pub-titre">Nouvelle bannière</h3>
+      <input type="hidden" id="pub-edit-id" />
+      <div class="form-group">
+        <label>Titre (interne)</label>
+        <input type="text" id="pub-titre" placeholder="Ex: Promo été 2026" />
+      </div>
+      <div class="form-group">
+        <label>URL de l'image</label>
+        <input type="url" id="pub-image-url" placeholder="https://..." />
+      </div>
+      <div class="form-group">
+        <label>Lien de destination (clic)</label>
+        <input type="url" id="pub-lien" placeholder="https://..." />
+      </div>
+      <div class="form-group">
+        <label>Texte du bouton CTA</label>
+        <input type="text" id="pub-cta" placeholder="En savoir plus" value="En savoir plus" />
+      </div>
+      <div class="form-group">
+        <label>Page cible</label>
+        <select id="pub-page">
+          <option value="all">Toutes les pages</option>
+          <option value="home">Accueil</option>
+          <option value="library">Bibliothèque</option>
+          <option value="reader">Lecteur</option>
+          <option value="education">Éducation</option>
+          <option value="work">Fiche œuvre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Date de début (optionnel)</label>
+        <input type="date" id="pub-debut" />
+      </div>
+      <div class="form-group">
+        <label>Date de fin (optionnel)</label>
+        <input type="date" id="pub-fin" />
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:var(--spacing-lg)">
+        <button class="btn btn--ghost" onclick="fermerModalePub()">Annuler</button>
+        <button class="btn btn--primary" onclick="sauvegarderBanniere()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container" id="toast-container" aria-live="polite"></div>
-  <script type="module" src="/assets/js/admin.js"></script>
-  <script type="module" src="/assets/js/theme-init.js"></script>
+  <script type="module" src="/assets/js/admin.js" defer></script>
+  <script type="module" src="/assets/js/theme-init.js" defer></script>
 </body>
 </html>

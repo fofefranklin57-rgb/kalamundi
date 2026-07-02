@@ -2,8 +2,8 @@
    owner.js — Owner Dashboard Kalamundi (mobile-first)
    ============================================================ */
 
-import { api } from './api.js?v=20260621';
-import { supabase } from './auth.js?v=20260621';
+import { api } from './api.js';
+import { supabase } from './auth.js';
 
 /* ── Auth guard + login intégré ─────────────────────────────── */
 (async () => {
@@ -63,7 +63,6 @@ window.submitLogin = async function () {
 
 window.submitLogout = async function () {
   await supabase.auth.signOut();
-  masquerLogin = () => {};
   afficherLogin();
   document.getElementById('login-email').value = '';
   document.getElementById('login-pwd').value   = '';
@@ -73,6 +72,7 @@ async function init() {
   await Promise.all([chargerFinance(), chargerPub(), chargerConfig()]);
   // Croissance partage les données de finance, on le charge après
   chargerCroissance();
+  chargerDonnees();
 }
 
 /* ── Navigation ─────────────────────────────────────────────── */
@@ -92,6 +92,7 @@ window.rafraichir = function () {
   const map = {
     finance:    chargerFinance,
     croissance: chargerCroissance,
+    donnees:    chargerDonnees,
     pub:        chargerPub,
     config:     chargerConfig,
   };
@@ -101,6 +102,7 @@ window.rafraichir = function () {
 
 /* ── Finance ─────────────────────────────────────────────────── */
 let _financeData = null;
+let _ownerInsights = null;
 
 async function chargerFinance() {
   const el = document.getElementById('finance-content');
@@ -209,11 +211,185 @@ async function chargerCroissance() {
   } catch (e) { el.innerHTML = errEl('Erreur croissance'); console.error(e); }
 }
 
+/* ── Données commercialisables ───────────────────────────────── */
+async function chargerDonnees() {
+  const el = document.getElementById('donnees-content');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">⏳ Analyse des données…</div>';
+  try {
+    _ownerInsights = await api.adminGetOwnerInsights();
+    const d = _ownerInsights;
+    const k = d.kpis || {};
+    const seg = d.segments || {};
+    const lists = d.lists || {};
+
+    el.innerHTML = `
+      <div class="toolbar">
+        <button class="btn-sm btn-primary" onclick="exporterDataset('audience','csv')">Audience CSV</button>
+        <button class="btn-sm btn-primary" onclick="exporterDataset('catalogue','csv')">Catalogue CSV</button>
+        <button class="btn-sm btn-primary" onclick="exporterDataset('segments','csv')">Segments CSV</button>
+        <button class="btn-sm btn-toggle" onclick="exporterDataset('all','json')">Tout JSON</button>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-card--green">
+          <div class="kpi-card__icon">🎯</div>
+          <div class="kpi-card__val">${fmt0(k.active30)}</div>
+          <div class="kpi-card__lbl">Actifs 30 jours</div>
+        </div>
+        <div class="kpi-card kpi-card--acc">
+          <div class="kpi-card__icon">🛒</div>
+          <div class="kpi-card__val">${pct(k.conversion)}</div>
+          <div class="kpi-card__lbl">Conversion payante</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card__icon">📚</div>
+          <div class="kpi-card__val">${fmt0(k.totalLectures)}</div>
+          <div class="kpi-card__lbl">Lectures cumulées</div>
+        </div>
+        <div class="kpi-card kpi-card--green">
+          <div class="kpi-card__icon">💳</div>
+          <div class="kpi-card__val">${fmt(k.arpu)}</div>
+          <div class="kpi-card__lbl">ARPU global</div>
+        </div>
+      </div>
+
+      ${renderActionsCommerciales(d)}
+
+      <div class="block">
+        <div class="block__title">Segments vendables</div>
+        <div class="mini-note">Ces segments peuvent servir à préparer offres sponsorisées, packs éditeurs, écoles, concours ou campagnes publicitaires.</div>
+        ${renderSegments(seg.marketableSegments || [])}
+      </div>
+
+      <div class="block">
+        <div class="block__title">Demande par genre</div>
+        ${renderGenreDemand(seg.lecturesParGenre || [])}
+      </div>
+
+      <div class="block">
+        <div class="block__title">Top auteurs exploitables</div>
+        ${renderTopAuteurs(lists.topAuteurs || [])}
+      </div>
+
+      <div class="block">
+        <div class="block__title">Inventaire publicitaire</div>
+        ${renderAdInventory(lists.adInventory || [])}
+      </div>`;
+  } catch (e) {
+    el.innerHTML = errEl('Erreur données');
+    console.error(e);
+  }
+}
+
+function renderActionsCommerciales(d) {
+  const k = d.kpis || {};
+  const seg = d.segments || {};
+  const topGenre = seg.lecturesParGenre?.[0];
+  const topPays = seg.paysUsers?.[0];
+  const ideas = [];
+
+  if (topGenre) {
+    ideas.push({
+      title: `Pack sponsorisé "${topGenre.genre}"`,
+      body: `${fmt0(topGenre.lectures)} lectures sur ${fmt0(topGenre.oeuvres)} œuvres. Bon angle pour éditeurs, concours littéraires et marques culturelles.`,
+    });
+  }
+  if (topPays) {
+    ideas.push({
+      title: `Offre locale ${topPays.label}`,
+      body: `${fmt0(topPays.count)} profils. Segment utile pour écoles, librairies, évènements et annonceurs géolocalisés.`,
+    });
+  }
+  if (Number(k.active30 || 0) > 0) {
+    ideas.push({
+      title: 'Audience active 30 jours',
+      body: `${fmt0(k.active30)} utilisateurs récents. À vendre comme inventaire prioritaire, newsletter ou notification sponsorisée.`,
+    });
+  }
+  if (Number(k.paidUsers || 0) > 0) {
+    ideas.push({
+      title: 'Acheteurs confirmés',
+      body: `${fmt0(k.paidUsers)} utilisateurs ont déjà payé. Segment précieux pour upsell abonnements, premium, formations et offres partenaires.`,
+    });
+  }
+
+  return `
+    <div class="block">
+      <div class="block__title">Pistes commerciales prioritaires</div>
+      ${ideas.map(i => `
+        <div class="insight-card">
+          <div class="insight-card__title">${escapeHtml(i.title)}</div>
+          <div class="insight-card__body">${escapeHtml(i.body)}</div>
+        </div>`).join('') || '<div class="mini-note">Pas encore assez de données pour proposer des pistes fiables.</div>'}
+    </div>`;
+}
+
+function renderSegments(rows) {
+  if (!rows.length) return '<div class="mini-note">Aucun segment exploitable pour le moment.</div>';
+  return `
+    <table class="data-table">
+      <thead><tr><th>Segment</th><th>Usage</th><th>Taille</th></tr></thead>
+      <tbody>${rows.slice(0, 12).map(r => `
+        <tr>
+          <td>${escapeHtml(r.segment)}</td>
+          <td>${escapeHtml(r.angle)}</td>
+          <td>${fmt0(r.taille)}</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+function renderGenreDemand(rows) {
+  if (!rows.length) return '<div class="mini-note">Aucune lecture par genre disponible.</div>';
+  const max = Math.max(...rows.map(r => r.lectures), 1);
+  return rows.slice(0, 8).map(r => {
+    const pctWidth = Math.max(4, Math.round((r.lectures / max) * 100));
+    return `
+      <div class="list-row" style="flex-direction:column;align-items:stretch;gap:4px">
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span>${escapeHtml(r.genre)} <span class="pill">${fmt0(r.oeuvres)} œuvres</span></span>
+          <strong>${fmt0(r.lectures)} lectures</strong>
+        </div>
+        <div class="progress"><div class="progress__fill" style="width:${pctWidth}%"></div></div>
+      </div>`;
+  }).join('');
+}
+
+function renderTopAuteurs(rows) {
+  if (!rows.length) return '<div class="mini-note">Aucun auteur exploitable pour le moment.</div>';
+  return `
+    <table class="data-table">
+      <thead><tr><th>Auteur</th><th>Pays</th><th>Œuvres</th><th>Lectures</th></tr></thead>
+      <tbody>${rows.slice(0, 10).map(a => `
+        <tr>
+          <td>${escapeHtml(a.nom)}</td>
+          <td>${escapeHtml(a.pays || '-')}</td>
+          <td>${fmt0(a.oeuvres)} / ${fmt0(a.premium)} premium</td>
+          <td>${fmt0(a.lectures)}</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+function renderAdInventory(rows) {
+  if (!rows.length) return '<div class="mini-note">Aucune bannière publicitaire suivie.</div>';
+  return `
+    <table class="data-table">
+      <thead><tr><th>Campagne</th><th>Page</th><th>État</th><th>CTR</th></tr></thead>
+      <tbody>${rows.slice(0, 10).map(b => `
+        <tr>
+          <td>${escapeHtml(b.titre || 'Sans titre')}</td>
+          <td>${escapeHtml(b.page || 'all')}</td>
+          <td>${b.actif ? '<span class="badge-on">ON</span>' : '<span class="badge-off">OFF</span>'}</td>
+          <td>${fmt0(b.impressions)} vues<br>${pct(b.ctr)}</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+}
+
 /* ── Pub ─────────────────────────────────────────────────────── */
 async function chargerPub() {
   const el = document.getElementById('pub-content');
   el.innerHTML = '<div class="loading">⏳ Chargement…</div>';
-  document.getElementById('fab').classList.add('visible');
+  document.getElementById('fab').classList.toggle('visible', _section === 'pub');
   try {
     const bannieres = await api.pubGetBannieres();
 
@@ -369,6 +545,73 @@ window.sauvegarderConfig = async function (cle) {
 /* ── Utilitaires ─────────────────────────────────────────────── */
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmt0(n) {
+  return Number(n || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+}
+
+function pct(n) {
+  return `${Number(n || 0).toLocaleString('fr-FR', { maximumFractionDigits: 1 })}%`;
+}
+
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+window.exporterDataset = function (nom, format = 'csv') {
+  if (!_ownerInsights) {
+    toast('Données pas encore chargées', 'error');
+    return;
+  }
+  if (format === 'json') {
+    telecharger(
+      `kalamundi_owner_${dateStamp()}.json`,
+      JSON.stringify(_ownerInsights, null, 2),
+      'application/json'
+    );
+    return;
+  }
+  const data = _ownerInsights.exports?.[nom] || [];
+  if (!data.length) {
+    toast('Aucune donnée à exporter', 'error');
+    return;
+  }
+  telecharger(`kalamundi_${nom}_${dateStamp()}.csv`, toCsv(data), 'text/csv;charset=utf-8');
+  toast('Export prêt ✓', 'success');
+};
+
+function toCsv(rows) {
+  const headers = [...new Set(rows.flatMap(r => Object.keys(r)))];
+  const esc = value => {
+    const text = String(value ?? '');
+    return /[;"\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  };
+  return [
+    headers.join(';'),
+    ...rows.map(row => headers.map(h => esc(row[h])).join(';')),
+  ].join('\n');
+}
+
+function telecharger(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function dateStamp() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function errEl(msg) {

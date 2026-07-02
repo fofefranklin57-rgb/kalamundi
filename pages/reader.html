@@ -89,6 +89,7 @@
         <button class="reader-action-btn" id="btn-show-cover"  title="Voir la couverture">📚</button>
         <button class="reader-action-btn reader-action-btn--nav" id="btn-nav-panel" title="Volet de navigation" aria-expanded="false" aria-controls="reader-nav-panel">☰</button>
         <button class="reader-action-btn" id="btn-marque-page" title="Marque-page" aria-pressed="false">🔖</button>
+        <button class="reader-action-btn reader-action-btn--offline" id="btn-offline-status" title="Disponibilité hors-ligne">⬇️</button>
         <button class="reader-action-btn" id="btn-annotations" title="Mes annotations">📋</button>
         <button class="reader-action-btn" id="btn-lang"        title="Langue de lecture">🌐 <span id="lang-label">FR</span></button>
         <button class="reader-action-btn" id="btn-partager"    title="Partager">🔗</button>
@@ -214,6 +215,7 @@
 
   <!-- ── Contenu de lecture ────────────────────────────── -->
   <main class="reader-main" id="reader-main">
+    <div class="reader-library-room" aria-hidden="true"></div>
     <div id="reader-loading" class="reader-translating">
       <div class="spinner"></div>
       <span>Chargement…</span>

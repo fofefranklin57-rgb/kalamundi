@@ -766,10 +766,10 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--color-accent);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
   cursor: pointer;
   flex-shrink: 0;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255,255,255,0.45);
   overflow: visible;
   display: flex;
   align-items: center;
@@ -796,26 +796,41 @@
 .nav-avatar__menu {
   display: none;
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 12px);
   right: 0;
   background: var(--bg-main);
   border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  min-width: 200px;
+  border-radius: 8px;
+  box-shadow: 0 18px 44px rgba(0,0,0,0.18);
+  min-width: 238px;
   z-index: 1000;
   overflow: hidden;
+}
+
+.nav-avatar__menu::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  right: 17px;
+  width: 14px;
+  height: 14px;
+  transform: rotate(45deg);
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  border-top: 1px solid var(--border-color);
 }
 
 .nav-avatar__menu.is-open { display: block; }
 
 .nav-avatar__name {
-  padding: 12px var(--spacing-md);
+  padding: 14px var(--spacing-md);
   font-weight: 700;
   font-size: var(--font-size-sm);
   color: var(--color-primary);
   border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent),
+    var(--bg-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -825,7 +840,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px var(--spacing-md);
+  padding: 11px var(--spacing-md);
   font-size: var(--font-size-sm);
   color: var(--text-primary);
   text-decoration: none;

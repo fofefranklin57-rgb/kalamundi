@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Communautés — Kalamundi</title>
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/communautes.css" />
+  <script src="/assets/js/theme-init.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo">Kalamundi</a>
+      <div class="navbar__nav" id="navbar-nav">
+        <a href="/index.html" class="navbar__link">Accueil</a>
+        <a href="/pages/library.html" class="navbar__link">Bibliothèque</a>
+        <a href="/pages/communautes.html" class="navbar__link navbar__link--active">Communautés</a>
+        <a href="/pages/publish.html" class="navbar__link">Publier</a>
+      </div>
+      <span id="theme-slot"></span>
+      <div class="navbar__actions" id="navbar-actions"></div>
+    </div>
+  </nav>
+
+  <main class="communities-page">
+    <section class="communities-head">
+      <div>
+        <h1>Communautés</h1>
+        <p>Crée des cercles de lecture, rassemble des auteurs par genre, pays ou école, et fais vivre les œuvres après publication.</p>
+      </div>
+      <button class="btn btn--primary" id="btn-open-create">Créer une communauté</button>
+    </section>
+
+    <section class="communities-layout">
+      <aside class="communities-panel">
+        <div class="search-bar">
+          <input class="search-bar__input" id="community-search" type="search" placeholder="Rechercher un thème, une ville, un genre..." />
+        </div>
+        <div id="communities-list" class="communities-list">
+          <div class="empty-state"><div class="spinner"></div></div>
+        </div>
+      </aside>
+
+      <section class="community-detail" id="community-detail">
+        <div class="empty-state">
+          <div class="empty-state__icon">💬</div>
+          <p class="empty-state__title">Choisis une communauté</p>
+          <p class="empty-state__text">Les discussions, partages d’œuvres et annonces apparaîtront ici.</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-overlay" id="modal-create-community">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title">Nouvelle communauté</h2>
+        <button class="modal__close" id="close-create-community">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="form-group">
+          <label class="form-label form-label--required" for="community-name">Nom</label>
+          <input class="form-input" id="community-name" maxlength="80" placeholder="Ex: Poésie urbaine de Douala" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="community-theme">Thème</label>
+          <input class="form-input" id="community-theme" maxlength="60" placeholder="Roman, poésie, éducation, polar..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="community-country">Pays ou ville</label>
+          <input class="form-input" id="community-country" maxlength="60" placeholder="Cameroun, Afrique centrale, diaspora..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="community-description">Description</label>
+          <textarea class="form-textarea" id="community-description" rows="4" maxlength="600" placeholder="Explique le ton, les genres et les lecteurs attendus."></textarea>
+        </div>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn--ghost" id="cancel-create-community">Annuler</button>
+        <button class="btn btn--primary" id="save-create-community">Créer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script type="module" src="/assets/js/communautes.js"></script>
+</body>
+</html>

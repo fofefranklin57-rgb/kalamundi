@@ -20,6 +20,7 @@
       <div class="navbar__nav" id="navbar-nav">
         <a href="/index.html" class="navbar__link">Accueil</a>
         <a href="/pages/library.html" class="navbar__link">Bibliothèque</a>
+        <a href="/pages/abonnements.html" class="navbar__link">Abonnements</a>
         <a href="/pages/publish.html" class="navbar__link">Publier</a>
         <a href="/pages/author-dashboard.html" class="navbar__link navbar__link--active">Dashboard</a>
       </div>
@@ -57,20 +58,70 @@
           <div class="stat-card">
             <div class="stat-card__label">Œuvres publiées</div>
             <div class="stat-card__value" id="stat-nb-oeuvres">—</div>
+            <div class="stat-card__trend" id="stat-premium">—</div>
           </div>
           <div class="stat-card">
             <div class="stat-card__label">Total lectures</div>
             <div class="stat-card__value" id="stat-lectures">—</div>
+            <div class="stat-card__trend" id="stat-moyenne-lectures">—</div>
           </div>
           <div class="stat-card">
             <div class="stat-card__label">Note moyenne</div>
             <div class="stat-card__value" id="stat-note">—</div>
+            <div class="stat-card__trend" id="stat-note-detail">—</div>
           </div>
           <div class="stat-card">
             <div class="stat-card__label">Revenus totaux</div>
             <div class="stat-card__value" id="stat-revenus">—</div>
+            <div class="stat-card__trend" id="stat-revenus-attente">—</div>
           </div>
         </div>
+
+        <!-- Pilotage auteur -->
+        <section class="author-command" aria-label="Pilotage auteur">
+          <div class="author-focus">
+            <div class="author-focus__eyebrow">Priorité du moment</div>
+            <h2 class="author-focus__title" id="author-focus-title">Chargement…</h2>
+            <p class="author-focus__text" id="author-focus-text"></p>
+            <div class="author-focus__actions">
+              <a href="/pages/publish.html" class="btn btn--primary btn--sm" id="author-focus-cta">Nouvelle œuvre</a>
+              <a href="/pages/library.html?collection=originaux" class="btn btn--outline btn--sm">Voir la bibliothèque</a>
+            </div>
+          </div>
+
+          <div class="author-side-panel">
+            <div class="author-panel__title">Profil auteur</div>
+            <div class="author-score">
+              <div class="author-score__ring" id="author-profile-score">0%</div>
+              <div>
+                <div class="author-score__label" id="author-score-label">À compléter</div>
+                <p class="author-score__hint" id="author-score-hint">Un profil complet inspire plus confiance aux lecteurs.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="author-side-panel">
+            <div class="author-panel__title">À faire</div>
+            <div class="author-actions-list" id="author-next-actions">
+              <span class="skeleton-card" style="height:28px"></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="author-insights" aria-label="Aperçu des performances">
+          <div class="author-insight">
+            <span class="author-insight__label">Œuvre à pousser</span>
+            <strong id="author-best-work">—</strong>
+          </div>
+          <div class="author-insight">
+            <span class="author-insight__label">Potentiel commercial</span>
+            <strong id="author-market-note">—</strong>
+          </div>
+          <div class="author-insight">
+            <span class="author-insight__label">En attente</span>
+            <strong id="author-revenue-pending">—</strong>
+          </div>
+        </section>
 
         <!-- Tabs -->
         <div class="tabs dashboard-tabs" role="tablist">
@@ -85,6 +136,7 @@
             <h2 class="section__title">Mes œuvres</h2>
             <a href="/pages/publish.html" class="btn btn--primary btn--sm">+ Ajouter</a>
           </div>
+          <div class="author-top-list" id="author-top-list"></div>
           <div id="liste-oeuvres">
             <div class="skeleton-card" style="height:80px"></div>
             <div class="skeleton-card" style="height:80px"></div>

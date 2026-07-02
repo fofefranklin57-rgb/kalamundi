@@ -1935,6 +1935,155 @@ body.theme-dark .nav-heading-item:hover { background: var(--dark-card); }
 /* Thème sépia */
 body.theme-sepia .reader-nav-panel { background: var(--sepia-surface); }
 
+/* ============================================================
+   EXPÉRIENCE LIVRE MODERNE — page papier dans une bibliothèque
+   ============================================================ */
+
+body.reader-body {
+  background:
+    linear-gradient(90deg, rgba(80,55,34,0.10) 0 1px, transparent 1px 100%),
+    radial-gradient(circle at 50% -20%, rgba(212,160,23,0.14), transparent 34rem),
+    #edf1ea;
+  background-size: 36px 100%, auto, auto;
+}
+
+.reader-topbar {
+  background: rgba(13,43,31,0.94);
+  backdrop-filter: blur(12px);
+}
+
+.reader-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(18px, 4vw, 42px) var(--spacing-md) 86px;
+  position: relative;
+  perspective: 1800px;
+}
+
+.reader-library-room {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(55,35,20,0.10) 0 1px, transparent 1px 100%),
+    repeating-linear-gradient(90deg, rgba(27,67,50,0.16) 0 18px, rgba(45,106,79,0.14) 18px 35px, rgba(169,124,14,0.16) 35px 48px, transparent 48px 68px);
+  background-size: 44px 100%, 320px 100%;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.reader-content {
+  width: min(100%, calc(var(--reader-width, 680px) + 72px));
+  min-height: min(74vh, 860px);
+  padding: clamp(28px, 5vw, 58px);
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.055), transparent 20px),
+    linear-gradient(180deg, rgba(255,255,255,0.94), rgba(250,247,238,0.98));
+  border: 1px solid rgba(84,66,40,0.16);
+  border-radius: 6px 12px 12px 6px;
+  box-shadow:
+    -12px 0 22px rgba(55,35,16,0.10),
+    0 18px 55px rgba(25,28,22,0.16);
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.reader-content::before {
+  content: '';
+  position: absolute;
+  inset: 18px auto 18px 20px;
+  width: 1px;
+  background: rgba(80,55,34,0.16);
+}
+
+.reader-content::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 0 calc(50% - 18px), rgba(86,62,34,0.18) calc(50% - 1px), rgba(255,255,255,0.38) 50%, rgba(86,62,34,0.16) calc(50% + 1px), transparent calc(50% + 20px)),
+    linear-gradient(90deg, rgba(0,0,0,0.04), transparent 12%, transparent 88%, rgba(0,0,0,0.035));
+  border-radius: inherit;
+}
+
+.reader-book-page {
+  max-width: var(--reader-width, 680px);
+  margin-inline: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.reader-book-page.is-turning-next {
+  animation: bookTurnNext 0.34s ease both;
+  transform-origin: left center;
+}
+
+.reader-book-page.is-turning-prev {
+  animation: bookTurnPrev 0.34s ease both;
+  transform-origin: right center;
+}
+
+@keyframes bookTurnNext {
+  from { opacity: 0; transform: rotateY(-10deg) translateX(18px); filter: blur(1px); }
+  to   { opacity: 1; transform: rotateY(0) translateX(0); filter: blur(0); }
+}
+
+@keyframes bookTurnPrev {
+  from { opacity: 0; transform: rotateY(10deg) translateX(-18px); filter: blur(1px); }
+  to   { opacity: 1; transform: rotateY(0) translateX(0); filter: blur(0); }
+}
+
+.reader-action-btn--offline.is-active {
+  background: rgba(212,160,23,0.95);
+  border-color: rgba(212,160,23,0.95);
+  color: #1a1a1a;
+}
+
+.reader-content p {
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #1f211c;
+}
+
+.reader-bottombar {
+  background: rgba(255,255,255,0.90);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(84,66,40,0.16);
+  box-shadow: 0 -8px 28px rgba(25,28,22,0.08);
+}
+
+body.theme-dark.reader-body {
+  background: radial-gradient(circle at 50% -20%, rgba(212,160,23,0.10), transparent 34rem), #101410;
+}
+
+body.theme-dark .reader-content {
+  background: linear-gradient(180deg, #171d18, #111611);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 18px 55px rgba(0,0,0,0.45);
+}
+
+body.theme-dark .reader-content p { color: #e6e2d6; }
+
+body.theme-dark .reader-library-room {
+  opacity: 0.14;
+}
+
+body.theme-sepia.reader-body {
+  background: radial-gradient(circle at 50% -20%, rgba(128,83,32,0.16), transparent 34rem), #e9dfc7;
+}
+
+body.theme-sepia .reader-content {
+  background: linear-gradient(180deg, #fbf3df, #f3e8cb);
+}
+
+@media (min-width: 1080px) {
+  .reader-content {
+    width: min(100%, calc(var(--reader-width, 680px) * 1.45));
+    padding-inline: clamp(54px, 6vw, 82px);
+  }
+}
+
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 900px) {
   /* Sur mobile/tablette : le volet overlay le contenu, pas de décalage */
@@ -1942,5 +2091,9 @@ body.theme-sepia .reader-nav-panel { background: var(--sepia-surface); }
   .reader-page.nav-panel-open header,
   .reader-page.nav-panel-open .reader-bottombar {
     margin-left: 0;
+  }
+
+  .reader-content::after {
+    background: linear-gradient(90deg, rgba(0,0,0,0.055), transparent 20px);
   }
 }

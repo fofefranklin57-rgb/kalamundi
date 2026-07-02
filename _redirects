@@ -9,6 +9,8 @@
 /library        /pages/library.html     301
 /publish        /pages/publish.html     301
 /reader         /pages/reader.html      301
+/communautes    /pages/communautes.html 301
+/owner          /pages/owner.html       301
 
 # Compatibilité anciennes URLs
 /catalogue      /pages/library.html     301

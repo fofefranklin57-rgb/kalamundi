@@ -210,7 +210,9 @@ function validerEtape3() {
   const statut = qs('#statut-oeuvre').value;
   if (statut === 'premium') {
     const prix = parseFloat(qs('#prix').value);
-    if (!prix || prix < 0.99) return afficherErreur('Le prix minimum est 0,99 USD.') || false;
+    if (!prix || prix < 100) return afficherErreur('Le prix minimum est 100 FCFA.') || false;
+    const gratuits = parseInt(qs('#chapitres-gratuits')?.value || '0', 10);
+    if (Number.isNaN(gratuits) || gratuits < 0) return afficherErreur('Indique un nombre de chapitres gratuits valide.') || false;
   }
   if (!qs('#declaration-proprio').checked) {
     return afficherErreur('Tu dois déclarer être l\'auteur(e) de cette œuvre.') || false;
@@ -363,7 +365,14 @@ function mettreAJourApercuPlanning() {
     return;
   }
 
-  const labels = { quotidien: 'par jour', hebdomadaire: 'par semaine', mensuel: 'par mois' };
+  const labels = {
+    quotidien: 'par jour',
+    biquotidien: 'tous les 2 jours',
+    hebdomadaire: 'par semaine',
+    bihebdomadaire: 'toutes les 2 semaines',
+    mensuel: 'par mois',
+    bimensuel: 'tous les 2 mois',
+  };
   apercu.style.display = 'block';
   apercu.innerHTML = `✅ Les chapitres seront dévoilés automatiquement — 1 chapitre ${labels[freq]}.<br>
     Le premier paraît à la date de début (ou aujourd'hui si vide).`;
@@ -445,7 +454,7 @@ function remplirRecap() {
   qs('#recap-genre').textContent   = genres[qs('#genre').value] || '—';
   qs('#recap-langue').textContent  = langues[qs('#langue').value] || '—';
   qs('#recap-statut').textContent  = qs('#statut-oeuvre').value === 'premium'
-    ? `Premium — ${qs('#prix').value || '?'} USD` : 'Gratuit';
+    ? `Premium — ${qs('#prix').value || '?'} FCFA · ${qs('#chapitres-gratuits')?.value || 0} chapitre(s) gratuit(s)` : 'Gratuit';
   qs('#recap-licence').textContent = qs('#licence-oeuvre').value === 'cc'
     ? 'Creative Commons' : 'Tous droits réservés';
   qs('#recap-contenu').textContent = etat.fichier
@@ -489,6 +498,7 @@ qs('#btn-publier')?.addEventListener('click', async () => {
       langue_originale:       qs('#langue').value,
       statut:                 qs('#statut-oeuvre').value,
       prix:                   qs('#statut-oeuvre').value === 'premium' ? parseFloat(qs('#prix').value) : 0,
+      chapitres_gratuits:     qs('#statut-oeuvre').value === 'premium' ? parseInt(qs('#chapitres-gratuits')?.value || '3', 10) : 0,
       public_cible:           qs('#public_cible').value,
       hash_sha256:            etat.hash,
       visible:                true,

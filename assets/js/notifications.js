@@ -2,6 +2,8 @@
    notifications.js — Initialisation OneSignal cote navigateur
    ============================================================ */
 
+import { getUser } from './auth.js';
+
 let _initPromise = null;
 
 export function initNotificationsPush() {
@@ -26,6 +28,17 @@ async function _initNotificationsPush() {
       serviceWorkerPath: 'OneSignalSDKWorker.js',
       serviceWorkerParam: { scope: '/' },
     });
+
+    try {
+      const user = await getUser();
+      if (user?.id && typeof OneSignal.login === 'function') {
+        await OneSignal.login(user.id);
+      } else if (user?.id && OneSignal.User?.addAlias) {
+        OneSignal.User.addAlias('external_id', user.id);
+      }
+    } catch {
+      /* L'association push est utile mais ne doit jamais bloquer l'app. */
+    }
   });
 }
 

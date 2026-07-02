@@ -22,6 +22,8 @@
       <div class="navbar__nav" id="navbar-nav">
         <a href="/index.html" class="navbar__link">Accueil</a>
         <a href="/pages/library.html" class="navbar__link navbar__link--active">Bibliothèque</a>
+        <a href="/pages/communautes.html" class="navbar__link">Communautés</a>
+        <a href="/pages/abonnements.html" class="navbar__link">Abonnements</a>
         <a href="/pages/publish.html" class="navbar__link">Publier</a>
       </div>
       <span id="theme-slot"></span>
@@ -42,7 +44,7 @@
         <div>
           <h1 class="lib-header__title">Bibliothèque</h1>
           <p class="lib-header__sub">
-            Littérature mondiale · Patrimoine africain · Domaine public
+            Les publications des auteurs Kalamundi en priorité, avec le patrimoine rangé à part
           </p>
         </div>
         <div class="lib-header__search">
@@ -60,7 +62,7 @@
       <div class="container">
         <div class="lib-tabs" role="tablist" aria-label="Catégories bibliothèque">
           <button class="lib-tab is-active" data-cat="" role="tab" aria-selected="true">
-            Tout le catalogue
+            Œuvres Kalamundi
           </button>
           <button class="lib-tab" data-cat="fiction" role="tab" aria-selected="false">
             📗 Fiction
@@ -88,12 +90,54 @@
   <!-- Description de catégorie (masquée par défaut, visible si onglet actif) -->
   <div class="lib-cat-desc container" id="lib-cat-desc" style="display:none;"></div>
 
+  <section class="library-shelves container" aria-label="Rayons principaux">
+    <a href="/pages/library.html?collection=originaux" class="library-shelf library-shelf--featured">
+      <span class="library-shelf__label">Auteurs Kalamundi</span>
+      <span class="library-shelf__hint">Les œuvres publiées sur la plateforme</span>
+    </a>
+    <a href="/pages/library.html?cat=fiction&collection=originaux" class="library-shelf">
+      <span class="library-shelf__label">Fiction</span>
+      <span class="library-shelf__hint">Romans · Contes · Thrillers</span>
+    </a>
+    <a href="/pages/library.html?cat=poesie&collection=originaux" class="library-shelf">
+      <span class="library-shelf__label">Poésie & Oralité</span>
+      <span class="library-shelf__hint">Voix · Scènes · Patrimoine</span>
+    </a>
+    <a href="/pages/library.html?statut=premium&collection=originaux" class="library-shelf">
+      <span class="library-shelf__label">Premium</span>
+      <span class="library-shelf__hint">Extraits gratuits puis achat Fapshi</span>
+    </a>
+    <a href="/pages/library.html?collection=patrimoine" class="library-shelf library-shelf--heritage">
+      <span class="library-shelf__label">Patrimoine / imports</span>
+      <span class="library-shelf__hint">Domaine public et contenus pédagogiques</span>
+    </a>
+  </section>
+
   <main class="main-content">
     <div class="container">
       <div class="lib-layout">
 
         <!-- Sidebar filtres bibliothéconomiques -->
         <aside class="lib-sidebar" id="lib-sidebar">
+
+          <!-- Rayon -->
+          <div class="lib-filter-group">
+            <div class="lib-filter-group__title">Rayon</div>
+            <div class="lib-filter-options">
+              <label class="lib-radio is-active">
+                <input type="radio" name="collection" value="originaux" checked />
+                Auteurs Kalamundi
+              </label>
+              <label class="lib-radio">
+                <input type="radio" name="collection" value="patrimoine" />
+                Patrimoine / imports
+              </label>
+              <label class="lib-radio">
+                <input type="radio" name="collection" value="tout" />
+                Tout afficher
+              </label>
+            </div>
+          </div>
 
           <!-- Tri -->
           <div class="lib-filter-group">
@@ -253,6 +297,8 @@
           <div class="footer__heading">Plateforme</div>
           <div class="footer__links">
             <a href="/pages/library.html" class="footer__link">Bibliothèque</a>
+            <a href="/pages/communautes.html" class="footer__link">Communautés</a>
+            <a href="/pages/abonnements.html" class="footer__link">Abonnements</a>
             <a href="/pages/publish.html" class="footer__link">Publier</a>
             <a href="/pages/login.html" class="footer__link">Connexion</a>
           </div>

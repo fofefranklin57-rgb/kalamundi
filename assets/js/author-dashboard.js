@@ -5,7 +5,7 @@
 
 import { protegerRoute, resetPassword, getUser } from './auth.js';
 import { api } from './api.js';
-import { formatNombre, formatMontant, formatDateCourt, toastSucces, toastErreur, toast } from './utils.js';
+import { formatNombre, formatMontant, formatDateCourt, toastSucces, toastErreur, toast, truncate } from './utils.js';
 
 /* ============================================================
    CONSTANTES
@@ -75,12 +75,14 @@ const etat = {
 
     rendreHeader(profil);
     rendreStats(stats);
+    rendrePilotageAuteur(stats, profil);
     rendreOeuvres(etat.oeuvres);
     remplirFormulaireProfil(profil);
 
     api.getRevenus(etat.userId).then(rev => {
       etat.revenus = rev || [];
       rendreRevenus(etat.revenus);
+      rendrePilotageAuteur(stats, profil);
     }).catch(() => {});
 
   } catch (err) {
@@ -149,6 +151,9 @@ function rendreHeader(profil) {
 function rendreStats(stats) {
   document.getElementById('stat-nb-oeuvres').textContent = stats.nbOeuvres ?? '0';
   document.getElementById('stat-lectures').textContent   = formatNombre(stats.totalLectures ?? 0);
+  const oeuvres = stats.oeuvres || [];
+  const premium = oeuvres.filter(o => o.statut === 'premium').length;
+  const moyenneLectures = oeuvres.length ? Math.round((stats.totalLectures || 0) / oeuvres.length) : 0;
   const notesMoyennes = (stats.oeuvres || []).filter(o => o.note_moyenne).map(o => o.note_moyenne);
   const noteMoyenne = notesMoyennes.length
     ? (notesMoyennes.reduce((a, b) => a + b, 0) / notesMoyennes.length).toFixed(1)
@@ -157,6 +162,112 @@ function rendreStats(stats) {
     noteMoyenne !== '—' ? `⭐ ${noteMoyenne}` : '—';
   document.getElementById('stat-revenus').textContent =
     stats.revenus?.total ? formatMontant(stats.revenus.total) : '0,00 $';
+  document.getElementById('stat-premium').textContent = `${premium} premium`;
+  document.getElementById('stat-moyenne-lectures').textContent = `${formatNombre(moyenneLectures)} / œuvre`;
+  document.getElementById('stat-note-detail').textContent = `${notesMoyennes.length} œuvre${notesMoyennes.length > 1 ? 's' : ''} notée${notesMoyennes.length > 1 ? 's' : ''}`;
+  document.getElementById('stat-revenus-attente').textContent = `${formatMontant(stats.revenus?.en_attente || 0)} en attente`;
+}
+
+function rendrePilotageAuteur(stats, profil) {
+  const oeuvres = [...(stats.oeuvres || [])];
+  const revenus = etat.revenus || [];
+  const top = oeuvres.sort((a, b) => Number(b.nb_lectures || 0) - Number(a.nb_lectures || 0))[0];
+  const totalLectures = Number(stats.totalLectures || 0);
+  const premium = oeuvres.filter(o => o.statut === 'premium');
+  const profilScore = calculerScoreProfil(profil);
+  const actions = construireActionsAuteur(oeuvres, profil, revenus);
+
+  const focusTitle = !oeuvres.length
+    ? 'Publier une première œuvre'
+    : premium.length === 0 && totalLectures >= 50
+      ? 'Transformer une œuvre suivie en offre premium'
+      : top
+        ? `Pousser “${truncate(top.titre || 'Sans titre', 46)}”`
+        : 'Développer ton catalogue';
+
+  const focusText = !oeuvres.length
+    ? 'Commence avec une œuvre courte, découpée en chapitres. Le lecteur doit comprendre vite ton univers.'
+    : premium.length === 0 && totalLectures >= 50
+      ? 'Tu as déjà des lectures. Garde les premiers chapitres gratuits, puis fais payer au moment où l’histoire devient forte.'
+      : top
+        ? `${formatNombre(top.nb_lectures || 0)} lectures. Mets cette œuvre en avant, ajoute une bonne couverture et publie le prochain chapitre régulièrement.`
+        : 'Ajoute des chapitres, améliore tes couvertures et garde un rythme de publication visible.';
+
+  setText('author-focus-title', focusTitle);
+  setText('author-focus-text', focusText);
+  const cta = document.getElementById('author-focus-cta');
+  if (cta) {
+    cta.textContent = !oeuvres.length ? 'Publier maintenant' : 'Continuer à publier';
+    cta.href = '/pages/publish.html';
+  }
+
+  const scoreEl = document.getElementById('author-profile-score');
+  if (scoreEl) {
+    scoreEl.textContent = `${profilScore}%`;
+    scoreEl.style.setProperty('--score', profilScore);
+  }
+  setText('author-score-label', profilScore >= 80 ? 'Profil solide' : profilScore >= 50 ? 'Profil presque prêt' : 'Profil à renforcer');
+  setText('author-score-hint', profilScore >= 80
+    ? 'Ton profil donne déjà de bons signaux de confiance.'
+    : 'Ajoute photo, bio, pays, genres et réseaux pour rassurer les lecteurs.');
+
+  const actionsEl = document.getElementById('author-next-actions');
+  if (actionsEl) {
+    actionsEl.innerHTML = actions.map(a => `
+      <a class="author-action" href="${a.href}">
+        <span class="author-action__icon">${a.icon}</span>
+        <span>${escapeHtml(a.label)}</span>
+      </a>`).join('');
+  }
+
+  setText('author-best-work', top ? `${top.titre || 'Sans titre'} · ${formatNombre(top.nb_lectures || 0)} lectures` : 'Aucune œuvre publiée');
+  setText('author-market-note', premium.length
+    ? `${premium.length} œuvre${premium.length > 1 ? 's' : ''} premium`
+    : totalLectures >= 50 ? 'Prêt pour un test premium' : 'Construire l’audience');
+  const attente = revenus.filter(r => r.statut === 'en_attente').reduce((s, r) => s + Number(r.montant || 0), 0);
+  setText('author-revenue-pending', formatMontant(attente));
+
+  rendreTopOeuvres(oeuvres.slice(0, 3));
+}
+
+function calculerScoreProfil(profil) {
+  if (!profil) return 0;
+  const champs = [
+    profil.photo_url, profil.bio, profil.pays, profil.ville, profil.niveau_auteur,
+    profil.langues_parlees?.length, profil.genres_ecrits?.length, profil.genres_preferes?.length,
+    profil.site_web || Object.values(profil.reseaux_sociaux || {}).some(Boolean),
+  ];
+  return Math.round((champs.filter(Boolean).length / champs.length) * 100);
+}
+
+function construireActionsAuteur(oeuvres, profil, revenus) {
+  const actions = [];
+  if (!oeuvres.length) actions.push({ icon: '✍️', label: 'Publier ta première œuvre', href: '/pages/publish.html' });
+  if (!profil?.photo_url || !profil?.bio) actions.push({ icon: '👤', label: 'Compléter ton profil public', href: '/pages/author-dashboard.html?tab=profil' });
+  if (oeuvres.length && !oeuvres.some(o => o.statut === 'premium')) actions.push({ icon: '⭐', label: 'Tester une œuvre premium', href: '/pages/publish.html' });
+  if (oeuvres.some(o => !o.couverture_url)) actions.push({ icon: '🖼', label: 'Ajouter de vraies couvertures', href: '/pages/publish.html' });
+  if (revenus.some(r => r.statut === 'en_attente')) actions.push({ icon: '💰', label: 'Suivre les revenus en attente', href: '/pages/author-dashboard.html?tab=revenus' });
+  if (!actions.length) actions.push({ icon: '📚', label: 'Publier le prochain chapitre', href: '/pages/publish.html' });
+  return actions.slice(0, 4);
+}
+
+function rendreTopOeuvres(oeuvres) {
+  const el = document.getElementById('author-top-list');
+  if (!el) return;
+  if (!oeuvres.length) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = `
+    <div class="author-top-list__title">Top œuvres</div>
+    <div class="author-top-list__items">
+      ${oeuvres.map((o, i) => `
+        <a class="author-top-item" href="/pages/work.html?id=${o.id}">
+          <span class="author-top-item__rank">${i + 1}</span>
+          <span class="author-top-item__title">${escapeHtml(o.titre || 'Sans titre')}</span>
+          <span class="author-top-item__metric">${formatNombre(o.nb_lectures || 0)} lectures</span>
+        </a>`).join('')}
+    </div>`;
 }
 
 /* ============================================================
@@ -177,13 +288,17 @@ function rendreOeuvres(oeuvres) {
   }
   conteneur.innerHTML = oeuvres.map(o => `
     <div class="oeuvre-row" data-id="${o.id}">
-      <div class="oeuvre-row__cover--placeholder">📖</div>
+      ${o.couverture_url
+        ? `<img src="${escapeHtml(o.couverture_url)}" alt="" class="oeuvre-row__cover" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=&quot;oeuvre-row__cover--placeholder&quot;>📖</div>'">`
+        : '<div class="oeuvre-row__cover--placeholder">📖</div>'}
       <div class="oeuvre-row__info">
-        <div class="oeuvre-row__titre">${o.titre || 'Sans titre'}</div>
+        <div class="oeuvre-row__titre">${escapeHtml(o.titre || 'Sans titre')}</div>
         <div class="oeuvre-row__meta">
           <span class="badge badge--${o.statut === 'premium' ? 'premium' : 'gratuit'}">${o.statut === 'premium' ? 'Premium' : 'Gratuit'}</span>
+          ${o.genre ? `<span>${escapeHtml(o.genre)}</span>` : ''}
           <span>👁 ${formatNombre(o.nb_lectures || 0)} lectures</span>
           ${o.note_moyenne ? `<span>⭐ ${o.note_moyenne}</span>` : ''}
+          ${o.statut === 'premium' && o.prix ? `<span>${formatMontant(o.prix, 'XAF')}</span>` : ''}
           ${!o.visible ? '<span class="badge badge--warning">Masquée</span>' : ''}
         </div>
       </div>
@@ -196,6 +311,20 @@ function rendreOeuvres(oeuvres) {
 
   conteneur.querySelectorAll('.btn-supprimer').forEach(btn =>
     btn.addEventListener('click', () => ouvrirModalSupprimer(btn.dataset.id, btn.dataset.titre)));
+}
+
+function setText(id, valeur) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = valeur;
+}
+
+function escapeHtml(valeur = '') {
+  return String(valeur)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 /* ============================================================
@@ -394,11 +523,12 @@ function initFormulaireProfil() {
     }
   });
 
-  // Si l'URL contient ?tab=profil, ouvrir directement l'onglet profil
+  // Si l'URL contient ?tab=..., ouvrir directement l'onglet demandé
   const params = new URLSearchParams(window.location.search);
-  if (params.get('tab') === 'profil') {
+  const tab = params.get('tab');
+  if (tab) {
     setTimeout(() => {
-      document.querySelector('[data-tab="profil"]')?.click();
+      document.querySelector(`[data-tab="${tab}"]`)?.click();
     }, 300);
   }
 }

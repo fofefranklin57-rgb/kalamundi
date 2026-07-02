@@ -104,6 +104,16 @@
     .list-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
     .list-row:last-child { border-bottom: none; }
     .list-row__val { font-weight: 700; color: var(--pri); }
+    .mini-note { font-size: 11px; color: var(--text3); line-height: 1.45; margin-top: 6px; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .data-table th, .data-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .data-table th { color: var(--pri); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+    .data-table td:last-child, .data-table th:last-child { text-align: right; }
+    .pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px; background: #e8f5e9; color: #065f46; font-size: 10px; font-weight: 700; }
+    .insight-card { background: var(--card); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 10px; border-left: 4px solid var(--pri-l); }
+    .insight-card__title { font-size: 13px; font-weight: 800; color: var(--pri); margin-bottom: 4px; }
+    .insight-card__body { font-size: 12px; color: var(--text2); line-height: 1.45; }
 
     /* ── Progress bar ── */
     .progress { height: 5px; background: var(--bg); border-radius: 99px; margin-top: 4px; }
@@ -246,6 +256,10 @@
     <div id="croissance-content"><div class="loading">⏳ Chargement…</div></div>
   </section>
 
+  <section class="section" id="sec-donnees">
+    <div id="donnees-content"><div class="loading">⏳ Chargement…</div></div>
+  </section>
+
   <section class="section" id="sec-pub">
     <div id="pub-content"><div class="loading">⏳ Chargement…</div></div>
   </section>
@@ -264,6 +278,9 @@
     </button>
     <button class="bnav-btn" onclick="showSection('croissance', this)">
       <span class="icon">📈</span>Croissance
+    </button>
+    <button class="bnav-btn" onclick="showSection('donnees', this)">
+      <span class="icon">🧭</span>Données
     </button>
     <button class="bnav-btn" onclick="showSection('pub', this)">
       <span class="icon">📢</span>Pub

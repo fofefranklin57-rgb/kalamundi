@@ -33,6 +33,14 @@ desktop.ini
 *.jks
 /android/
 /electron/
+android-owner/.gradle/
+android-owner/**/build/
+android-owner/gradle-*.zip
+android-owner/replay_*.log
+*.apk
+
+# Assets générés incomplets
+assets/fonts/*.woff2
 
 # Fichiers temporaires
 *.tmp

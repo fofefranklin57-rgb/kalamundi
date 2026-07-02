@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   chargerUsers();
   chargerInstitutions();
   chargerPaiements();
+  chargerFinance();
+  chargerPub();
+  chargerConfig();
 });
 
 /* ============================================================
@@ -63,16 +66,321 @@ async function chargerStats() {
 
     if (s.signalementsOuverts > 0) {
       const b = document.getElementById('badge-signalements');
-      b.textContent = s.signalementsOuverts;
-      b.style.display = '';
+      b.textContent = s.signalementsOuverts; b.style.display = '';
     }
     if (s.institutionsAttente > 0) {
       const b = document.getElementById('badge-institutions');
-      b.textContent = s.institutionsAttente;
-      b.style.display = '';
+      b.textContent = s.institutionsAttente; b.style.display = '';
     }
   } catch (e) { console.error(e); }
 }
+
+/* ============================================================
+   Finance & Revenus
+   ============================================================ */
+
+window.chargerFinance = async function () {
+  const el = document.getElementById('finance-content');
+  el.innerHTML = loading();
+  try {
+    const d = await api.adminGetFinance();
+    const maxGraphe = Math.max(...d.graphe.map(g => g.total), 1);
+
+    el.innerHTML = `
+      <div class="stat-grid" style="margin-bottom:var(--spacing-lg)">
+        <div class="stat-card stat-card--green">
+          <div class="stat-card__icon">💵</div>
+          <div class="stat-card__val">$${fmtMoney(d.totalPaiements)}</div>
+          <div class="stat-card__label">Revenus bruts totaux</div>
+        </div>
+        <div class="stat-card stat-card--accent">
+          <div class="stat-card__icon">🏦</div>
+          <div class="stat-card__val">$${fmtMoney(d.totalKalamundi)}</div>
+          <div class="stat-card__label">Part Kalamundi (50%)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon">✍️</div>
+          <div class="stat-card__val">$${fmtMoney(d.totalAuteurs)}</div>
+          <div class="stat-card__label">Reversé aux auteurs</div>
+        </div>
+        <div class="stat-card stat-card--green">
+          <div class="stat-card__icon">📅</div>
+          <div class="stat-card__val">$${fmtMoney(d.mrr)}</div>
+          <div class="stat-card__label">Revenus ce mois</div>
+        </div>
+      </div>
+
+      <div class="card-block" style="margin-bottom:var(--spacing-lg)">
+        <h3>Revenus mensuels — 12 derniers mois</h3>
+        <div class="bar-chart">
+          ${d.graphe.map(g => `
+            <div class="bar-chart__col">
+              <div class="bar-chart__val">$${g.total > 0 ? fmtMoney(g.total) : '0'}</div>
+              <div class="bar-chart__bar" style="height:${Math.round((g.total / maxGraphe) * 100)}px" title="${g.label}: $${g.total}"></div>
+              <div class="bar-chart__label">${g.label}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="card-block">
+        <h3>Top 10 œuvres par lectures</h3>
+        <table class="admin-table">
+          <thead><tr><th>#</th><th>Titre</th><th>Auteur</th><th>Genre</th><th>Lectures</th></tr></thead>
+          <tbody>
+            ${d.topOeuvres.map((o, i) => `
+              <tr>
+                <td style="color:var(--text-light);font-weight:700">${i + 1}</td>
+                <td><a href="/pages/work.html?id=${o.id}" target="_blank" style="color:var(--color-primary)">${o.titre}</a></td>
+                <td>${o.profiles?.nom || '—'}</td>
+                <td>${o.genre || '—'}</td>
+                <td><strong>${(o.nb_lectures || 0).toLocaleString('fr-FR')}</strong></td>
+              </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-light)">Aucune donnée</td></tr>'}
+          </tbody>
+        </table>
+      </div>`;
+  } catch (e) { el.innerHTML = erreur('Impossible de charger les données finance.'); console.error(e); }
+};
+
+/* ============================================================
+   Croissance
+   ============================================================ */
+
+window.chargerCroissance = async function () {
+  const el = document.getElementById('croissance-content');
+  el.innerHTML = loading();
+  try {
+    const d = await api.adminGetFinance();
+    const maxUsers = Math.max(...d.usersParMois.map(u => u.count), 1);
+    const totalUsers = d.usersParMois.reduce((s, u) => s + u.count, 0);
+
+    el.innerHTML = `
+      <div class="stat-grid" style="margin-bottom:var(--spacing-lg)">
+        <div class="stat-card stat-card--green">
+          <div class="stat-card__icon">👥</div>
+          <div class="stat-card__val">${d.totalUsers.toLocaleString('fr-FR')}</div>
+          <div class="stat-card__label">Utilisateurs totaux</div>
+        </div>
+        <div class="stat-card stat-card--accent">
+          <div class="stat-card__icon">🆕</div>
+          <div class="stat-card__val">${(d.usersParMois[d.usersParMois.length - 1]?.count || 0)}</div>
+          <div class="stat-card__label">Nouveaux ce mois</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon">📖</div>
+          <div class="stat-card__val">${d.topOeuvres.reduce((s, o) => s + (o.nb_lectures || 0), 0).toLocaleString('fr-FR')}</div>
+          <div class="stat-card__label">Total lectures (top 10)</div>
+        </div>
+      </div>
+
+      <div class="cards-2">
+        <div class="card-block">
+          <h3>Nouveaux utilisateurs — 6 derniers mois</h3>
+          <div class="bar-chart">
+            ${d.usersParMois.map(u => `
+              <div class="bar-chart__col">
+                <div class="bar-chart__val">${u.count}</div>
+                <div class="bar-chart__bar" style="height:${Math.round((u.count / maxUsers) * 100)}px;background:var(--color-accent)"></div>
+                <div class="bar-chart__label">${u.label}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div class="card-block">
+          <h3>Top 5 pays</h3>
+          ${d.topPays.length ? `
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+              ${d.topPays.map((p, i) => {
+                const pct = Math.round((p.count / d.totalUsers) * 100);
+                return `
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+                      <span>${i + 1}. ${p.pays || 'Inconnu'}</span>
+                      <span style="font-weight:700">${p.count} <span style="color:var(--text-light);font-weight:400">(${pct}%)</span></span>
+                    </div>
+                    <div style="height:6px;background:var(--bg-secondary);border-radius:99px">
+                      <div style="height:6px;width:${pct}%;background:var(--color-primary-light);border-radius:99px"></div>
+                    </div>
+                  </div>`;
+              }).join('')}
+            </div>
+          ` : '<p style="color:var(--text-light);font-size:13px">Aucune donnée pays disponible.</p>'}
+        </div>
+      </div>`;
+  } catch (e) { el.innerHTML = erreur('Impossible de charger les données de croissance.'); console.error(e); }
+};
+
+/* ============================================================
+   Régie Publicitaire
+   ============================================================ */
+
+window.chargerPub = async function () {
+  const el = document.getElementById('pub-content');
+  el.innerHTML = loading();
+  try {
+    const bannieres = await api.pubGetBannieres();
+    if (!bannieres.length) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state__icon">📢</div>
+          <p class="empty-state__title">Aucune bannière créée</p>
+          <p class="empty-state__subtitle">Créez votre première bannière publicitaire</p>
+          <button class="btn btn--primary" onclick="ouvrirModalePub()">+ Nouvelle bannière</button>
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = `
+      <div style="margin-bottom:var(--spacing-md);font-size:var(--font-size-sm);color:var(--text-secondary)">
+        ${bannieres.filter(b => b.actif).length} bannière(s) active(s) sur ${bannieres.length} au total
+      </div>
+      <div class="pub-grid">
+        ${bannieres.map(b => `
+          <div class="pub-card" id="pub-card-${b.id}">
+            <div class="pub-card__img">
+              ${b.image_url
+                ? `<img src="${b.image_url}" alt="${b.titre}" onerror="this.parentElement.textContent='Image non disponible'" />`
+                : '🖼️ Aucune image'}
+            </div>
+            <div class="pub-card__body">
+              <div class="pub-card__titre">
+                ${b.titre}
+                <span class="pub-badge ${b.actif ? 'pub-badge--on' : 'pub-badge--off'}" style="margin-left:6px">
+                  ${b.actif ? 'ACTIVE' : 'INACTIVE'}
+                </span>
+              </div>
+              <div class="pub-card__meta">
+                Page : <strong>${b.page_cible || 'all'}</strong>
+                ${b.date_debut ? ` · Du ${new Date(b.date_debut).toLocaleDateString('fr-FR')}` : ''}
+                ${b.date_fin   ? ` au ${new Date(b.date_fin).toLocaleDateString('fr-FR')}` : ''}
+              </div>
+              <div class="pub-card__stats">
+                <span>👁 ${(b.impressions || 0).toLocaleString('fr-FR')} imp.</span>
+                <span>🖱 ${(b.clics || 0).toLocaleString('fr-FR')} clics</span>
+                <span>📊 CTR ${b.impressions > 0 ? ((b.clics / b.impressions) * 100).toFixed(1) : '0'}%</span>
+              </div>
+              <div class="pub-card__actions">
+                <button class="btn-xs ${b.actif ? 'btn-warning' : 'btn-success'}"
+                  onclick="toggleBanniere('${b.id}', ${!b.actif})">
+                  ${b.actif ? '⏸ Désactiver' : '▶ Activer'}
+                </button>
+                <button class="btn-xs btn-muted" onclick="editerBanniere(${JSON.stringify(b).replace(/"/g, '&quot;')})">
+                  ✏️ Éditer
+                </button>
+                <button class="btn-xs btn-danger" onclick="supprimerBanniere('${b.id}')">
+                  🗑 Supprimer
+                </button>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  } catch (e) { el.innerHTML = erreur('Impossible de charger les bannières.'); console.error(e); }
+};
+
+window.ouvrirModalePub = function (banniere = null) {
+  document.getElementById('pub-edit-id').value   = banniere?.id || '';
+  document.getElementById('pub-titre').value     = banniere?.titre || '';
+  document.getElementById('pub-image-url').value = banniere?.image_url || '';
+  document.getElementById('pub-lien').value      = banniere?.lien_cible || '';
+  document.getElementById('pub-cta').value       = banniere?.texte_cta || 'En savoir plus';
+  document.getElementById('pub-page').value      = banniere?.page_cible || 'all';
+  document.getElementById('pub-debut').value     = banniere?.date_debut || '';
+  document.getElementById('pub-fin').value       = banniere?.date_fin || '';
+  document.getElementById('modal-pub-titre').textContent = banniere ? 'Modifier la bannière' : 'Nouvelle bannière';
+  document.getElementById('modal-pub').classList.add('open');
+};
+
+window.fermerModalePub = function (e) {
+  if (!e || e.target === document.getElementById('modal-pub'))
+    document.getElementById('modal-pub').classList.remove('open');
+};
+
+window.editerBanniere = function (b) { ouvrirModalePub(b); };
+
+window.sauvegarderBanniere = async function () {
+  const id        = document.getElementById('pub-edit-id').value;
+  const titre     = document.getElementById('pub-titre').value.trim();
+  const image_url = document.getElementById('pub-image-url').value.trim();
+  const lien_cible = document.getElementById('pub-lien').value.trim();
+  const texte_cta = document.getElementById('pub-cta').value.trim() || 'En savoir plus';
+  const page_cible = document.getElementById('pub-page').value;
+  const date_debut = document.getElementById('pub-debut').value || null;
+  const date_fin   = document.getElementById('pub-fin').value || null;
+
+  if (!titre) { toast('Le titre est requis.', 'error'); return; }
+
+  try {
+    if (id) {
+      await api.pubUpdateBanniere(id, { titre, image_url, lien_cible, texte_cta, page_cible, date_debut, date_fin });
+      toast('Bannière mise à jour ✅', 'success');
+    } else {
+      await api.pubCreerBanniere({ titre, image_url, lien_cible, texte_cta, page_cible, date_debut, date_fin, actif: true });
+      toast('Bannière créée ✅', 'success');
+    }
+    fermerModalePub();
+    chargerPub();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+};
+
+window.toggleBanniere = async function (id, actif) {
+  try {
+    await api.pubUpdateBanniere(id, { actif });
+    toast(actif ? 'Bannière activée.' : 'Bannière désactivée.', 'success');
+    chargerPub();
+  } catch { toast('Erreur.', 'error'); }
+};
+
+window.supprimerBanniere = async function (id) {
+  if (!confirm('Supprimer cette bannière définitivement ?')) return;
+  try {
+    await api.pubSupprimerBanniere(id);
+    toast('Bannière supprimée.', 'info');
+    chargerPub();
+  } catch { toast('Erreur.', 'error'); }
+};
+
+/* ============================================================
+   Configuration plateforme
+   ============================================================ */
+
+window.chargerConfig = async function () {
+  const el = document.getElementById('config-content');
+  el.innerHTML = loading();
+  try {
+    const configs = await api.configGetAll();
+    if (!configs.length) { el.innerHTML = erreur('Table config_plateforme introuvable. Appliquez la migration SQL.'); return; }
+
+    el.innerHTML = `
+      <div class="config-list">
+        ${configs.map(c => `
+          <div class="config-row">
+            <div>
+              <div class="config-row__cle">${c.cle}</div>
+            </div>
+            <div class="config-row__desc">${c.description || ''}</div>
+            <div class="config-row__input">
+              <input type="text" id="cfg-${c.cle}" value="${c.valeur || ''}"
+                placeholder="Valeur..."
+                onkeydown="if(event.key==='Enter') sauvegarderConfig('${c.cle}')" />
+              <button class="btn-xs btn-success" onclick="sauvegarderConfig('${c.cle}')">✓</button>
+            </div>
+          </div>`).join('')}
+      </div>
+      <p style="margin-top:var(--spacing-lg);font-size:11px;color:var(--text-light)">
+        Appuyez sur Entrée ou cliquez ✓ pour sauvegarder chaque valeur individuellement.
+      </p>`;
+  } catch (e) { el.innerHTML = erreur('Impossible de charger la config. Vérifiez que la migration SQL a été appliquée.'); console.error(e); }
+};
+
+window.sauvegarderConfig = async function (cle) {
+  const input = document.getElementById('cfg-' + cle);
+  if (!input) return;
+  try {
+    await api.configSet(cle, input.value.trim());
+    toast(`"${cle}" mis à jour ✅`, 'success');
+    input.style.borderColor = 'var(--color-success)';
+    setTimeout(() => { input.style.borderColor = ''; }, 2000);
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+};
 
 /* ============================================================
    Oeuvres
@@ -80,7 +388,7 @@ async function chargerStats() {
 
 window.chargerOeuvres = async function () {
   const el = document.getElementById('table-oeuvres');
-  el.innerHTML = '<div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>';
+  el.innerHTML = loading();
   try {
     const { data } = await api.adminGetOeuvres({ limit: 50 });
     if (!data?.length) { el.innerHTML = vide('Aucune œuvre.'); return; }
@@ -125,7 +433,7 @@ window.toggleVisible = async function (id, visible) {
 
 window.chargerSignalements = async function () {
   const el = document.getElementById('table-signalements');
-  el.innerHTML = '<div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>';
+  el.innerHTML = loading();
   try {
     const data = await api.adminGetSignalements();
     if (!data?.length) { el.innerHTML = vide('Aucun signalement.'); return; }
@@ -170,7 +478,7 @@ window.traiterSignalement = async function (id, statut) {
 
 window.chargerUsers = async function () {
   const el = document.getElementById('table-users');
-  el.innerHTML = '<div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>';
+  el.innerHTML = loading();
   try {
     const data = await api.adminGetUsers({ limit: 50 });
     if (!data?.length) { el.innerHTML = vide('Aucun utilisateur.'); return; }
@@ -192,10 +500,10 @@ window.chargerUsers = async function () {
             <td>
               <select class="form-input" style="padding:4px 8px;font-size:11px;height:28px"
                 onchange="setRole('${u.id}', this.value)">
-                <option ${u.role==='lecteur'    ? 'selected':''} value="lecteur">lecteur</option>
-                <option ${u.role==='auteur'     ? 'selected':''} value="auteur">auteur</option>
-                <option ${u.role==='institution'? 'selected':''} value="institution">institution</option>
-                <option ${u.role==='admin'      ? 'selected':''} value="admin">admin</option>
+                <option ${u.role==='lecteur'     ? 'selected':''} value="lecteur">lecteur</option>
+                <option ${u.role==='auteur'      ? 'selected':''} value="auteur">auteur</option>
+                <option ${u.role==='institution' ? 'selected':''} value="institution">institution</option>
+                <option ${u.role==='admin'       ? 'selected':''} value="admin">admin</option>
               </select>
             </td>
           </tr>`).join('')}
@@ -217,7 +525,7 @@ window.setRole = async function (userId, role) {
 
 window.chargerInstitutions = async function () {
   const el = document.getElementById('table-institutions');
-  el.innerHTML = '<div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>';
+  el.innerHTML = loading();
   try {
     const data = await api.adminGetInstitutions();
     if (!data?.length) { el.innerHTML = vide('Aucune institution.'); return; }
@@ -236,8 +544,8 @@ window.chargerInstitutions = async function () {
             <td>${i.domaine ? `<a href="${i.domaine}" target="_blank" style="color:var(--color-primary)">${i.domaine}</a>` : '—'}</td>
             <td>
               <span class="badge ${
-                i.statut_verification === 'verifie'    ? 'badge--success' :
-                i.statut_verification === 'rejete'     ? 'badge--danger'  : 'badge--warning'}">
+                i.statut_verification === 'verifie' ? 'badge--success' :
+                i.statut_verification === 'rejete'  ? 'badge--danger'  : 'badge--warning'}">
                 ${i.statut_verification}
               </span>
             </td>
@@ -269,15 +577,14 @@ window.verifierInstitution = async function (id, statut) {
 
 window.chargerPaiements = async function () {
   const el = document.getElementById('table-paiements');
-  el.innerHTML = '<div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>';
+  el.innerHTML = loading();
   try {
     const data = await api.adminGetPaiements();
     const attente = data?.filter(p => p.statut === 'en_attente') || [];
 
     if (attente.length > 0) {
       const b = document.getElementById('badge-paiements');
-      b.textContent = attente.length;
-      b.style.display = '';
+      b.textContent = attente.length; b.style.display = '';
     }
 
     if (!data?.length) { el.innerHTML = vide('Aucun paiement.'); return; }
@@ -319,8 +626,7 @@ window.confirmerPaiement = async function (id, oeuvreId, userId) {
   try {
     await api.adminConfirmerPaiement(id, oeuvreId || null, userId);
     toast('Paiement confirmé — accès activé ✅', 'success');
-    chargerPaiements();
-    chargerStats();
+    chargerPaiements(); chargerStats();
   } catch { toast('Erreur.', 'error'); }
 };
 
@@ -343,11 +649,8 @@ window.exporterOeuvresCSV = async function () {
     const lignes  = data.map(o => [
       `"${(o.titre || '').replace(/"/g,'""')}"`,
       `"${(o.profiles?.nom || '').replace(/"/g,'""')}"`,
-      o.genre || '',
-      o.statut || '',
-      o.nb_lectures || 0,
-      o.note_moyenne || '',
-      o.visible ? 'oui' : 'non',
+      o.genre || '', o.statut || '', o.nb_lectures || 0,
+      o.note_moyenne || '', o.visible ? 'oui' : 'non',
       new Date(o.created_at).toLocaleDateString('fr-FR'),
     ].join(';'));
     _telechargerCSV('kalamundi_oeuvres.csv', [entetes.join(';'), ...lignes]);
@@ -361,9 +664,7 @@ window.exporterUsersCSV = async function () {
     const entetes = ['Nom', 'Rôle', 'Niveau', 'Pays', 'Badge fondateur', 'Inscrit le'];
     const lignes  = data.map(u => [
       `"${(u.nom || '').replace(/"/g,'""')}"`,
-      u.role || '',
-      u.niveau_auteur || '',
-      u.pays || '',
+      u.role || '', u.niveau_auteur || '', u.pays || '',
       u.badge_fondateur ? 'oui' : 'non',
       new Date(u.created_at).toLocaleDateString('fr-FR'),
     ].join(';'));
@@ -378,13 +679,9 @@ window.exporterPaiementsCSV = async function () {
     const entetes = ['Utilisateur', 'Type', 'Œuvre', 'Montant', 'Devise', 'Méthode', 'Référence', 'Statut', 'Date'];
     const lignes  = data.map(p => [
       `"${(p.profiles?.nom || '').replace(/"/g,'""')}"`,
-      p.type || '',
-      `"${(p.oeuvres?.titre || '').replace(/"/g,'""')}"`,
-      p.montant || '',
-      p.devise || 'USD',
-      p.methode || '',
-      p.reference_transaction || '',
-      p.statut || '',
+      p.type || '', `"${(p.oeuvres?.titre || '').replace(/"/g,'""')}"`,
+      p.montant || '', p.devise || 'USD', p.methode || '',
+      p.reference_transaction || '', p.statut || '',
       new Date(p.created_at).toLocaleDateString('fr-FR'),
     ].join(';'));
     _telechargerCSV('kalamundi_paiements.csv', [entetes.join(';'), ...lignes]);
@@ -393,14 +690,11 @@ window.exporterPaiementsCSV = async function () {
 };
 
 function _telechargerCSV(nom, lignes) {
-  const bom     = '﻿'; // BOM UTF-8 pour Excel
-  const contenu = bom + lignes.join('\r\n');
+  const contenu = '﻿' + lignes.join('\r\n');
   const blob    = new Blob([contenu], { type: 'text/csv;charset=utf-8;' });
   const url     = URL.createObjectURL(blob);
   const a       = document.createElement('a');
-  a.href        = url;
-  a.download    = nom;
-  a.click();
+  a.href = url; a.download = nom; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -408,8 +702,20 @@ function _telechargerCSV(nom, lignes) {
    Utilitaires
    ============================================================ */
 
+function fmtMoney(n) {
+  return Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function loading() {
+  return `<div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div>`;
+}
+
 function vide(msg) {
   return `<div class="empty-state"><div class="empty-state__icon">📭</div><p class="empty-state__title">${msg}</p></div>`;
+}
+
+function erreur(msg) {
+  return `<div class="empty-state"><div class="empty-state__icon">⚠️</div><p class="empty-state__title">${msg}</p></div>`;
 }
 
 function toast(message, type = 'info') {
