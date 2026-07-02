@@ -1403,16 +1403,55 @@ function _paginerContenu(contentEl) {
     contentEl.appendChild(div);
   });
 
+  if (etat.chapitreNum >= etat.chapitres.length) {
+    const backCover = _creerQuatriemeCouverturePage(pages.length + 1);
+    backCover.hidden = pages.length > 0;
+    contentEl.appendChild(backCover);
+    pages.push([backCover]);
+  }
+
   etat.pages       = pages.length;
   etat.pageCourante = 1;
   contentEl.dataset.currentPage = '1';
   contentEl.classList.toggle('is-left-page', false);
 }
 
+function _creerQuatriemeCouverturePage(numeroPage) {
+  const page = document.createElement('div');
+  page.className = 'reader-book-page reader-book-page--back-cover';
+  page.dataset.page = String(numeroPage);
+
+  const auteur = etat.oeuvre?.profiles?.nom || 'Auteur inconnu';
+  const titre = etat.oeuvre?.titre || 'Kalamundi';
+  const resume = etat.oeuvre?.resume || 'Merci d’avoir lu cette œuvre sur Kalamundi.';
+
+  const inner = document.createElement('div');
+  inner.className = 'reader-back-cover';
+
+  const label = document.createElement('div');
+  label.className = 'reader-back-cover__label';
+  label.textContent = 'Quatrième de couverture';
+
+  const h = document.createElement('h2');
+  h.textContent = titre;
+
+  const p = document.createElement('p');
+  p.textContent = resume;
+
+  const meta = document.createElement('div');
+  meta.className = 'reader-back-cover__meta';
+  meta.textContent = `Kalamundi · ${auteur}`;
+
+  inner.append(label, h, p, meta);
+  page.appendChild(inner);
+  return page;
+}
+
 /** Affiche la page `num` du chapitre courant */
 function _allerPage(num, options = {}) {
   if (num < 1 || num > etat.pages) return;
   const direction = num > etat.pageCourante ? 'next' : 'prev';
+  const pageActuelle = document.querySelector(`.reader-book-page[data-page="${etat.pageCourante}"]`);
 
   // Contrôle visiteur — bloquer après LIMIT_VISITEUR_PAGES
   if (!etat.utilisateur && num > etat.pageCourante) {
@@ -1441,6 +1480,7 @@ function _allerPage(num, options = {}) {
   if (contentEl) {
     contentEl.dataset.currentPage = String(num);
     contentEl.classList.toggle('is-left-page', num % 2 === 0);
+    _jouerFeuilletage(contentEl, pageActuelle, direction);
   }
   window.scrollTo({ top: 0 });
   mettreAJourNavigation();
@@ -1448,6 +1488,18 @@ function _allerPage(num, options = {}) {
   _mettreAJourScrollProgress();
   mettreAJourNavPanelPages(); // synchronise la page surlignée dans le volet
   if (options.sauvegarder !== false) sauvegarderProgression();
+}
+
+function _jouerFeuilletage(contentEl, pageActuelle, direction) {
+  if (!pageActuelle || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  contentEl.querySelectorAll('.reader-page-flip').forEach(el => el.remove());
+  const feuille = document.createElement('div');
+  feuille.className = `reader-page-flip reader-page-flip--${direction}`;
+  feuille.innerHTML = pageActuelle.innerHTML;
+  contentEl.appendChild(feuille);
+
+  window.setTimeout(() => feuille.remove(), 620);
 }
 
 /** Page suivante, puis chapitre suivant si on est à la dernière page */
