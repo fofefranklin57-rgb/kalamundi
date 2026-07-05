@@ -186,6 +186,9 @@ async function chargerOeuvres() {
       tri:       filtres.tri,
       exclureSysteme: filtres.collection === 'originaux',
     });
+    const statsCatalogue = filtres.collection !== 'tout'
+      ? await api.getStatsAccueil().catch(() => null)
+      : null;
 
     // Filtrage client pour catégories multi-genres et pays africains
     let data = tous;
@@ -223,6 +226,7 @@ async function chargerOeuvres() {
       const message = filtres.collection === 'originaux'
         ? 'Les livres importés sont maintenant rangés à part. Publie une œuvre ou passe sur Patrimoine / imports pour les voir.'
         : 'Aucune œuvre ne correspond à ces filtres.';
+      afficherContexteCatalogue(totalAffiches, statsCatalogue?.totalOeuvres);
       grid.innerHTML = `
         <div class="empty-state" style="grid-column:1/-1">
           <div class="empty-state__icon">📚</div>
@@ -239,8 +243,11 @@ async function chargerOeuvres() {
     grid.innerHTML = pageData.map(o => carteOeuvre(o)).join('');
     rendrePagination(totalAffiches);
     afficherFiltresActifs();
+    afficherContexteCatalogue(totalAffiches, statsCatalogue?.totalOeuvres);
 
   } catch (err) {
+    const contexte = document.getElementById('library-context');
+    if (contexte) contexte.style.display = 'none';
     grid.innerHTML = `<div class="alert alert--error" style="grid-column:1/-1">Erreur de chargement : ${err.message}</div>`;
   }
 }
@@ -264,6 +271,33 @@ function echapperHtml(valeur = '') {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function afficherContexteCatalogue(totalAffiches, totalCatalogue) {
+  const el = document.getElementById('library-context');
+  if (!el) return;
+
+  if (filtres.collection === 'tout') {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+
+  const total = Number(totalCatalogue || 0);
+  const affiches = Number(totalAffiches || 0);
+  const masques = Math.max(total - affiches, 0);
+  const collectionLabel = filtres.collection === 'patrimoine'
+    ? 'le patrimoine et les imports'
+    : 'les œuvres publiées par les auteurs Kalamundi';
+
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <div>
+      <strong>Rayon sélectionné :</strong> ${collectionLabel}.
+      ${masques > 0 ? `<span>${formatNombre(masques)} autre${masques > 1 ? 's' : ''} œuvre${masques > 1 ? 's' : ''} restent masquée${masques > 1 ? 's' : ''} par ce filtre.</span>` : ''}
+    </div>
+    <a href="/pages/library.html?collection=tout" class="btn btn--outline btn--sm">Tout afficher</a>
+  `;
 }
 
 /* ============================================================

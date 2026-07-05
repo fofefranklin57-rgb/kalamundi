@@ -308,6 +308,29 @@
   color: var(--text-secondary);
 }
 
+.lib-context {
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin: -2px 0 var(--spacing-md);
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--border-color));
+  border-radius: var(--border-radius-sm);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 8%, transparent), transparent),
+    var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.lib-context strong {
+  color: var(--color-primary);
+}
+
+.lib-context .btn {
+  flex-shrink: 0;
+}
+
 .lib-mobile-filter-btn {
   display: none;
   background: var(--bg-secondary);
