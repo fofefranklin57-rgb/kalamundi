@@ -23,6 +23,29 @@ function sansChamp(obj, champ) {
   return copie;
 }
 
+const AUTEURS_SYSTEME = new Set([
+  '00000000-0000-0000-0000-000000000001',
+]);
+
+const NOMS_IMPORTS = new Set([
+  'bibliotheque kalamundi',
+  'bibliothèque kalamundi',
+  'domaine public',
+  'creative commons',
+]);
+
+function estOeuvreImportee(o) {
+  const nom = (o.profiles?.nom || '').toLowerCase();
+  const resume = (o.resume || '').toLowerCase();
+  return AUTEURS_SYSTEME.has(o.auteur_id)
+    || NOMS_IMPORTS.has(nom)
+    || resume.includes('project gutenberg')
+    || resume.includes('standard ebooks')
+    || resume.includes('openstax')
+    || resume.includes('african storybook')
+    || resume.includes('domaine public');
+}
+
 /* ============================================================
    PROFILS
    ============================================================ */
@@ -147,27 +170,29 @@ export const api = {
     return { data, total: count };
   },
 
-  async getStatsAccueil() {
-    const [oeuvres, lectures] = await Promise.all([
-      supabase
-        .from('oeuvres')
-        .select('id', { count: 'exact', head: true })
-        .eq('visible', true),
-      supabase
-        .from('oeuvres')
-        .select('nb_lectures')
-        .eq('visible', true),
-    ]);
+  async getStatsAccueil({ collection = 'tout' } = {}) {
+    let { data, error } = await supabase
+      .from('oeuvres')
+      .select('id, nb_lectures, auteur_id, resume, profiles!oeuvres_auteur_id_fkey(nom)')
+      .eq('visible', true);
 
-    if (oeuvres.error) throw oeuvres.error;
-    if (lectures.error && colonneManquante(lectures.error, 'nb_lectures')) {
-      return { totalOeuvres: oeuvres.count || 0, totalLectures: 0 };
+    if (error && colonneManquante(error, 'nb_lectures')) {
+      const retry = await supabase
+        .from('oeuvres')
+        .select('id, auteur_id, resume, profiles!oeuvres_auteur_id_fkey(nom)')
+        .eq('visible', true);
+      data = (retry.data || []).map(o => ({ ...o, nb_lectures: 0 }));
+      error = retry.error;
     }
-    if (lectures.error) throw lectures.error;
+    if (error) throw error;
+
+    const oeuvres = collection === 'originaux'
+      ? (data || []).filter(o => !estOeuvreImportee(o))
+      : (data || []);
 
     return {
-      totalOeuvres: oeuvres.count || 0,
-      totalLectures: (lectures.data || []).reduce((somme, oeuvre) => somme + Number(oeuvre.nb_lectures || 0), 0),
+      totalOeuvres: oeuvres.length,
+      totalLectures: oeuvres.reduce((somme, oeuvre) => somme + Number(oeuvre.nb_lectures || 0), 0),
     };
   },
 

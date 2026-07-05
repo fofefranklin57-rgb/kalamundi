@@ -221,14 +221,13 @@ async function chargerVedettes() {
   try {
     const [oeuvres, stats] = await Promise.all([
       api.getOeuvres({ limit: 12, tri: 'lectures' }),
-      api.getStatsAccueil().catch(() => null),
+      api.getStatsAccueil({ collection: 'originaux' }).catch(() => null),
     ]);
     const { data, total } = oeuvres;
 
-    const lecturesFallback = (data || []).reduce((somme, oeuvre) => somme + Number(oeuvre.nb_lectures || 0), 0);
     mettreAJourStatsHero({
-      oeuvres: stats?.totalOeuvres ?? total,
-      lectures: stats?.totalLectures ?? lecturesFallback,
+      oeuvres: total,
+      lectures: stats?.totalLectures ?? 0,
     });
 
     if (!data?.length) {
