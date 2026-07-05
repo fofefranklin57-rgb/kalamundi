@@ -34,15 +34,15 @@
   <!-- NAVBAR -->
   <header class="navbar" id="navbar">
     <div class="navbar__inner">
-      <a href="/index.html" class="navbar__logo">📚 Kalamundi</a>
+      <a href="/index.html" class="navbar__logo">📚 <span data-i18n="app.nom">Kalamundi</span></a>
       <nav class="navbar__nav" id="nav-menu" aria-label="Navigation principale">
-        <a href="/pages/library.html" class="navbar__link">Catalogue</a>
-        <a href="/pages/library.html?genre=roman" class="navbar__link">Romans</a>
-        <a href="/pages/library.html?genre=poesie" class="navbar__link">Poésie</a>
-        <a href="/pages/library.html?genre=conte" class="navbar__link">Contes</a>
-        <a href="/pages/communautes.html" class="navbar__link">Communautés</a>
-        <a href="/pages/abonnements.html" class="navbar__link">Abonnements</a>
-        <a href="/pages/bienvenue.html" class="navbar__link">À propos</a>
+        <a href="/pages/library.html" class="navbar__link" data-i18n="nav.catalogue">Catalogue</a>
+        <a href="/pages/library.html?genre=roman" class="navbar__link" data-i18n="nav.romans">Romans</a>
+        <a href="/pages/library.html?genre=poesie" class="navbar__link" data-i18n="nav.poesie">Poésie</a>
+        <a href="/pages/library.html?genre=conte" class="navbar__link" data-i18n="nav.contes">Contes</a>
+        <a href="/pages/communautes.html" class="navbar__link" data-i18n="nav.communautes">Communautés</a>
+        <a href="/pages/abonnements.html" class="navbar__link" data-i18n="nav.abonnements">Abonnements</a>
+        <a href="/pages/bienvenue.html" class="navbar__link" data-i18n="nav.a_propos">À propos</a>
       </nav>
       <span id="theme-slot"></span>
       <div class="navbar__actions" id="navbar-actions"></div>
@@ -57,9 +57,9 @@
     <!-- HERO ORIGINAL -->
     <section class="hero hero--home" id="hero">
       <div class="container">
-        <div class="hero__badge">✨ La littérature africaine et mondiale</div>
-        <h1 class="hero__title">La Plume du Monde</h1>
-        <p class="hero__subtitle">
+        <div class="hero__badge" data-i18n="home.hero.badge">✨ La littérature africaine et mondiale</div>
+        <h1 class="hero__title" data-i18n="home.hero.titre">La Plume du Monde</h1>
+        <p class="hero__subtitle" data-i18n="home.hero.sous_titre">
           Découvrez des œuvres d'auteurs du monde entier. Publiez vos textes, protégés par horodatage blockchain. Lisez dans votre langue.
         </p>
         <div class="hero__actions" id="hero-actions"></div>
@@ -72,8 +72,8 @@
       <!-- CARROUSEL PRÉSENTATION -->
       <section class="section container">
         <div class="section__header">
-          <h2 class="section__title">Pourquoi Kalamundi ?</h2>
-          <a href="/pages/bienvenue.html" class="btn btn--ghost btn--sm">En savoir plus →</a>
+          <h2 class="section__title" data-i18n="home.pourquoi.titre">Pourquoi Kalamundi ?</h2>
+          <a href="/pages/bienvenue.html" class="btn btn--ghost btn--sm" data-i18n="btn.en_savoir_plus">En savoir plus →</a>
         </div>
         <div class="books-carousel-wrap">
           <div class="promo-carousel">
@@ -165,8 +165,8 @@
       <!-- SECTION : Œuvres vedettes -->
       <section class="section container">
         <div class="section__header">
-          <h2 class="section__title">Œuvres du moment</h2>
-          <a href="/pages/library.html" class="btn btn--ghost btn--sm">Tout voir →</a>
+          <h2 class="section__title" data-i18n="home.vedettes">Œuvres du moment</h2>
+          <a href="/pages/library.html" class="btn btn--ghost btn--sm" data-i18n="btn.voir_tout">Tout voir →</a>
         </div>
         <div class="books-carousel-wrap">
           <div class="books-carousel" id="grid-vedettes"></div>
@@ -176,7 +176,7 @@
       <!-- SECTION : Genres -->
       <section class="section section--alt">
         <div class="container">
-          <h2 class="section__title" style="margin-bottom: var(--spacing-lg)">Explorer par genre</h2>
+          <h2 class="section__title" style="margin-bottom: var(--spacing-lg)" data-i18n="home.genres.titre">Explorer par genre</h2>
           <div class="genres-grid">
             <a href="/pages/library.html?genre=roman" class="genre-card"><span class="genre-card__icon">📖</span><span class="genre-card__name">Roman</span></a>
             <a href="/pages/library.html?genre=poesie" class="genre-card"><span class="genre-card__icon">🖊️</span><span class="genre-card__name">Poésie</span></a>
@@ -193,8 +193,8 @@
       <!-- SECTION : Nouvelles publications -->
       <section class="section container" id="section-nouveautes">
         <div class="section__header">
-          <h2 class="section__title">Nouvelles publications</h2>
-          <a href="/pages/library.html?tri=recent" class="btn btn--ghost btn--sm">Tout voir →</a>
+          <h2 class="section__title" data-i18n="home.nouveautes">Nouvelles publications</h2>
+          <a href="/pages/library.html?tri=recent" class="btn btn--ghost btn--sm" data-i18n="btn.voir_tout">Tout voir →</a>
         </div>
         <div class="books-carousel-wrap">
           <div class="books-carousel" id="grid-nouveautes"></div>
@@ -204,8 +204,8 @@
       <!-- SECTION : Nouveaux talents -->
       <section class="section container" id="section-nouveaux-talents">
         <div class="section__header">
-          <h2 class="section__title">✨ Nouveaux talents</h2>
-          <a href="/pages/library.html?tri=recent" class="btn btn--ghost btn--sm">Tous les auteurs →</a>
+          <h2 class="section__title" data-i18n="home.nouveaux_talents">✨ Nouveaux talents</h2>
+          <a href="/pages/library.html?tri=recent" class="btn btn--ghost btn--sm" data-i18n="btn.tous_auteurs">Tous les auteurs →</a>
         </div>
         <!-- Spotlight auteur tournant -->
         <div class="spotlight-wrap" id="spotlight-auteur">
@@ -214,7 +214,7 @@
           </div>
         </div>
         <!-- Grille "Premiers pas" -->
-        <h3 class="premiers-pas__titre">📝 Leurs premières œuvres</h3>
+        <h3 class="premiers-pas__titre" data-i18n="home.premieres_oeuvres">📝 Leurs premières œuvres</h3>
         <div class="books-carousel-wrap" style="margin-top:var(--spacing-md)">
           <div class="books-carousel" id="grid-premiers-pas"></div>
         </div>
@@ -224,9 +224,9 @@
       <section class="section section--cta">
         <div class="container text-center">
           <div class="cta-box">
-            <h2 class="cta-box__title">Vous êtes auteur ?</h2>
-            <p class="cta-box__text">Publiez votre première œuvre gratuitement. Protégez votre création en quelques clics et rejoignez une communauté de lecteurs passionnés.</p>
-            <a href="/pages/login.html?mode=inscription" class="btn btn--accent btn--lg">Commencer à publier</a>
+            <h2 class="cta-box__title" data-i18n="home.cta_auteur.titre">Vous êtes auteur ?</h2>
+            <p class="cta-box__text" data-i18n="home.cta_auteur.texte">Publiez votre première œuvre gratuitement. Protégez votre création en quelques clics et rejoignez une communauté de lecteurs passionnés.</p>
+            <a href="/pages/login.html?mode=inscription" class="btn btn--accent btn--lg" data-i18n="home.cta_auteur.btn">Commencer à publier</a>
           </div>
         </div>
       </section>
@@ -238,30 +238,30 @@
       <div class="container">
         <div class="footer__grid">
           <div>
-            <div class="footer__logo">📚 Kalamundi</div>
-            <p class="footer__tagline">La Plume du Monde</p>
-            <p>Une plateforme pour découvrir, protéger et partager la littérature de tous les continents.</p>
+            <div class="footer__logo">📚 <span data-i18n="app.nom">Kalamundi</span></div>
+            <p class="footer__tagline" data-i18n="app.slogan">La Plume du Monde</p>
+            <p data-i18n="footer.pitch">Une plateforme pour découvrir, protéger et partager la littérature de tous les continents.</p>
           </div>
           <div>
-            <div class="footer__heading">Lire</div>
+            <div class="footer__heading" data-i18n="footer.lire">Lire</div>
             <ul class="footer__links">
-              <li><a href="/pages/library.html" class="footer__link">Catalogue</a></li>
-              <li><a href="/pages/library.html?statut=gratuit" class="footer__link">Œuvres gratuites</a></li>
-              <li><a href="/pages/library.html?statut=premium" class="footer__link">Œuvres premium</a></li>
-              <li><a href="/pages/communautes.html" class="footer__link">Communautés</a></li>
-              <li><a href="/pages/abonnements.html" class="footer__link">Abonnements</a></li>
+              <li><a href="/pages/library.html" class="footer__link" data-i18n="nav.catalogue">Catalogue</a></li>
+              <li><a href="/pages/library.html?statut=gratuit" class="footer__link" data-i18n="footer.oeuvres_gratuites">Œuvres gratuites</a></li>
+              <li><a href="/pages/library.html?statut=premium" class="footer__link" data-i18n="footer.oeuvres_premium">Œuvres premium</a></li>
+              <li><a href="/pages/communautes.html" class="footer__link" data-i18n="nav.communautes">Communautés</a></li>
+              <li><a href="/pages/abonnements.html" class="footer__link" data-i18n="nav.abonnements">Abonnements</a></li>
             </ul>
           </div>
           <div>
-            <div class="footer__heading">Créer</div>
+            <div class="footer__heading" data-i18n="footer.creer">Créer</div>
             <ul class="footer__links">
-              <li><a href="/pages/publish.html" class="footer__link">Publier une œuvre</a></li>
-              <li><a href="/pages/communautes.html" class="footer__link">Créer une communauté</a></li>
-              <li><a href="/pages/login.html?mode=inscription" class="footer__link">Devenir auteur</a></li>
+              <li><a href="/pages/publish.html" class="footer__link" data-i18n="home.hero.cta_publier">Publier une œuvre</a></li>
+              <li><a href="/pages/communautes.html" class="footer__link" data-i18n="footer.creer_communaute">Créer une communauté</a></li>
+              <li><a href="/pages/login.html?mode=inscription" class="footer__link" data-i18n="footer.devenir_auteur">Devenir auteur</a></li>
             </ul>
           </div>
           <div>
-            <div class="footer__heading">Légal</div>
+            <div class="footer__heading" data-i18n="footer.legal">Légal</div>
             <ul class="footer__links">
               <li><a href="/pages/cgu.html" class="footer__link">CGU</a></li>
               <li><a href="/pages/confidentialite.html" class="footer__link">Confidentialité</a></li>
@@ -269,7 +269,7 @@
             </ul>
           </div>
         </div>
-        <div class="footer__bottom">© 2026 Kalamundi — Tous droits réservés</div>
+        <div class="footer__bottom" data-i18n="footer.droits">© 2026 Kalamundi — Tous droits réservés</div>
       </div>
     </footer>
 
@@ -277,5 +277,6 @@
 
   <div class="toast-container" id="toast-container" aria-live="polite"></div>
   <script type="module" src="/assets/js/app.js"></script>
+  <script type="module" src="/assets/js/i18n-boot.js"></script>
 </body>
 </html>

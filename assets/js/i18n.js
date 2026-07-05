@@ -1492,6 +1492,116 @@ function detecterLangue() {
 
 let _langueCourante = detecterLangue();
 
+const TRADUCTIONS_COMMUNES = {
+  fr: {
+    'nav.catalogue': 'Catalogue',
+    'nav.romans': 'Romans',
+    'nav.poesie': 'Poésie',
+    'nav.contes': 'Contes',
+    'nav.communautes': 'Communautés',
+    'nav.abonnements': 'Abonnements',
+    'nav.a_propos': 'À propos',
+    'btn.en_savoir_plus': 'En savoir plus →',
+    'btn.tous_auteurs': 'Tous les auteurs →',
+    'home.nouveaux_talents': '✨ Nouveaux talents',
+    'home.premieres_oeuvres': '📝 Leurs premières œuvres',
+    'footer.pitch': 'Une plateforme pour découvrir, protéger et partager la littérature de tous les continents.',
+    'footer.creer_communaute': 'Créer une communauté',
+  },
+  en: {
+    'nav.catalogue': 'Catalog',
+    'nav.romans': 'Novels',
+    'nav.poesie': 'Poetry',
+    'nav.contes': 'Tales',
+    'nav.communautes': 'Communities',
+    'nav.abonnements': 'Subscriptions',
+    'nav.a_propos': 'About',
+    'btn.en_savoir_plus': 'Learn more →',
+    'btn.tous_auteurs': 'All authors →',
+    'home.nouveaux_talents': '✨ New talents',
+    'home.premieres_oeuvres': '📝 Their first works',
+    'footer.pitch': 'A platform to discover, protect, and share literature from every continent.',
+    'footer.creer_communaute': 'Create a community',
+  },
+  es: {
+    'nav.catalogue': 'Catálogo',
+    'nav.romans': 'Novelas',
+    'nav.poesie': 'Poesía',
+    'nav.contes': 'Cuentos',
+    'nav.communautes': 'Comunidades',
+    'nav.abonnements': 'Suscripciones',
+    'nav.a_propos': 'Acerca de',
+    'btn.en_savoir_plus': 'Saber más →',
+    'btn.tous_auteurs': 'Todos los autores →',
+    'home.nouveaux_talents': '✨ Nuevos talentos',
+    'home.premieres_oeuvres': '📝 Sus primeras obras',
+    'footer.pitch': 'Una plataforma para descubrir, proteger y compartir literatura de todos los continentes.',
+    'footer.creer_communaute': 'Crear una comunidad',
+  },
+  pt: {
+    'nav.catalogue': 'Catálogo',
+    'nav.romans': 'Romances',
+    'nav.poesie': 'Poesia',
+    'nav.contes': 'Contos',
+    'nav.communautes': 'Comunidades',
+    'nav.abonnements': 'Assinaturas',
+    'nav.a_propos': 'Sobre',
+    'btn.en_savoir_plus': 'Saiba mais →',
+    'btn.tous_auteurs': 'Todos os autores →',
+    'home.nouveaux_talents': '✨ Novos talentos',
+    'home.premieres_oeuvres': '📝 Suas primeiras obras',
+    'footer.pitch': 'Uma plataforma para descobrir, proteger e compartilhar literatura de todos os continentes.',
+    'footer.creer_communaute': 'Criar uma comunidade',
+  },
+  de: {
+    'nav.catalogue': 'Katalog',
+    'nav.romans': 'Romane',
+    'nav.poesie': 'Poesie',
+    'nav.contes': 'Erzählungen',
+    'nav.communautes': 'Communitys',
+    'nav.abonnements': 'Abos',
+    'nav.a_propos': 'Über uns',
+    'btn.en_savoir_plus': 'Mehr erfahren →',
+    'btn.tous_auteurs': 'Alle Autoren →',
+    'home.nouveaux_talents': '✨ Neue Talente',
+    'home.premieres_oeuvres': '📝 Ihre ersten Werke',
+    'footer.pitch': 'Eine Plattform, um Literatur aus allen Kontinenten zu entdecken, zu schützen und zu teilen.',
+    'footer.creer_communaute': 'Community erstellen',
+  },
+  ar: {
+    'nav.catalogue': 'الفهرس',
+    'nav.romans': 'روايات',
+    'nav.poesie': 'شعر',
+    'nav.contes': 'قصص',
+    'nav.communautes': 'مجتمعات',
+    'nav.abonnements': 'اشتراكات',
+    'nav.a_propos': 'حول',
+    'btn.en_savoir_plus': 'اعرف المزيد ←',
+    'btn.tous_auteurs': 'كل المؤلفين ←',
+    'home.nouveaux_talents': '✨ مواهب جديدة',
+    'home.premieres_oeuvres': '📝 أعمالهم الأولى',
+    'footer.pitch': 'منصة لاكتشاف الأدب من كل القارات وحمايته ومشاركته.',
+    'footer.creer_communaute': 'إنشاء مجتمع',
+  },
+  zh: {
+    'nav.catalogue': '目录',
+    'nav.romans': '小说',
+    'nav.poesie': '诗歌',
+    'nav.contes': '故事',
+    'nav.communautes': '社区',
+    'nav.abonnements': '订阅',
+    'nav.a_propos': '关于',
+    'btn.en_savoir_plus': '了解更多 →',
+    'btn.tous_auteurs': '所有作者 →',
+    'home.nouveaux_talents': '✨ 新锐作者',
+    'home.premieres_oeuvres': '📝 他们的首部作品',
+    'footer.pitch': '一个发现、保护和分享各大洲文学的平台。',
+    'footer.creer_communaute': '创建社区',
+  },
+};
+
+const LANGUES_COMMUNES_EN = new Set(['hi', 'ja', 'ko', 'sw']);
+
 /* ============================================================
    API publique
    ============================================================ */
@@ -1527,6 +1637,8 @@ export const i18n = {
   t(cle, fallback = '') {
     const trad = TRADUCTIONS[_langueCourante];
     if (trad && trad[cle] !== undefined) return trad[cle];
+    const communes = TRADUCTIONS_COMMUNES[_langueCourante] || (LANGUES_COMMUNES_EN.has(_langueCourante) ? TRADUCTIONS_COMMUNES.en : null);
+    if (communes && communes[cle] !== undefined) return communes[cle];
     const fr = TRADUCTIONS[LANGUE_DEFAUT];
     if (fr && fr[cle] !== undefined) return fr[cle];
     return fallback || cle;

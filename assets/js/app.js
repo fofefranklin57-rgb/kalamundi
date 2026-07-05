@@ -178,6 +178,8 @@ function renderSelecteurLangue() {
 
 function connecterSelecteursLangue() {
   document.querySelectorAll('.js-lang-select').forEach(select => {
+    if (select.dataset.i18nBound === '1') return;
+    select.dataset.i18nBound = '1';
     select.value = i18n.langue;
     select.addEventListener('change', (event) => {
       i18n.setLangue(event.target.value);
