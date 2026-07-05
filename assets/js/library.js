@@ -3,7 +3,7 @@
    Organisation : BISAC + Dublin Core + Dewey 896 (littératures africaines)
    ============================================================ */
 
-import { api } from './api.js';
+import { api, estOeuvreImportee } from './api.js';
 import { debounce, getParam, formatNombre, truncate } from './utils.js';
 import { genererCouverture } from './cover-generator.js';
 import { echapperAttr, normaliserUrlImage } from './cover-utils.js';
@@ -109,18 +109,7 @@ const PAYS_AFRICAINS = new Set([
   'Centrafrique','Équateur','Guinée équatoriale',
 ]);
 
-const AUTEURS_SYSTEME = new Set([
-  '00000000-0000-0000-0000-000000000001',
-]);
-
-const NOMS_IMPORTS = new Set([
-  'bibliotheque kalamundi',
-  'bibliothèque kalamundi',
-  'domaine public',
-  'creative commons',
-]);
-
-const FETCH_LIMIT = 60;
+const FETCH_LIMIT = 1000;
 
 /* ============================================================
    ÉTAT DES FILTRES
@@ -206,9 +195,9 @@ async function chargerOeuvres() {
     }
 
     if (filtres.collection === 'originaux') {
-      data = data.filter(o => !estContenuImporte(o));
+      data = data.filter(o => !estOeuvreImportee(o));
     } else if (filtres.collection === 'patrimoine') {
-      data = data.filter(o => estContenuImporte(o));
+      data = data.filter(o => estOeuvreImportee(o));
     }
 
     // Compte affiché
@@ -250,18 +239,6 @@ async function chargerOeuvres() {
     if (contexte) contexte.style.display = 'none';
     grid.innerHTML = `<div class="alert alert--error" style="grid-column:1/-1">Erreur de chargement : ${err.message}</div>`;
   }
-}
-
-function estContenuImporte(o) {
-  const nom = (o.profiles?.nom || '').toLowerCase();
-  const resume = (o.resume || '').toLowerCase();
-  return AUTEURS_SYSTEME.has(o.auteur_id)
-    || NOMS_IMPORTS.has(nom)
-    || resume.includes('project gutenberg')
-    || resume.includes('standard ebooks')
-    || resume.includes('openstax')
-    || resume.includes('african storybook')
-    || resume.includes('domaine public');
 }
 
 function echapperHtml(valeur = '') {
@@ -315,7 +292,7 @@ function carteOeuvre(o) {
   const annee   = o.created_at ? new Date(o.created_at).getFullYear() : '';
   const note    = o.note_moyenne ? `⭐ ${Number(o.note_moyenne).toFixed(1)}` : '';
   const lectures = o.nb_lectures ? `👁 ${formatNombre(o.nb_lectures)}` : '';
-  const estImporte = estContenuImporte(o);
+  const estImporte = estOeuvreImportee(o);
 
   // Couverture : image réelle, générée automatiquement, ou emoji fallback
   const auteurNom = o.profiles?.nom || '';

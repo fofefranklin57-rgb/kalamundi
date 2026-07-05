@@ -27,18 +27,18 @@ const AUTEURS_SYSTEME = new Set([
   '00000000-0000-0000-0000-000000000001',
 ]);
 
-const NOMS_IMPORTS = new Set([
+const NOMS_IMPORTS = [
   'bibliotheque kalamundi',
   'bibliothèque kalamundi',
   'domaine public',
   'creative commons',
-]);
+];
 
-function estOeuvreImportee(o) {
+export function estOeuvreImportee(o) {
   const nom = (o.profiles?.nom || '').toLowerCase();
   const resume = (o.resume || '').toLowerCase();
   return AUTEURS_SYSTEME.has(o.auteur_id)
-    || NOMS_IMPORTS.has(nom)
+    || NOMS_IMPORTS.some(source => nom.includes(source))
     || resume.includes('project gutenberg')
     || resume.includes('standard ebooks')
     || resume.includes('openstax')
