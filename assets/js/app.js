@@ -8,6 +8,7 @@ import { api } from './api.js';
 import { injecterPub } from './pub.js';
 import { initNotificationsPush } from './notifications.js';
 import { echapperAttr, normaliserUrlImage } from './cover-utils.js';
+import i18n from './i18n.js';
 
 /* ============================================================
    Init
@@ -37,6 +38,7 @@ window._installerApp = async function () {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+  i18n.appliquer();
   enregistrerSW();
   initNotificationsPush().catch(() => {});
 
@@ -107,6 +109,7 @@ async function initNavbar() {
       : `<span class="nav-avatar__initiale">${initiale}</span>`;
 
     navbarActions.innerHTML = `
+      ${renderSelecteurLangue()}
       <button class="btn btn--outline btn--sm btn-pwa-install" onclick="window._installerApp()" style="display:none;color:rgba(255,255,255,0.9);border-color:rgba(255,255,255,0.4)">📲 Installer</button>
       <a href="/pages/publish.html" class="btn btn--accent btn--sm">Publier</a>
       <div class="nav-avatar" id="nav-avatar-btn" title="${nom}">
@@ -146,6 +149,7 @@ async function initNavbar() {
     `;
   } else {
     navbarActions.innerHTML = `
+      ${renderSelecteurLangue()}
       <button class="btn btn--outline btn--sm btn-pwa-install" onclick="window._installerApp()" style="display:none;color:rgba(255,255,255,0.9);border-color:rgba(255,255,255,0.4)">📲 Installer</button>
       <a href="/pages/login.html" class="btn btn--ghost btn--sm" style="color:rgba(255,255,255,0.85)">Connexion</a>
       <a href="/pages/login.html?mode=inscription" class="btn btn--accent btn--sm">S'inscrire</a>
@@ -157,13 +161,43 @@ async function initNavbar() {
   }
 
   heroStats.innerHTML = `
-    <div class="hero__stat"><span class="hero__stat-value" id="stat-oeuvres">—</span><span class="hero__stat-label">œuvres</span></div>
-    <div class="hero__stat"><span class="hero__stat-value" id="stat-lectures">—</span><span class="hero__stat-label">lectures</span></div>
-    <div class="hero__stat"><span class="hero__stat-value">50+</span><span class="hero__stat-label">langues</span></div>
+    <div class="hero__stat"><span class="hero__stat-value" id="stat-oeuvres">—</span><span class="hero__stat-label">${i18n.t('home.hero.oeuvres', 'œuvres')}</span></div>
+    <div class="hero__stat"><span class="hero__stat-value" id="stat-lectures">—</span><span class="hero__stat-label">${i18n.t('home.hero.lectures', 'lectures')}</span></div>
+    <div class="hero__stat"><span class="hero__stat-value">50+</span><span class="hero__stat-label">${i18n.t('home.hero.langues', 'langues')}</span></div>
   `;
+
+  connecterSelecteursLangue();
 
   // chargerStats() supprimé — total récupéré dans chargerVedettes()
   return session;
+}
+
+function renderSelecteurLangue() {
+  return i18n.renderSelecteur({ classes: 'lang-select--nav js-lang-select' });
+}
+
+function connecterSelecteursLangue() {
+  document.querySelectorAll('.js-lang-select').forEach(select => {
+    select.value = i18n.langue;
+    select.addEventListener('change', (event) => {
+      i18n.setLangue(event.target.value);
+      window.location.reload();
+    });
+  });
+}
+
+function formatStat(nombre) {
+  const valeur = Number(nombre || 0);
+  if (valeur >= 1000000) return `${(valeur / 1000000).toFixed(valeur >= 10000000 ? 0 : 1).replace('.0', '')}M+`;
+  if (valeur >= 1000) return `${(valeur / 1000).toFixed(valeur >= 10000 ? 0 : 1).replace('.0', '')}k+`;
+  return String(valeur);
+}
+
+function mettreAJourStatsHero({ oeuvres, lectures } = {}) {
+  const elOeuvres = document.getElementById('stat-oeuvres');
+  const elLectures = document.getElementById('stat-lectures');
+  if (elOeuvres && oeuvres != null) elOeuvres.textContent = formatStat(oeuvres);
+  if (elLectures && lectures != null) elLectures.textContent = formatStat(lectures);
 }
 
 /* ============================================================
@@ -185,11 +219,17 @@ async function chargerStats() {
 async function chargerVedettes() {
   const grid = document.getElementById('grid-vedettes');
   try {
-    const { data, total } = await api.getOeuvres({ limit: 12, tri: 'lectures' });
+    const [oeuvres, stats] = await Promise.all([
+      api.getOeuvres({ limit: 12, tri: 'lectures' }),
+      api.getStatsAccueil().catch(() => null),
+    ]);
+    const { data, total } = oeuvres;
 
-    // Mettre à jour le compteur hero sans requête supplémentaire
-    const el = document.getElementById('stat-oeuvres');
-    if (el && total != null) el.textContent = total > 999 ? Math.floor(total / 1000) + 'k+' : total || '0';
+    const lecturesFallback = (data || []).reduce((somme, oeuvre) => somme + Number(oeuvre.nb_lectures || 0), 0);
+    mettreAJourStatsHero({
+      oeuvres: stats?.totalOeuvres ?? total,
+      lectures: stats?.totalLectures ?? lecturesFallback,
+    });
 
     if (!data?.length) {
       grid.innerHTML = videState('Aucune œuvre disponible pour l\'instant.');

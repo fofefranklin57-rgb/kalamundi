@@ -147,6 +147,30 @@ export const api = {
     return { data, total: count };
   },
 
+  async getStatsAccueil() {
+    const [oeuvres, lectures] = await Promise.all([
+      supabase
+        .from('oeuvres')
+        .select('id', { count: 'exact', head: true })
+        .eq('visible', true),
+      supabase
+        .from('oeuvres')
+        .select('nb_lectures')
+        .eq('visible', true),
+    ]);
+
+    if (oeuvres.error) throw oeuvres.error;
+    if (lectures.error && colonneManquante(lectures.error, 'nb_lectures')) {
+      return { totalOeuvres: oeuvres.count || 0, totalLectures: 0 };
+    }
+    if (lectures.error) throw lectures.error;
+
+    return {
+      totalOeuvres: oeuvres.count || 0,
+      totalLectures: (lectures.data || []).reduce((somme, oeuvre) => somme + Number(oeuvre.nb_lectures || 0), 0),
+    };
+  },
+
   async getOeuvre(id) {
     const { data, error } = await supabase
       .from('oeuvres')

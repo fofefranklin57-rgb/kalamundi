@@ -758,6 +758,50 @@
 }
 
 /* ============================================================
+   Sélecteur de langue
+   ============================================================ */
+
+.lang-select {
+  min-width: 112px;
+  height: 34px;
+  padding: 0 34px 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lang-select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.lang-select--nav {
+  width: 118px;
+  min-width: 104px;
+  border-color: rgba(255,255,255,0.35);
+  background-color: rgba(255,255,255,0.08);
+  color: var(--text-inverse);
+  flex-shrink: 0;
+}
+
+.lang-select--nav option {
+  color: var(--text-primary);
+  background-color: var(--bg-main);
+}
+
+@media (max-width: 760px) {
+  .lang-select--nav {
+    width: 98px;
+    min-width: 92px;
+  }
+}
+
+/* ============================================================
    Avatar navbar — menu profil connecté
    ============================================================ */
 
