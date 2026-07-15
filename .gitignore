@@ -41,6 +41,11 @@ android-owner/replay_*.log
 
 # Assets générés incomplets
 assets/fonts/*.woff2
+!assets/fonts/fraunces-400.woff2
+!assets/fonts/fraunces-700.woff2
+!assets/fonts/inter-400.woff2
+!assets/fonts/inter-500.woff2
+!assets/fonts/inter-700.woff2
 
 # Fichiers temporaires
 *.tmp

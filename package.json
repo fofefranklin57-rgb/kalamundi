@@ -7,6 +7,8 @@
     "sharp": "^0.34.5"
   },
   "dependencies": {
+    "@fontsource/fraunces": "^5.2.9",
+    "@fontsource/inter": "^5.2.8",
     "@supabase/supabase-js": "^2.107.0",
     "pdfjs-dist": "^6.0.227"
   }
