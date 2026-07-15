@@ -161,10 +161,39 @@ function connecterSelecteurs() {
   });
 }
 
+function installerNavigationMobile() {
+  if (document.querySelector('.mobile-tabbar')) return;
+
+  const page = location.pathname.split('/').pop() || 'index.html';
+  const exclues = new Set(['reader.html', 'payment.html', 'login.html', 'admin.html', 'owner.html']);
+  if (exclues.has(page)) return;
+
+  const tabs = [
+    { key: 'home',    href: '/index.html',              icon: '⌂', label: i18n.t('tab.home', 'Accueil'),   active: page === 'index.html' || location.pathname === '/' },
+    { key: 'explore', href: '/pages/library.html',      icon: '⌕', label: i18n.t('tab.explore', 'Explorer'), active: page === 'library.html' || page === 'work.html' },
+    { key: 'learn',   href: '/pages/education.html',    icon: '▣', label: i18n.t('tab.learn', 'Apprendre'), active: ['education.html','annales.html','epreuves.html','examen-sim.html','simulateur.html','repetiteur.html','ecole.html','institution.html','fax.html'].includes(page) },
+    { key: 'shelf',   href: '/offline.html',            icon: '▤', label: i18n.t('tab.shelf', 'Biblio'),    active: page === 'offline.html' },
+    { key: 'profile', href: '/pages/author-dashboard.html', icon: '◉', label: i18n.t('tab.profile', 'Profil'), active: ['author-dashboard.html','author-profile.html','publish.html'].includes(page) },
+  ];
+
+  document.body.classList.add('has-mobile-tabbar');
+  document.body.insertAdjacentHTML('beforeend', `
+    <nav class="mobile-tabbar" aria-label="${i18n.t('tab.navigation', 'Navigation mobile')}">
+      ${tabs.map(tab => `
+        <a class="mobile-tabbar__item ${tab.active ? 'is-active' : ''}" href="${tab.href}" data-tab="${tab.key}">
+          <span class="mobile-tabbar__icon" aria-hidden="true">${tab.icon}</span>
+          <span class="mobile-tabbar__label">${tab.label}</span>
+        </a>
+      `).join('')}
+    </nav>
+  `);
+}
+
 function appliquerInterface() {
   i18n.appliquer();
   traduireTextesCommuns();
   installerSelecteurLangue();
+  installerNavigationMobile();
   connecterSelecteurs();
 }
 

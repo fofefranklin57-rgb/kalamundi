@@ -279,6 +279,14 @@
 }
 
 /* ============================================================
+   Shell mobile — onglets bas
+   ============================================================ */
+
+.mobile-tabbar {
+  display: none;
+}
+
+/* ============================================================
    Sidebar layout (dashboard)
    ============================================================ */
 
@@ -322,6 +330,81 @@
    ============================================================ */
 
 @media (max-width: 768px) {
+  body.has-mobile-tabbar {
+    padding-bottom: calc(68px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-tabbar {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    z-index: var(--z-sticky);
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.86)),
+      var(--bg-card);
+    box-shadow: var(--shadow-lg);
+    backdrop-filter: blur(16px);
+  }
+
+  .mobile-tabbar__item {
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border-radius: var(--border-radius-md);
+    color: var(--text-light);
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1.1;
+    text-decoration: none;
+    transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  }
+
+  .mobile-tabbar__item:hover,
+  .mobile-tabbar__item.is-active {
+    color: var(--color-primary);
+    background-color: var(--bg-secondary);
+  }
+
+  .mobile-tabbar__item:active {
+    transform: scale(0.97);
+  }
+
+  .mobile-tabbar__icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .mobile-tabbar__label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body.theme-dark .mobile-tabbar {
+    background:
+      linear-gradient(180deg, rgba(36,59,42,0.94), rgba(26,46,32,0.9)),
+      var(--bg-card);
+    border-color: var(--dark-border);
+  }
+
+  body.theme-sepia .mobile-tabbar {
+    background:
+      linear-gradient(180deg, rgba(244,236,216,0.94), rgba(237,224,196,0.9)),
+      var(--bg-card);
+  }
+
   .navbar__nav {
     display: none;
     position: absolute;

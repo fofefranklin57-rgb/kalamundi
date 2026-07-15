@@ -11,6 +11,7 @@ Types : `feat` (fonctionnalité) · `decision` (choix produit) · `fix` (correct
 
 ## 2026-07
 
+- **2026-07-16 — feat** : ajout du shell mobile Phase 1 : barre d'onglets basse commune (Accueil · Explorer · Apprendre · Biblio · Profil) injectée sur les pages cœur, avec exclusions lecteur/paiement/login/admin/owner et cache PWA bumpé en `kala-v11`.
 - **2026-07-16 — style** : application du socle design global Phase 1 : polices Fraunces/Inter auto-hébergées, tokens `base.css` modernisés (base crème, bordures neutres, rayons/ombres), composants communs adoucis (boutons, cartes, inputs, search, skeleton) et Service Worker bumpé en `kala-v10`.
 - **2026-07-16 — docs** : création de `DESIGN_SYSTEM_KALAMUNDI.md` (nouveaux tokens exacts pour `base.css`) + `INTERFACES_KALAMUNDI.md` (inventaire de tous les écrans par rôle + priorités). Référencés dans `AGENTS.md`.
 - **2026-07-16 — docs** : création de `AGENTS.md` + `CLAUDE.md` (contrat de travail pour Codex/agents : documentation d'abord, journalisation obligatoire évolutions + erreurs, direction design, règles code/métier). Codex démarre la mise en œuvre.
