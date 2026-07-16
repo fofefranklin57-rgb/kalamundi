@@ -107,7 +107,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 ### 🟥 P0 — Finir le socle Phase 1 (peu risqué, visible, en cours)
 1. ✅ **Lecteur premium** — réglages typo, bascule thèmes jour/nuit/sépia, surlignage. *(livré 16/07, SW `kala-v14`)*
 2. ✅ **Interface auteur modernisée** — dashboard + formulaire de publication au nouveau design. *(livré 16/07, SW `kala-v15`)*
-3. **Hygiène** — test régression lecture en ligne (après refonte offline), retrait des polices Roboto mortes.
+3. ✅ **Hygiène** — test régression lecture en ligne (après refonte offline), retrait des polices Roboto mortes. *(livré 16/07, contrôle `check-reader-regression`, SW `kala-v18`)*
 4. **Logo** — remplacer l'emoji 📚, décliner favicon + icônes PWA (`generate-icons.mjs`). *(quick win, parallélisable)*
 
 ### 🟧 P1 — Fondations structurantes (prérequis de TOUT le commerce)

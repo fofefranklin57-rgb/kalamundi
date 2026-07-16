@@ -91,10 +91,8 @@ const etat = {
   etat.utilisateur = await getUser();
 
   try {
-    [etat.oeuvre, etat.chapitres] = await Promise.all([
-      api.getOeuvre(etat.oeuvreId),
-      api.getChapitres(etat.oeuvreId),
-    ]);
+    etat.oeuvre = await api.getOeuvre(etat.oeuvreId);
+    etat.chapitres = await chargerChapitresEnLigne(etat.oeuvre);
   } catch {
     const livreLocal = await getLivre(etat.oeuvreId).catch(() => null);
     if (!livreLocal) {
@@ -407,6 +405,25 @@ async function chargerChapitre(numero, sansAnimation = false) {
   remplirNavPanelPages();
 }
 
+async function chargerChapitresEnLigne(oeuvre) {
+  let chapitres = [];
+  try {
+    chapitres = await api.getChapitres(etat.oeuvreId);
+  } catch {
+    chapitres = [];
+  }
+
+  if (!chapitres?.length) {
+    chapitres = normaliserChapitresOeuvre(oeuvre);
+  }
+
+  if (!chapitres.length) {
+    throw new Error('Aucun chapitre disponible pour cette œuvre.');
+  }
+
+  return chapitres;
+}
+
 async function chargerChapitreLocal(numero) {
   try {
     const livreLocal = await getLivre(etat.oeuvreId);
@@ -445,6 +462,22 @@ function normaliserChapitresLocaux(livre) {
     type_element: ch.type_element || 'chapitre',
     _offline: true,
   }));
+}
+
+function normaliserChapitresOeuvre(oeuvre) {
+  return (oeuvre?.chapitres || [])
+    .slice()
+    .sort((a, b) => Number(a.numero || 0) - Number(b.numero || 0))
+    .map((ch, index) => ({
+      id: ch.id,
+      numero: Number(ch.numero || index + 1),
+      titre: ch.titre || null,
+      type_element: ch.type_element || 'chapitre',
+      visible: ch.visible !== false,
+      date_publication: ch.date_publication || null,
+      created_at: ch.created_at || null,
+    }))
+    .filter(ch => ch.id && ch.numero >= 1);
 }
 
 /* ============================================================

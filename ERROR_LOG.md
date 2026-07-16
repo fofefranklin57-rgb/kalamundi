@@ -16,6 +16,13 @@ Format par entrée :
 
 ---
 
+### [2026-07-16] Démarrage lecteur en ligne trop fragile
+- **Symptôme** : une œuvre pouvait refuser de s'ouvrir en ligne si le chargement séparé de la liste des chapitres échouait ou revenait vide, même lorsque la fiche œuvre était disponible.
+- **Cause** : le lecteur chargeait l'œuvre et les chapitres dans un seul `Promise.all`, puis basculait directement vers le mode local en cas d'échec global.
+- **Correctif** : séparation du chargement œuvre → chapitres, ajout d'un fallback depuis les chapitres embarqués dans l'œuvre, et ajout d'un contrôle de régression dédié lecteur/Roboto.
+- **Fichier(s)** : `assets/js/reader.js`, `scripts/check-reader-regression.mjs`, `package.json`, `sw.js`.
+- **Leçon** : le mode offline doit rester un secours, pas rendre le démarrage online dépendant d'un chargement groupé fragile.
+
 ### [2026-07-16] Royalties Premium affichées à 70 %
 - **Symptôme** : le formulaire de publication annonçait que l'auteur recevait 70 % des revenus directs en mode Premium.
 - **Cause** : l'ancienne copie marketing n'avait pas été alignée sur la décision D10 validée : royalties 50/50, option « Kalamundi Select » 70 % non actée.

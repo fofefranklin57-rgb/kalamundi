@@ -11,6 +11,7 @@ Types : `feat` (fonctionnalité) · `decision` (choix produit) · `fix` (correct
 
 ## 2026-07
 
+- **2026-07-16 — fix** : P0.3 livré — hygiène lecteur : démarrage en ligne fiabilisé après la refonte offline, fallback chapitres depuis l'œuvre, contrôle de régression lecteur/Roboto ajouté au `npm run check`, absence de Roboto confirmée et cache PWA bumpé en `kala-v18`.
 - **2026-07-16 — design** : piste logo retenue et enregistrée : monogramme **KM** lisible avec plume centrale, petit livre discret, wordmark `KalaMundi` réduit et signature `La Plume du Monde` plus littéraire. Asset : `assets/img/logo-kalamundi-km-plume.png`. Prompt mis à jour dans `PROMPT_LOGO_KALAMUNDI.md`.
 - **2026-07-16 — feat** : P0.2 livré — interface auteur modernisée : dashboard enrichi par un bloc standard auteur (50/50, statistiques, dépôt), formulaire publication doté d'un cockpit qualité dynamique, résumé obligatoire, validation fichier réelle, rappel couverture 1,6:1 et cache PWA bumpé en `kala-v15`.
 - **2026-07-16 — feat** : P0.1 livré — lecteur premium renforcé : choix de police de lecture, thèmes jour/nuit/sépia appliqués proprement, réglages qui repaginent le livre, note d'annotation/surlignage visible et cache PWA bumpé en `kala-v14`.
