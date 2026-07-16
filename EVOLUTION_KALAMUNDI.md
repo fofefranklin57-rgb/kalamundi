@@ -11,6 +11,7 @@ Types : `feat` (fonctionnalité) · `decision` (choix produit) · `fix` (correct
 
 ## 2026-07
 
+- **2026-07-16 — feat** : P1.6 en cours — socle **chapitres normalisés + EPUB canonique** livré : migration `V008__chapitres_normalisation_epub.sql` (`chapitre_id`, `source_hash`, `epub_href`, `metadata`), librairie `scripts/lib/book-normalizer.mjs`, générateur `scripts/build_epub.mjs`, contrôle `check-epub-pipeline`, publication enrichie avec identifiants stables et cache PWA bumpé en `kala-v20`. Reste : intégration lecteur EPUB web Readium/foliate + validation epubcheck complète.
 - **2026-07-16 — feat** : P1.5 livré — décision **D3 Livre + Offres** validée et migration `V007__livres_offres.sql` créée : tables `livres`, `livre_editions`, `livre_offres`, backfill depuis `oeuvres`, liens progressifs vers `paiements`, `revenus`, `acces_premium`, RLS et index commerce.
 - **2026-07-16 — design** : P0.4 livré — intégration du logo : mark **KM + plume + livre** dérivé en `assets/img/logo-mark-km.png`, icônes PWA régénérées via `scripts/generate-icons.mjs`, remplacement des logos emoji dans les nav/footer et owner dashboard, cache PWA bumpé en `kala-v19`.
 - **2026-07-16 — fix** : P0.3 livré — hygiène lecteur : démarrage en ligne fiabilisé après la refonte offline, fallback chapitres depuis l'œuvre, contrôle de régression lecteur/Roboto ajouté au `npm run check`, absence de Roboto confirmée et cache PWA bumpé en `kala-v18`.

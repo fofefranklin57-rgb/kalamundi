@@ -227,10 +227,10 @@ function chargerScript(src) {
 
 export function decouperEnChapitres(texte) {
   const source = String(texte || '').trim();
-  if (!source) return [{ numero: 1, titre: null, contenu: '' }];
+  if (!source) return enrichirChapitres([{ numero: 1, titre: null, contenu: '' }]);
 
   const matches = detecterTitresChapitres(source);
-  if (!matches.length) return decouperParTaille(source);
+  if (!matches.length) return enrichirChapitres(decouperParTaille(source));
 
   const chapitres = [];
   const avantPremier = source.slice(0, matches[0].index).trim();
@@ -246,8 +246,49 @@ export function decouperEnChapitres(texte) {
     if (contenu) chapitres.push({ numero: chapitres.length + 1, titre, contenu });
   });
 
-  if (chapitres.length <= 1 && source.length > 18000) return decouperParTaille(source);
-  return chapitres.length ? chapitres : [{ numero: 1, titre: null, contenu: source }];
+  if (chapitres.length <= 1 && source.length > 18000) return enrichirChapitres(decouperParTaille(source));
+  return enrichirChapitres(chapitres.length ? chapitres : [{ numero: 1, titre: null, contenu: source }]);
+}
+
+function enrichirChapitres(chapitres) {
+  return chapitres.map((chapitre, index) => {
+    const propre = {
+      ...chapitre,
+      numero: chapitre.numero || index + 1,
+      type_element: chapitre.type_element || 'chapitre',
+    };
+    const contenu = String(propre.contenu || '');
+    return {
+      ...propre,
+      chapitre_id: propre.chapitre_id || creerChapitreId(propre),
+      source_hash: hashCourt(contenu),
+    };
+  });
+}
+
+function creerChapitreId(chapitre) {
+  const numero = String(chapitre.numero || 1).padStart(3, '0');
+  const titre = slugifier(chapitre.titre || `chapitre-${numero}`) || `chapitre-${numero}`;
+  return `${titre.slice(0, 32)}-${numero}-${hashCourt(`${chapitre.titre || ''}\n${String(chapitre.contenu || '').slice(0, 1200)}`)}`;
+}
+
+function slugifier(valeur) {
+  return String(valeur || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function hashCourt(valeur) {
+  const texte = String(valeur || '');
+  let h1 = 0x811c9dc5;
+  for (let i = 0; i < texte.length; i++) {
+    h1 ^= texte.charCodeAt(i);
+    h1 = Math.imul(h1, 0x01000193);
+  }
+  return (h1 >>> 0).toString(16).padStart(8, '0');
 }
 
 function detecterTitresChapitres(source) {
@@ -265,7 +306,7 @@ function detecterTitresChapitres(source) {
     titres.push({ index: debut, raw, titre: propre });
   });
 
-  return filtrerTitresTropProches(titres);
+  return filtrerTitresTropProches(titres, source);
 }
 
 function estTitreChapitre(ligne, avant = '', apres = '') {
@@ -289,11 +330,15 @@ function estTitreChapitre(ligne, avant = '', apres = '') {
   return bas === '***' || bas === '* * *';
 }
 
-function filtrerTitresTropProches(titres) {
+function filtrerTitresTropProches(titres, source) {
   const retenus = [];
   titres.forEach(t => {
     const precedent = retenus[retenus.length - 1];
-    if (precedent && t.index - precedent.index < 500) {
+    const entreTitres = precedent
+      ? source.slice(precedent.index + precedent.raw.length, t.index).trim()
+      : '';
+    const titresConsecutifs = entreTitres.length < 120 && !/[.!?]\s*$/.test(entreTitres);
+    if (precedent && titresConsecutifs) {
       precedent.titre = `${precedent.titre} — ${t.titre}`;
       precedent.raw += `\n${t.raw}`;
     } else {

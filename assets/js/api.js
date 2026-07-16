@@ -23,6 +23,23 @@ function sansChamp(obj, champ) {
   return copie;
 }
 
+const COLONNES_NORMALISATION_CHAPITRES = [
+  'chapitre_id',
+  'format_source',
+  'source_hash',
+  'structure_path',
+  'epub_href',
+  'metadata',
+];
+
+function contientColonnesNormalisation(champs = {}) {
+  return COLONNES_NORMALISATION_CHAPITRES.some(colonne => colonne in champs);
+}
+
+function erreurColonnesNormalisationManquantes(error) {
+  return COLONNES_NORMALISATION_CHAPITRES.some(colonne => colonneManquante(error, colonne));
+}
+
 const AUTEURS_SYSTEME = new Set([
   '00000000-0000-0000-0000-000000000001',
 ]);
@@ -390,11 +407,27 @@ export const api = {
   },
 
   async creerChapitre(champs) {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('chapitres')
       .insert(champs)
       .select()
       .single();
+    if (error && erreurColonnesNormalisationManquantes(error) && contientColonnesNormalisation(champs)) {
+      const champsCompat = { ...champs };
+      delete champsCompat.chapitre_id;
+      delete champsCompat.format_source;
+      delete champsCompat.source_hash;
+      delete champsCompat.structure_path;
+      delete champsCompat.epub_href;
+      delete champsCompat.metadata;
+      const retry = await supabase
+        .from('chapitres')
+        .insert(champsCompat)
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
     if (error) throw error;
     return data;
   },

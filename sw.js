@@ -8,7 +8,7 @@
      - Page offline            → fallback si tout échoue
    ============================================================ */
 
-const VERSION        = 'kala-v19';
+const VERSION        = 'kala-v20';
 const CACHE_SHELL    = `${VERSION}-shell`;
 const CACHE_API      = `${VERSION}-api`;
 const CACHE_IMAGES   = `${VERSION}-images`;

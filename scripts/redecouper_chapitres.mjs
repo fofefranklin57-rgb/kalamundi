@@ -13,6 +13,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { decouperEnChapitres } from './lib/book-normalizer.mjs';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://iobieffnaauecyukecds.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SERVICE_KEY;
@@ -37,113 +38,6 @@ const FORCER_MULTI = args.has('--all');
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
-
-function decouperEnChapitres(texte) {
-  const source = String(texte || '').trim();
-  if (!source) return [{ numero: 1, titre: null, contenu: '' }];
-
-  const matches = detecterTitresChapitres(source);
-  if (!matches.length) return decouperParTaille(source);
-
-  const chapitres = [];
-  const avantPremier = source.slice(0, matches[0].index).trim();
-  if (avantPremier && avantPremier.length > 260) {
-    chapitres.push({ numero: chapitres.length + 1, titre: 'Avant-propos', contenu: avantPremier });
-  }
-
-  matches.forEach((match, index) => {
-    const debut = match.index + match.raw.length;
-    const fin = index + 1 < matches.length ? matches[index + 1].index : source.length;
-    const titre = nettoyerTitreChapitre(match.titre);
-    const contenu = source.slice(debut, fin).trim();
-    if (contenu) chapitres.push({ numero: chapitres.length + 1, titre, contenu });
-  });
-
-  if (chapitres.length <= 1 && source.length > 18000) return decouperParTaille(source);
-  return chapitres.length ? chapitres : [{ numero: 1, titre: null, contenu: source }];
-}
-
-function detecterTitresChapitres(source) {
-  const lignes = source.split('\n');
-  const titres = [];
-  let index = 0;
-
-  lignes.forEach((ligne, i) => {
-    const raw = ligne;
-    const propre = raw.trim();
-    const debut = index;
-    index += raw.length + 1;
-    if (!propre || propre.length > 140) return;
-    if (!estTitreChapitre(propre, lignes[i - 1], lignes[i + 1])) return;
-    titres.push({ index: debut, raw, titre: propre });
-  });
-
-  return filtrerTitresTropProches(titres);
-}
-
-function estTitreChapitre(ligne, avant = '', apres = '') {
-  const propre = ligne.replace(/\s+/g, ' ').trim();
-  const bas = propre.toLowerCase();
-  const ligneIsolee = !String(avant || '').trim() || !String(apres || '').trim();
-  const ponctuationForte = /[!?;:]{2,}|[.!?]$/.test(propre);
-  const mots = propre.split(/\s+/).length;
-
-  if (/^(prologue|epilogue|épilogue|avant-propos|préface|preface|introduction|conclusion)$/i.test(propre)) return true;
-  if (/^(chapitre|chapter)\s+(premier|[0-9]+|[ivxlcdm]+|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze)\b/i.test(propre)) return true;
-  if (/^(livre|book|partie|part)\s+(premier|[0-9]+|[ivxlcdm]+|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)\b/i.test(propre)) return true;
-  if (/^[-—–]\s*(chapitre|chapter|[0-9]+|[ivxlcdm]+)\s*[-—–]?$/i.test(propre)) return true;
-  if (/^([0-9]{1,3}|[ivxlcdm]{1,8})[.)]\s+.{0,90}$/i.test(propre) && ligneIsolee && !ponctuationForte) return true;
-
-  const estMajuscule = propre === propre.toUpperCase() && /[A-ZÀ-Ý]/.test(propre);
-  if (ligneIsolee && estMajuscule && mots <= 10 && propre.length >= 4 && !ponctuationForte) {
-    if (!/^(TABLE|SOMMAIRE|COPYRIGHT|ISBN|NOTES?|REMERCIEMENTS?)\b/i.test(propre)) return true;
-  }
-
-  return bas === '***' || bas === '* * *';
-}
-
-function filtrerTitresTropProches(titres) {
-  const retenus = [];
-  titres.forEach(t => {
-    const precedent = retenus[retenus.length - 1];
-    if (precedent && t.index - precedent.index < 500) {
-      precedent.titre = `${precedent.titre} - ${t.titre}`;
-      precedent.raw += `\n${t.raw}`;
-    } else {
-      retenus.push(t);
-    }
-  });
-  return retenus;
-}
-
-function nettoyerTitreChapitre(titre) {
-  return String(titre || '')
-    .replace(/^\s*[-—–]\s*/, '')
-    .replace(/\s*[-—–]\s*$/, '')
-    .trim() || null;
-}
-
-function decouperParTaille(source) {
-  const tailleCible = 9000;
-  if (source.length <= tailleCible * 1.4) return [{ numero: 1, titre: null, contenu: source }];
-
-  const blocs = source.split(/\n{2,}/);
-  const chapitres = [];
-  let courant = '';
-
-  blocs.forEach(bloc => {
-    const ajout = courant ? `${courant}\n\n${bloc}` : bloc;
-    if (ajout.length > tailleCible && courant.length > 2500) {
-      chapitres.push({ numero: chapitres.length + 1, titre: `Partie ${chapitres.length + 1}`, contenu: courant.trim() });
-      courant = bloc;
-    } else {
-      courant = ajout;
-    }
-  });
-
-  if (courant.trim()) chapitres.push({ numero: chapitres.length + 1, titre: `Partie ${chapitres.length + 1}`, contenu: courant.trim() });
-  return chapitres.length ? chapitres : [{ numero: 1, titre: null, contenu: source }];
-}
 
 async function chargerOeuvres() {
   let query = supabase
@@ -212,6 +106,13 @@ async function redecouperOeuvre(oeuvre) {
       numero: 1,
       titre: nouveaux[0].titre,
       contenu_texte: nouveaux[0].contenu,
+      chapitre_id: nouveaux[0].chapitre_id,
+      source_hash: nouveaux[0].source_hash,
+      format_source: 'normalise',
+      metadata: {
+        normalisation: 'redecoupage_auto',
+        outil: 'scripts/redecouper_chapitres.mjs',
+      },
       type_element: commun.type_element,
       visible: commun.visible,
       date_publication: commun.date_publication,
@@ -224,6 +125,13 @@ async function redecouperOeuvre(oeuvre) {
     numero: ch.numero,
     titre: ch.titre,
     contenu_texte: ch.contenu,
+    chapitre_id: ch.chapitre_id,
+    source_hash: ch.source_hash,
+    format_source: 'normalise',
+    metadata: {
+      normalisation: 'redecoupage_auto',
+      outil: 'scripts/redecouper_chapitres.mjs',
+    },
   }));
 
   if (inserts.length) {

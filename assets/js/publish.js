@@ -613,7 +613,7 @@ qs('#btn-publier')?.addEventListener('click', async () => {
 
     const chapitres = doitDecouper
       ? decouperEnChapitres(contenu)
-      : [{ numero: 1, titre: titreChapitre, contenu }];
+      : [{ ...decouperEnChapitres(contenu)[0], titre: titreChapitre }];
 
     if (decoupageAuto && !parChapitres && chapitres.length > 1) {
       toast(`Découpage automatique : ${chapitres.length} chapitres créés.`, 'info', 5000);
@@ -629,6 +629,13 @@ qs('#btn-publier')?.addEventListener('click', async () => {
         numero:           ch.numero,
         titre:            ch.titre,
         contenu_texte:    ch.contenu,
+        chapitre_id:      ch.chapitre_id,
+        source_hash:      ch.source_hash,
+        format_source:    etat.fichier?.name?.split('.').pop()?.toLowerCase() || 'interne',
+        metadata: {
+          normalisation: doitDecouper ? 'decoupage_publication' : 'chapitre_unique',
+          mode_publication: etat.mode,
+        },
         type_element:     doitDecouper ? (ch.type_element || 'chapitre') : typeElement,
         date_publication: datePubli,
         visible:          datePubli === null || new Date(datePubli) <= new Date(),

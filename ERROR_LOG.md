@@ -16,6 +16,13 @@ Format par entrée :
 
 ---
 
+### [2026-07-16] Chapitres courts fusionnés à tort
+- **Symptôme** : un livre avec des chapitres courts pouvait être interprété comme un seul chapitre ou comme un chapitre fusionné, ce qui dégradait le lecteur et la navigation.
+- **Cause** : le filtre anti-faux-titres fusionnait deux titres dès qu'ils étaient proches, sans vérifier si du contenu réel existait entre eux.
+- **Correctif** : fusion uniquement lorsque deux titres sont réellement consécutifs, ajout du contrôle `check-epub-pipeline` et partage du normaliseur avec l'outil de redécoupage.
+- **Fichier(s)** : `assets/js/upload.js`, `scripts/lib/book-normalizer.mjs`, `scripts/redecouper_chapitres.mjs`, `scripts/check-epub-pipeline.mjs`.
+- **Leçon** : la proximité entre deux titres n'est pas suffisante pour conclure à un faux chapitre ; il faut inspecter le contenu intermédiaire.
+
 ### [2026-07-16] Démarrage lecteur en ligne trop fragile
 - **Symptôme** : une œuvre pouvait refuser de s'ouvrir en ligne si le chargement séparé de la liste des chapitres échouait ou revenait vide, même lorsque la fiche œuvre était disponible.
 - **Cause** : le lecteur chargeait l'œuvre et les chapitres dans un seul `Promise.all`, puis basculait directement vers le mode local en cas d'échec global.
