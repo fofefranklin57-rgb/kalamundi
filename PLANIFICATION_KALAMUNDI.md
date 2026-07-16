@@ -85,7 +85,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 ## B-bis. Points d'attention identifiés (15/07/2026)
 
 - **Éducation** : ~~débranchée~~ → **entrée « Kalamundi Campus » rebranchée sur l'accueil** ✅ Codex 16/07 (`fa8ff9b`, accès annales/examens/répétiteur/institutions). **Reste** : moderniser et repenser les pages éducation elles-mêmes (offre étudiant vs écoles, lien achat de manuels).
-- **Logo à refaire** : aujourd'hui = emoji 📚 + wordmark, incohérent selon les pages (certaines sans emoji). Créer une **vraie identité graphique** ancrée sur *la plume* (« La Plume du Monde » / « Kalamu ya Dunia »). Concepts explorés le 15/07 ; à trancher puis décliner (favicon, icônes PWA `generate-icons.mjs`, nav, footer).
+- **Logo à refaire** : aujourd'hui = emoji 📚 + wordmark, incohérent selon les pages (certaines sans emoji). Piste visuelle retenue le 16/07 : monogramme **KM** + plume + petit livre, wordmark `KalaMundi`, signature `La Plume du Monde`, asset `assets/img/logo-kalamundi-km-plume.png`. **Reste** : vectoriser/décliner, générer favicon + icônes PWA (`generate-icons.mjs`), remplacer l'emoji dans nav/footer.
 
 ## C. Backlog transverse (à faire tôt)
 - [ ] Confiance : avis, garantie acheteur, badge vendeur vérifié

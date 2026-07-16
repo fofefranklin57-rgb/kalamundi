@@ -11,6 +11,7 @@ Types : `feat` (fonctionnalité) · `decision` (choix produit) · `fix` (correct
 
 ## 2026-07
 
+- **2026-07-16 — design** : piste logo retenue et enregistrée : monogramme **KM** lisible avec plume centrale, petit livre discret, wordmark `KalaMundi` réduit et signature `La Plume du Monde` plus littéraire. Asset : `assets/img/logo-kalamundi-km-plume.png`. Prompt mis à jour dans `PROMPT_LOGO_KALAMUNDI.md`.
 - **2026-07-16 — feat** : P0.2 livré — interface auteur modernisée : dashboard enrichi par un bloc standard auteur (50/50, statistiques, dépôt), formulaire publication doté d'un cockpit qualité dynamique, résumé obligatoire, validation fichier réelle, rappel couverture 1,6:1 et cache PWA bumpé en `kala-v15`.
 - **2026-07-16 — feat** : P0.1 livré — lecteur premium renforcé : choix de police de lecture, thèmes jour/nuit/sépia appliqués proprement, réglages qui repaginent le livre, note d'annotation/surlignage visible et cache PWA bumpé en `kala-v14`.
 - **2026-07-16 — docs** : ajout d'un **ordre d'exécution priorisé** (section E de `PLANIFICATION`, tiers P0→P5 avec dépendances). Pivot identifié : le modèle « Livre + Offres » (n°5) débloque le commerce → à faire tôt.

@@ -28,6 +28,43 @@ Vector, crisp edges, high contrast. On a plain background.
 
 ---
 
+## ✅ Direction retenue — Monogramme KM + plume + livre + signature
+
+À utiliser pour régénérer la piste validée : un logo complet avec symbole et texte,
+en gardant la lisibilité du **KM**, la plume comme axe identitaire, et un petit livre
+discret dans le médaillon.
+
+```
+Complete premium logo for "KalaMundi", an African digital book and reading
+platform whose motto is "La Plume du Monde".
+
+Top symbol: a circular or softly rounded badge in deep forest green (#1B4332)
+with a clearly readable custom KM monogram. The K and M must both be legible,
+balanced and elegant. Integrate a warm gold feather/quill (#D4A017 / #E9C46A)
+as the central stroke or diagonal flourish between K and M. Add a small subtle
+open book icon inside the badge, near the lower part or behind the base of the
+feather; it must remain discreet and not compete with the KM.
+
+Below the badge: the wordmark exactly "KalaMundi" with capital K and capital M,
+in an expressive literary display font, artistic and slightly calligraphic, but
+readable and premium. The wordmark must be smaller than the badge and balanced,
+not dominating the logo.
+
+Under the wordmark: the tagline exactly "La Plume du Monde", smaller than the
+wordmark, in elegant literary small caps or graceful calligraphic serif, refined
+and readable.
+
+Background: clean warm cream (#FBF8F2), uniform and premium.
+
+Constraints: exact spelling only; no extra words; no emoji; no generic book-only
+icon; no clutter; no watermark; no photorealism; no heavy gradients or shadows.
+Keep the palette forest green + warm gold + cream.
+```
+
+Asset enregistré : `assets/img/logo-kalamundi-km-plume.png`.
+
+---
+
 ## 🅰️ Variante A — Plume-feuille (organique, africaine) — *préférée pour la polyvalence*
 
 ```
