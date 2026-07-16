@@ -63,6 +63,7 @@ const etat = {
   chapitreNum:    parseInt(getParam('ch') || '1'),
   langueAffichee: lsGet('reader_langue') || 'original',
   fontSize:       parseInt(lsGet('reader_fontsize') || '18'),
+  fontFamily:     lsGet('reader_font_family') || 'serif',
   lineHeight:     parseFloat(lsGet('reader_lh') || '1.9'),
   maxWidth:       largeurLectureInitiale(),
   theme:          lsGet('reader_theme') || 'light',
@@ -1130,11 +1131,7 @@ document.getElementById('btn-settings')?.addEventListener('click', () => {
 // Thèmes
 document.querySelectorAll('.theme-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('is-active'));
-    btn.classList.add('is-active');
-    etat.theme = btn.dataset.theme;
-    document.body.className = `reader-body${etat.theme !== 'light' ? ` theme-${etat.theme}` : ''}`;
-    lsSet('reader_theme', etat.theme);
+    appliquerThemeLecteur(btn.dataset.theme || 'light');
   });
 });
 
@@ -1157,7 +1154,18 @@ function appliquerFontSize() {
   document.getElementById('reader-content').style.fontSize  = `${etat.fontSize}px`;
   document.getElementById('font-size-display').textContent  = `${etat.fontSize}px`;
   lsSet('reader_fontsize', etat.fontSize);
+  repaginerSiLectureOuverte();
 }
+
+// Police de lecture
+document.querySelectorAll('.font-family-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    etat.fontFamily = btn.dataset.font || 'serif';
+    appliquerPoliceLecture();
+    lsSet('reader_font_family', etat.fontFamily);
+    repaginerSiLectureOuverte();
+  });
+});
 
 // Interligne
 document.querySelectorAll('.line-height-btn').forEach(btn => {
@@ -1167,6 +1175,7 @@ document.querySelectorAll('.line-height-btn').forEach(btn => {
     etat.lineHeight = parseFloat(btn.dataset.lh);
     document.getElementById('reader-content').style.lineHeight = etat.lineHeight;
     lsSet('reader_lh', etat.lineHeight);
+    repaginerSiLectureOuverte();
   });
 });
 
@@ -1182,6 +1191,38 @@ document.querySelectorAll('.width-btn').forEach(btn => {
     if (!etat.couvertureVisible) chargerChapitre(etat.chapitreNum, true);
   });
 });
+
+function appliquerThemeLecteur(theme) {
+  etat.theme = ['light', 'dark', 'sepia'].includes(theme) ? theme : 'light';
+  document.body.classList.remove('theme-dark', 'theme-sepia');
+  if (etat.theme !== 'light') document.body.classList.add(`theme-${etat.theme}`);
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    const actif = btn.dataset.theme === etat.theme;
+    btn.classList.toggle('is-active', actif);
+    btn.setAttribute('aria-pressed', actif);
+  });
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    metaTheme.setAttribute('content', etat.theme === 'dark' ? '#101410' : etat.theme === 'sepia' ? '#8B6914' : '#1B4332');
+  }
+  lsSet('reader_theme', etat.theme);
+}
+
+function appliquerPoliceLecture() {
+  const contentEl = document.getElementById('reader-content');
+  if (!contentEl) return;
+  contentEl.dataset.font = etat.fontFamily;
+  document.querySelectorAll('.font-family-btn').forEach(btn => {
+    const actif = btn.dataset.font === etat.fontFamily;
+    btn.classList.toggle('is-active', actif);
+    btn.setAttribute('aria-pressed', actif);
+  });
+}
+
+function repaginerSiLectureOuverte() {
+  if (etat.couvertureVisible) return;
+  chargerChapitre(etat.chapitreNum, true);
+}
 
 /* ============================================================
    SÉLECTEUR LANGUE (bouton)
@@ -1214,11 +1255,7 @@ document.addEventListener('click', (e) => {
 
 function appliquerPreferences() {
   // Thème
-  if (etat.theme !== 'light') {
-    document.body.classList.add(`theme-${etat.theme}`);
-    document.querySelector(`[data-theme="${etat.theme}"]`)?.classList.add('is-active');
-    document.querySelector(`[data-theme="light"]`)?.classList.remove('is-active');
-  }
+  appliquerThemeLecteur(etat.theme);
 
   // Largeur
   document.getElementById('reader-content').style.maxWidth = 'none';
@@ -1232,6 +1269,9 @@ function appliquerPreferences() {
   // Font size
   document.getElementById('reader-content').style.fontSize  = `${etat.fontSize}px`;
   document.getElementById('font-size-display').textContent  = `${etat.fontSize}px`;
+
+  // Police
+  appliquerPoliceLecture();
 
   // Interligne
   document.getElementById('reader-content').style.lineHeight = etat.lineHeight;

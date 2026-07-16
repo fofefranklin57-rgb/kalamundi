@@ -11,6 +11,8 @@ Types : `feat` (fonctionnalité) · `decision` (choix produit) · `fix` (correct
 
 ## 2026-07
 
+- **2026-07-16 — feat** : P0.1 livré — lecteur premium renforcé : choix de police de lecture, thèmes jour/nuit/sépia appliqués proprement, réglages qui repaginent le livre, note d'annotation/surlignage visible et cache PWA bumpé en `kala-v14`.
+- **2026-07-16 — docs** : ajout d'un **ordre d'exécution priorisé** (section E de `PLANIFICATION`, tiers P0→P5 avec dépendances). Pivot identifié : le modèle « Livre + Offres » (n°5) débloque le commerce → à faire tôt.
 - **2026-07-16 — fix** : fiabilisation du mode hors-ligne lecteur : `offline.html` devient une bibliothèque locale listant les livres sauvegardés, le lecteur peut démarrer depuis IndexedDB sans réseau, et le cache PWA passe en `kala-v13`.
 - **2026-07-16 — feat** : ajout d'une porte d'entrée `Kalamundi Campus` sur l'accueil, alignée avec D12 : accès clair aux annales, examens simulés, Super Répétiteur et espaces institutions, textes internationalisés et cache PWA bumpé en `kala-v12`.
 - **2026-07-16 — feat** : ajout du shell mobile Phase 1 : barre d'onglets basse commune (Accueil · Explorer · Apprendre · Biblio · Profil) injectée sur les pages cœur, avec exclusions lecteur/paiement/login/admin/owner et cache PWA bumpé en `kala-v11`.

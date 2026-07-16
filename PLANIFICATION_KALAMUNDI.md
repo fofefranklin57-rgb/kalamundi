@@ -24,6 +24,8 @@ Statut : ✅ tranché · 🟡 proposé (attente Franklin) · ⬜ ouvert
 | **D10** | **Standards publication (réf. KDP) : EPUB + métadonnées ONIX-like + couverture 1,6:1 + reporting auteur niveau KDP.** Royalties = **50/50** (50 % auteur / 50 % plateforme) — détail dans `ADAPTATION_STANDARDS_KDP.md` | 50/50 | ✅ **validé (50/50)** — option « Select » 70 % gardée en réserve, à confirmer |
 | **D11** | **Diaspora** : ouvrir achat/location à la diaspora → **paiement international** (cartes/PayPal) + **multi-devises** (EUR/USD/FCFA) + pattern **gifting** (acheter/offrir un livre livré à un proche au pays) | Oui | ✅ **acté par Franklin** (mise en œuvre à cadrer) |
 | **D12** | **Stratégie éducation** : option **(a)** — intégré maintenant, séparable plus tard en PWA dédiée **« Kalamundi Campus »** sur backend partagé — détail dans `PROPOSITION_EDUCATION.md` | (a) | ✅ **validé** (nom « Kalamundi Campus » retenu) |
+| **D13** | **Canal maisons d'édition** : comptes catalogue + ingestion **ONIX**/EPUB + revenus **négociés** (≠ 50/50 auteur) ; onboarding via collectifs (African Books Collective, OAPE, Alliance) — détail `VISION_EDITEURS_ET_PATRIMOINE.md` | Oui, Phase 2/3 | ✅ **acté** (mise en œuvre à cadrer) |
+| **D14** | **Mission culturelle / bibliothèque numérique** : Fonds patrimoine **« Kalamundi Héritage »** (accès public-bien, distinct du commercial) + **partenariat MINAC/OIF/UNESCO** ; mené en parallèle, sans détourner le socle | Oui | ✅ **acté** (partenariats à initier) |
 
 *(D8 réservé.) Tant que ces lignes sont 🟡, on ne descend pas vers les specs techniques.*
 
@@ -44,12 +46,12 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 
 ### Phase 1 — Enrichir l'existant (peu risqué, gros effet)
 > 🎨 **Priorité transverse : moderniser TOUTES les interfaces clés** — auteur (dashboard, publication), lecteur (confort de lecture), boutique, éducation. Cf. direction design `BIBLE §10`.
-- [ ] **Reskin design (tokens)** : webfonts Fraunces + Inter, base crème, retrait bordures vertes, arrondis 12–16px, boutons pleins, skeletons
+- [x] **Reskin design (tokens)** — ✅ Codex 16/07 (`464131e`) : webfonts Fraunces/Inter auto-hébergées, base crème `#FBF8F2`, bordures neutres `#E7E0D2`, rayons/ombres, composants adoucis, SW `kala-v10`
 - [ ] **Interface AUTEUR modernisée** : dashboard + formulaire de publication (schéma métadonnées, upload multi-format, aperçu) au nouveau design
-- [ ] **Interface LECTEUR modernisée** : lecteur premium (typo, thèmes, surlignage), navigation fluide, offline soigné
-- [ ] **Shell mobile** : barre d'onglets basse (Accueil · Explorer · Apprendre · Biblio · Profil)
-- [ ] **Home en rails de merchandising** + carte/fiche livre unifiée (offres lire/acheter/emprunter/occasion)
-- [ ] Lecteur premium (réglages typo, thèmes jour/nuit/sépia, surlignage couleur)
+- [x] **Interface LECTEUR modernisée** : offline soigné ✅ Codex 16/07 (`f43ddee`, biblio locale + démarrage IndexedDB) ; lecteur premium ✅ Codex 16/07 (polices de lecture, thèmes robustes, repagination des réglages, surlignage/note exposés)
+- [x] **Shell mobile** — ✅ Codex 16/07 (`a28a36d`) : barre d'onglets basse (Accueil · Explorer · Apprendre · Biblio · Profil), SW `kala-v11`
+- [ ] **Home en rails de merchandising** + carte/fiche livre unifiée (offres lire/acheter/emprunter/occasion) — *entrée Campus ajoutée (`fa8ff9b`), rails commerce pas encore*
+- [x] Lecteur premium (réglages typo, thèmes jour/nuit/sépia, surlignage couleur) — ✅ Codex 16/07, SW `kala-v14`
 - [ ] **Lecteur EPUB web** (Readium/foliate-js) en parallèle du lecteur actuel
 - [ ] **Convertisseur « égalisateur »** : Word/PDF/EPUB → chapitres normalisés + build EPUB (epubcheck), avec relecture auteur pour le PDF
 - [ ] Checklist de dépôt auteur (langue originale obligatoire) au formulaire de publication
@@ -82,7 +84,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 
 ## B-bis. Points d'attention identifiés (15/07/2026)
 
-- **Éducation débranchée** : les pages existent (`education/annales/epreuves/examen-sim/repetiteur/ecole/institution`) mais `index.html` **ne les lie pas** → invisibles pour l'utilisateur. Décision : **repenser le vertical Apprendre avant de le réexposer** (place dans la nav à onglets, offre étudiant vs écoles, lien avec l'achat de manuels). Ne pas juste « rebrancher » — repenser.
+- **Éducation** : ~~débranchée~~ → **entrée « Kalamundi Campus » rebranchée sur l'accueil** ✅ Codex 16/07 (`fa8ff9b`, accès annales/examens/répétiteur/institutions). **Reste** : moderniser et repenser les pages éducation elles-mêmes (offre étudiant vs écoles, lien achat de manuels).
 - **Logo à refaire** : aujourd'hui = emoji 📚 + wordmark, incohérent selon les pages (certaines sans emoji). Créer une **vraie identité graphique** ancrée sur *la plume* (« La Plume du Monde » / « Kalamu ya Dunia »). Concepts explorés le 15/07 ; à trancher puis décliner (favicon, icônes PWA `generate-icons.mjs`, nav, footer).
 
 ## C. Backlog transverse (à faire tôt)
@@ -94,4 +96,42 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 ---
 
 ## D. Prochaine action
-→ **Franklin tranche D0–D9.** Ensuite : architecture d'information + schéma de données. Puis seulement : specs & code.
+→ Codex exécute dans l'**ordre priorisé** de la section E ci-dessous. Un seul tier à la fois, du haut vers le bas.
+
+---
+
+## E. Ordre d'exécution priorisé (hiérarchie)
+
+**Règle : traiter les tiers dans l'ordre. Ne pas ouvrir un tier tant que le précédent n'est pas livré.** `⟶` = dépend de.
+
+### 🟥 P0 — Finir le socle Phase 1 (peu risqué, visible, en cours)
+1. ✅ **Lecteur premium** — réglages typo, bascule thèmes jour/nuit/sépia, surlignage. *(livré 16/07, SW `kala-v14`)*
+2. **Interface auteur modernisée** — dashboard + formulaire de publication au nouveau design.
+3. **Hygiène** — test régression lecture en ligne (après refonte offline), retrait des polices Roboto mortes.
+4. **Logo** — remplacer l'emoji 📚, décliner favicon + icônes PWA (`generate-icons.mjs`). *(quick win, parallélisable)*
+
+### 🟧 P1 — Fondations structurantes (prérequis de TOUT le commerce)
+5. **Modèle de données « Livre + Offres »** (D3) — ⚠️ **le pivot** : plusieurs tâches P1/P2/P3 en dépendent. Invisible mais prioritaire.
+6. **Pipeline EPUB** — convertisseur (Word/PDF/EPUB → chapitres normalisés + build EPUB, epubcheck) + **lecteur EPUB web** (Readium/foliate). `⟶ 5`
+7. **Standards publication** — formulaire métadonnées complet + checklist bloquante + couverture 1,6:1. `⟶ 5`
+8. **Traduction** — nœuds de texte + langue source depuis métadonnées. `⟶ 6`
+
+### 🟨 P2 — Engagement & monétisation auteur
+9. **Home en rails + fiche livre unifiée** (offres lire/acheter/emprunter/occasion). `⟶ 5`
+10. **Couche sociale** — notes, avis, étagères « à lire », stats.
+11. **Royalties 50/50 + reporting auteur niveau KDP + option Kalamundi Select.** `⟶ 5`
+
+### 🟩 P3 — Espace Acheter (Phase 2, numérique, sans logistique)
+12. Entité produit/offres → **panier** → **checkout Fapshi** → store à rails → historique de commandes. `⟶ 5`
+13. **Diaspora (D11)** — paiement international (cartes/PayPal) + multi-devises + **gifting**. `⟶ 12`
+
+### 🟦 P4 — Espaces avancés (chacun livré seul, dans l'ordre)
+14. **Vendre / occasion** (Phase 3) — listing ISBN, escrow, payout, logistique pilote. *(le plus dur)*
+15. **Emprunter** (Phase 4) — Readium **LCP** (accès temporel + files d'attente), fonds maison.
+
+### 🟪 P5 — Piliers partenariats (en parallèle, au rythme des accords — PAS bloquants)
+16. **Canal éditeurs** (D13) — comptes catalogue, ONIX/EPUB, revenus négociés.
+17. **Fonds patrimoine « Kalamundi Héritage »** (D14) — accès public-bien + partenariat MINAC/OIF/UNESCO.
+18. **Libraire IA** (Anthropic) + **audiolivres langues locales** + **expansion africaine**.
+
+> Note dépendances : le **n°5 (modèle Livre+Offres)** débloque 6, 7, 9, 11, 12 → à faire tôt même s'il est « invisible ».
