@@ -16,6 +16,13 @@ Format par entrée :
 
 ---
 
+### [2026-07-16] Lecteur EPUB cherchait un statut inexistant
+- **Symptôme** : le mode EPUB pouvait ne jamais trouver une édition EPUB créée par le modèle `livre_editions`.
+- **Cause** : le lecteur filtrait `livre_editions.statut = 'publie'`, alors que la migration `V007` définit les statuts valides comme `active`, `brouillon`, `retiree`, `archivee`.
+- **Correctif** : alignement de `getEditionEpub` sur `statut = 'active'` et ajout d'un contrôle dans `check-epub-pipeline`.
+- **Fichier(s)** : `assets/js/api.js`, `scripts/check-epub-pipeline.mjs`.
+- **Leçon** : le code client doit reprendre strictement les valeurs CHECK des migrations, pas inventer une variante métier.
+
 ### [2026-07-16] Migration chapitres normalisés incompatible avec la table réelle
 - **Symptôme** : l'exécution de `V008__chapitres_normalisation_epub.sql` échouait avec `column "contenu" does not exist`.
 - **Cause** : la migration calculait `source_hash` avec `COALESCE(contenu_texte, contenu, '')`, mais la table Supabase Kalamundi ne possède pas de colonne `contenu`.

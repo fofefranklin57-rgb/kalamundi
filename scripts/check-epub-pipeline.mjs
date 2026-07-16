@@ -1,5 +1,9 @@
 import { construireEpub } from './build_epub.mjs';
 import { normaliserLivreDepuisTexte } from './lib/book-normalizer.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = process.cwd();
 
 const manuscrit = `
 Kalamundi Test
@@ -44,6 +48,31 @@ for (const attendu of [
   'data-kalamundi-chapitre-id=',
 ]) {
   if (!brut.includes(attendu)) erreurs.push(`EPUB incomplet : ${attendu} absent.`);
+}
+
+if (erreurs.length) {
+  console.error(erreurs.map(e => `- ${e}`).join('\n'));
+  process.exit(1);
+}
+
+const publish = fs.readFileSync(path.join(root, 'assets/js/publish.js'), 'utf8');
+const api = fs.readFileSync(path.join(root, 'assets/js/api.js'), 'utf8');
+const clientBuilder = fs.readFileSync(path.join(root, 'assets/js/epub-builder.js'), 'utf8');
+
+if (!publish.includes('construireEpubCanonique')) {
+  erreurs.push('publish.js doit construire l’EPUB canonique après normalisation.');
+}
+if (!publish.includes('synchroniserLivrePublication')) {
+  erreurs.push('publish.js doit synchroniser livres/éditions/offres après publication.');
+}
+if (!api.includes('uploadEpubCanonique')) {
+  erreurs.push('api.js doit uploader l’EPUB canonique dans oeuvres-privees.');
+}
+if (!api.includes(".eq('statut', 'active')")) {
+  erreurs.push('getEditionEpub doit utiliser le statut réel livre_editions: active.');
+}
+if (!clientBuilder.includes('application/epub+zip') || !clientBuilder.includes('data-kalamundi-chapitre-id')) {
+  erreurs.push('epub-builder.js doit générer un EPUB annoté avec les chapitre_id Kalamundi.');
 }
 
 if (erreurs.length) {

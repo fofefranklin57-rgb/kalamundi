@@ -6,6 +6,7 @@
 import { protegerRoute, getUser } from './auth.js';
 import { api } from './api.js';
 import { lireFichier, calculerSHA256, calculerSHA256Fichier, decouperEnChapitres, watermark } from './upload.js';
+import { construireEpubCanonique, validerStructureEpub } from './epub-builder.js';
 import { toast, toastErreur, formatTailleFichier, qs, cacher, afficher, copier, validerFichier } from './utils.js';
 
 /* ============================================================
@@ -588,17 +589,19 @@ qs('#btn-publier')?.addEventListener('click', async () => {
     etat.oeuvreId = oeuvre.id;
 
     // 4. Upload couverture si présente
+    let urlCouverture = null;
     if (etat.couverture) {
       try {
-        const urlCouverture = await api.uploadCouverture(oeuvre.id, etat.couverture);
+        urlCouverture = await api.uploadCouverture(oeuvre.id, etat.couverture);
         await api.updateOeuvre(oeuvre.id, { couverture_url: urlCouverture });
       } catch { /* couverture optionnelle, on continue */ }
     }
 
     // 5. Upload fichier original si présent
+    let cheminFichier = null;
     if (etat.fichier) {
       try {
-        const cheminFichier = await api.uploadFichierOeuvre(oeuvre.id, etat.fichier);
+        cheminFichier = await api.uploadFichierOeuvre(oeuvre.id, etat.fichier);
         await api.updateOeuvre(oeuvre.id, { fichier_url: cheminFichier });
       } catch { /* fichier optionnel, le texte est déjà en base */ }
     }
@@ -641,6 +644,40 @@ qs('#btn-publier')?.addEventListener('click', async () => {
         visible:          datePubli === null || new Date(datePubli) <= new Date(),
       });
     }
+
+    // 6bis. Construire l’EPUB canonique et synchroniser le modèle Livre/Éditions/Offres.
+    let epubPath = null;
+    const validationEpub = validerStructureEpub({ chapitres });
+    if (validationEpub.valide) {
+      try {
+        const epubBlob = await construireEpubCanonique({
+          oeuvre: {
+            ...oeuvreData,
+            id: oeuvre.id,
+            couverture_url: urlCouverture,
+          },
+          chapitres,
+        });
+        epubPath = await api.uploadEpubCanonique(oeuvre.id, epubBlob);
+      } catch (err) {
+        console.warn('EPUB canonique non généré :', err);
+        toast('Publication enregistrée, EPUB canonique à régénérer plus tard.', 'info', 5000);
+      }
+    } else {
+      console.warn('Structure EPUB invalide :', validationEpub.erreurs);
+    }
+
+    api.synchroniserLivrePublication({
+      ...oeuvre,
+      ...oeuvreData,
+      couverture_url: urlCouverture,
+      fichier_url: cheminFichier,
+    }, {
+      chapitres,
+      fichierOriginal: etat.fichier,
+      cheminFichier,
+      epubPath,
+    }).catch(err => console.warn('Livre/éditions/offres non synchronisés :', err));
 
     // 7. Afficher le certificat
     afficherCertificat(etat.hash);

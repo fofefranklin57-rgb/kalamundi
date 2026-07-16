@@ -437,7 +437,7 @@ export const api = {
       .from('livre_editions')
       .select('id, livre_id, source_oeuvre_id, format, statut, fichier_url, epub_url, livres!inner(oeuvre_id)')
       .eq('format', 'epub')
-      .eq('statut', 'publie')
+      .eq('statut', 'active')
       .eq('livres.oeuvre_id', oeuvreId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -462,6 +462,102 @@ export const api = {
     }
 
     return data || null;
+  },
+
+  async synchroniserLivrePublication(oeuvre, { chapitres = [], fichierOriginal = null, cheminFichier = null, epubPath = null } = {}) {
+    if (!oeuvre?.id || !oeuvre?.auteur_id) return null;
+
+    const livrePayload = {
+      oeuvre_id: oeuvre.id,
+      auteur_id: oeuvre.auteur_id,
+      titre: oeuvre.titre,
+      description: oeuvre.resume || null,
+      langue_originale: oeuvre.langue_originale || 'fr',
+      couverture_url: oeuvre.couverture_url || null,
+      public_cible: oeuvre.public_cible || 'tous',
+      statut: oeuvre.visible === false ? 'retire' : 'actif',
+      type_catalogue: 'auto_edition',
+      metadata: {
+        source: 'publication_kalamundi',
+        hash_sha256: oeuvre.hash_sha256 || null,
+      },
+    };
+
+    const { data: livre, error: livreError } = await supabase
+      .from('livres')
+      .upsert(livrePayload, { onConflict: 'oeuvre_id' })
+      .select()
+      .single();
+    if (livreError) {
+      console.warn('Livre non synchronisé :', livreError);
+      return null;
+    }
+
+    const extOriginale = fichierOriginal?.name?.split('.').pop()?.toLowerCase() || 'interne';
+    const editions = [
+      {
+        livre_id: livre.id,
+        source_oeuvre_id: oeuvre.id,
+        format: 'chapitres',
+        statut: 'active',
+        version: '1.0',
+        fichier_url: cheminFichier || null,
+        nb_chapitres: chapitres.length,
+        metadata: {
+          format_source: extOriginale,
+          normalisation: 'chapitres_internes',
+        },
+      },
+    ];
+
+    if (epubPath) {
+      editions.push({
+        livre_id: livre.id,
+        source_oeuvre_id: oeuvre.id,
+        format: 'epub',
+        statut: 'active',
+        version: '1.0',
+        fichier_url: epubPath,
+        epub_url: epubPath,
+        nb_chapitres: chapitres.length,
+        metadata: {
+          generated_by: 'kalamundi_epub_builder',
+          canonical: true,
+          format_source: extOriginale,
+        },
+      });
+    }
+
+    const { data: editionsCreees, error: editionsError } = await supabase
+      .from('livre_editions')
+      .upsert(editions, { onConflict: 'livre_id,format,source_oeuvre_id' })
+      .select();
+    if (editionsError) console.warn('Éditions non synchronisées :', editionsError);
+
+    const editionChapitres = (editionsCreees || []).find(e => e.format === 'chapitres') || null;
+    const offreType = oeuvre.statut === 'premium' ? 'achat_numerique' : 'lecture_gratuite';
+    const offrePayload = {
+      livre_id: livre.id,
+      edition_id: editionChapitres?.id || null,
+      source_oeuvre_id: oeuvre.id,
+      vendeur_id: oeuvre.auteur_id,
+      type: offreType,
+      statut: 'active',
+      prix: oeuvre.statut === 'premium' ? Number(oeuvre.prix || 0) : 0,
+      devise: 'XAF',
+      fapshi_enabled: oeuvre.statut === 'premium',
+      chapitres_gratuits: Number(oeuvre.chapitres_gratuits || 0),
+      royalties_auteur_pct: oeuvre.statut === 'premium' ? 50 : 0,
+      royalties_plateforme_pct: oeuvre.statut === 'premium' ? 50 : 0,
+      ordre: oeuvre.statut === 'premium' ? 20 : 10,
+    };
+
+    const { error: offreError } = await supabase
+      .from('livre_offres')
+      .upsert(offrePayload, { onConflict: 'source_oeuvre_id,type' });
+    if (offreError) console.warn('Offre non synchronisée :', offreError);
+
+    return { livre, editions: editionsCreees || [] };
   },
 
   async updateChapitre(id, champs) {
@@ -792,6 +888,18 @@ export const api = {
     const { error } = await supabase.storage
       .from('oeuvres-privees')
       .upload(chemin, fichier, { upsert: true });
+    if (error) throw error;
+    return chemin;
+  },
+
+  async uploadEpubCanonique(oeuvreId, blob) {
+    const chemin = `oeuvres/${oeuvreId}/canonique.epub`;
+    const { error } = await supabase.storage
+      .from('oeuvres-privees')
+      .upload(chemin, blob, {
+        upsert: true,
+        contentType: 'application/epub+zip',
+      });
     if (error) throw error;
     return chemin;
   },

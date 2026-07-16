@@ -53,7 +53,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 - [ ] **Home en rails de merchandising** + carte/fiche livre unifiée (offres lire/acheter/emprunter/occasion) — *entrée Campus ajoutée (`fa8ff9b`), rails commerce pas encore*
 - [x] Lecteur premium (réglages typo, thèmes jour/nuit/sépia, surlignage couleur) — ✅ Codex 16/07, SW `kala-v14`
 - [x] **Lecteur EPUB web** (Readium/foliate-js) en parallèle du lecteur actuel — ✅ Codex 16/07 : mode EPUB via `epub.js`, fichier `.epub`/`livre_editions`, URL signée, thèmes/réglages, fallback lecteur chapitres, SW `kala-v21`
-- [ ] **Convertisseur « égalisateur »** : Word/PDF/EPUB → chapitres normalisés + build EPUB (epubcheck), avec relecture auteur pour le PDF — *socle livré 16/07 : `V008`, normaliseur, build EPUB local, contrôle automatique ; reste branchement complet import DOCX/PDF/EPUB serveur + epubcheck*
+- [ ] **Convertisseur « égalisateur »** : Word/PDF/EPUB → chapitres normalisés + build EPUB (epubcheck), avec relecture auteur pour le PDF — *socle livré 16/07 : `V008`, normaliseur, build EPUB local + navigateur, upload `canonique.epub`, synchronisation `livre_editions` ; reste import serveur robuste + epubcheck strict*
 - [ ] Checklist de dépôt auteur (langue originale obligatoire) au formulaire de publication
 - [ ] Traduction : traiter les nœuds de texte + lire la langue source depuis les métadonnées
 - [ ] Couche sociale : notes, avis, étagères « à lire », stats à la Wattpad
@@ -112,7 +112,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 
 ### 🟧 P1 — Fondations structurantes (prérequis de TOUT le commerce)
 5. ✅ **Modèle de données « Livre + Offres »** (D3) — ⚠️ **le pivot** : plusieurs tâches P1/P2/P3 en dépendent. *(livré 16/07, migration `V007__livres_offres.sql`)*
-6. 🟡 **Pipeline EPUB** — convertisseur (Word/PDF/EPUB → chapitres normalisés + build EPUB, epubcheck) + **lecteur EPUB web** (Readium/foliate). `⟶ 5` *(socle chapitres normalisés + build EPUB local + lecteur EPUB web livrés ; reste branchement import serveur complet + validation epubcheck complète)*
+6. 🟡 **Pipeline EPUB** — convertisseur (Word/PDF/EPUB → chapitres normalisés + build EPUB, epubcheck) + **lecteur EPUB web** (Readium/foliate). `⟶ 5` *(socle chapitres normalisés + build EPUB local/navigateur + lecteur EPUB web + édition EPUB publication livrés ; reste import serveur robuste + validation epubcheck complète)*
 7. **Standards publication** — formulaire métadonnées complet + checklist bloquante + couverture 1,6:1. `⟶ 5`
 8. **Traduction** — nœuds de texte + langue source depuis métadonnées. `⟶ 6`
 
