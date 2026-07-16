@@ -16,6 +16,13 @@ Format par entrée :
 
 ---
 
+### [2026-07-16] Migration chapitres normalisés incompatible avec la table réelle
+- **Symptôme** : l'exécution de `V008__chapitres_normalisation_epub.sql` échouait avec `column "contenu" does not exist`.
+- **Cause** : la migration calculait `source_hash` avec `COALESCE(contenu_texte, contenu, '')`, mais la table Supabase Kalamundi ne possède pas de colonne `contenu`.
+- **Correctif** : remplacement par un bloc SQL conditionnel qui utilise `contenu_texte` si présent, `contenu` seulement si elle existe, puis `id` en fallback.
+- **Fichier(s)** : `migrations/V008__chapitres_normalisation_epub.sql`.
+- **Leçon** : les migrations doivent vérifier les colonnes historiques optionnelles avant de les référencer, même dans un `COALESCE`.
+
 ### [2026-07-16] Chapitres courts fusionnés à tort
 - **Symptôme** : un livre avec des chapitres courts pouvait être interprété comme un seul chapitre ou comme un chapitre fusionné, ce qui dégradait le lecteur et la navigation.
 - **Cause** : le filtre anti-faux-titres fusionnait deux titres dès qu'ils étaient proches, sans vérifier si du contenu réel existait entre eux.

@@ -12,9 +12,28 @@ UPDATE chapitres
 SET chapitre_id = 'ch-' || LPAD(COALESCE(numero, 1)::TEXT, 3, '0') || '-' || LEFT(REPLACE(id::TEXT, '-', ''), 8)
 WHERE chapitre_id IS NULL OR chapitre_id = '';
 
-UPDATE chapitres
-SET source_hash = SUBSTRING(MD5(COALESCE(contenu_texte, contenu, '')) FROM 1 FOR 12)
-WHERE source_hash IS NULL OR source_hash = '';
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'chapitres' AND column_name = 'contenu_texte'
+  ) THEN
+    UPDATE chapitres
+    SET source_hash = SUBSTRING(MD5(COALESCE(contenu_texte, '')) FROM 1 FOR 12)
+    WHERE source_hash IS NULL OR source_hash = '';
+  ELSIF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'chapitres' AND column_name = 'contenu'
+  ) THEN
+    UPDATE chapitres
+    SET source_hash = SUBSTRING(MD5(COALESCE(contenu, '')) FROM 1 FOR 12)
+    WHERE source_hash IS NULL OR source_hash = '';
+  ELSE
+    UPDATE chapitres
+    SET source_hash = SUBSTRING(MD5(COALESCE(id::TEXT, '')) FROM 1 FOR 12)
+    WHERE source_hash IS NULL OR source_hash = '';
+  END IF;
+END $$;
 
 ALTER TABLE IF EXISTS chapitres
   ALTER COLUMN chapitre_id SET NOT NULL;
