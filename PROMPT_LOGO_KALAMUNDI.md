@@ -61,7 +61,10 @@ icon; no clutter; no watermark; no photorealism; no heavy gradients or shadows.
 Keep the palette forest green + warm gold + cream.
 ```
 
-Asset enregistré : `assets/img/logo-kalamundi-km-plume.png`.
+Assets enregistrés :
+- Logo complet : `assets/img/logo-kalamundi-km-plume.png`
+- Mark app/nav : `assets/img/logo-mark-km.png`
+- Génération icônes PWA : `node scripts/generate-icons.mjs`
 
 ---
 

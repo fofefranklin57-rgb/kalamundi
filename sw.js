@@ -8,7 +8,7 @@
      - Page offline            → fallback si tout échoue
    ============================================================ */
 
-const VERSION        = 'kala-v18';
+const VERSION        = 'kala-v19';
 const CACHE_SHELL    = `${VERSION}-shell`;
 const CACHE_API      = `${VERSION}-api`;
 const CACHE_IMAGES   = `${VERSION}-images`;
@@ -33,6 +33,9 @@ const SHELL_URLS = [
   '/assets/fonts/inter-400.woff2',
   '/assets/fonts/inter-500.woff2',
   '/assets/fonts/inter-700.woff2',
+  '/assets/img/logo-mark-km.png',
+  '/assets/img/icons/icon-192.png',
+  '/assets/img/icons/icon-512.png',
   '/assets/js/theme-init.js',
   '/assets/js/i18n-boot.js',
   '/assets/js/offline-page.js',

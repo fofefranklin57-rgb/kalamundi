@@ -52,8 +52,10 @@
 }
 
 .navbar__logo img {
-  height: 36px;
-  width: auto;
+  height: 34px;
+  width: 34px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .navbar__nav {
@@ -235,10 +237,20 @@
 }
 
 .footer__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
   color: var(--text-inverse);
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   margin-bottom: var(--spacing-sm);
+}
+
+.footer__logo img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .footer__tagline {

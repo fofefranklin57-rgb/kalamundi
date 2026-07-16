@@ -47,7 +47,8 @@
       top: 0;
       z-index: 100;
     }
-    .topbar__logo { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+    .topbar__logo { display:flex; align-items:center; gap:8px; font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+    .owner-logo-mark { width:34px; height:34px; border-radius:50%; object-fit:cover; }
     .topbar__sub  { font-size: 10px; opacity: 0.5; letter-spacing: 2px; text-transform: uppercase; }
     .topbar__refresh { background: rgba(255,255,255,0.1); border: none; color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; }
     .topbar__refresh:active { background: rgba(255,255,255,0.2); }
@@ -185,7 +186,8 @@
       flex-direction: column; align-items: center; justify-content: center;
       padding: 32px 24px; z-index: 999;
     }
-    .login-logo { font-size: 56px; margin-bottom: 12px; }
+    .login-logo { margin-bottom: 12px; }
+    .login-logo img { width:72px; height:72px; border-radius:50%; object-fit:cover; }
     .login-title { color: white; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
     .login-sub   { color: var(--acc); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 36px; }
     .login-box   { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 12px; }
@@ -217,7 +219,7 @@
 
   <!-- LOGIN SCREEN (affiché si non connecté) -->
   <div id="login-screen">
-    <div class="login-logo">📚</div>
+    <div class="login-logo"><img src="/assets/img/logo-mark-km.png" alt="Kalamundi"></div>
     <div class="login-title">Kalamundi Owner</div>
     <div class="login-sub">Accès privé</div>
     <div class="login-box">
@@ -238,7 +240,7 @@
   <!-- TOPBAR -->
   <header class="topbar">
     <div>
-      <div class="topbar__logo">📚 Kalamundi</div>
+      <div class="topbar__logo"><img src="/assets/img/logo-mark-km.png" alt="" class="owner-logo-mark" aria-hidden="true"><span>Kalamundi</span></div>
       <div class="topbar__sub">Owner Dashboard</div>
     </div>
     <div style="display:flex;gap:8px">

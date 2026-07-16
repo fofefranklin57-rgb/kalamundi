@@ -85,7 +85,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 ## B-bis. Points d'attention identifiés (15/07/2026)
 
 - **Éducation** : ~~débranchée~~ → **entrée « Kalamundi Campus » rebranchée sur l'accueil** ✅ Codex 16/07 (`fa8ff9b`, accès annales/examens/répétiteur/institutions). **Reste** : moderniser et repenser les pages éducation elles-mêmes (offre étudiant vs écoles, lien achat de manuels).
-- **Logo à refaire** : aujourd'hui = emoji 📚 + wordmark, incohérent selon les pages (certaines sans emoji). Piste visuelle retenue le 16/07 : monogramme **KM** + plume + petit livre, wordmark `KalaMundi`, signature `La Plume du Monde`, asset `assets/img/logo-kalamundi-km-plume.png`. **Reste** : vectoriser/décliner, générer favicon + icônes PWA (`generate-icons.mjs`), remplacer l'emoji dans nav/footer.
+- **Logo** : piste visuelle retenue le 16/07 : monogramme **KM** + plume + petit livre, wordmark `KalaMundi`, signature `La Plume du Monde`, asset `assets/img/logo-kalamundi-km-plume.png`. Intégration P0 livrée : mark `assets/img/logo-mark-km.png`, favicon/icônes PWA régénérés, emojis remplacés dans nav/footer/owner. **Reste amélioration future** : vectorisation SVG fine et déclinaisons print/brandbook.
 
 ## C. Backlog transverse (à faire tôt)
 - [ ] Confiance : avis, garantie acheteur, badge vendeur vérifié
@@ -108,7 +108,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 1. ✅ **Lecteur premium** — réglages typo, bascule thèmes jour/nuit/sépia, surlignage. *(livré 16/07, SW `kala-v14`)*
 2. ✅ **Interface auteur modernisée** — dashboard + formulaire de publication au nouveau design. *(livré 16/07, SW `kala-v15`)*
 3. ✅ **Hygiène** — test régression lecture en ligne (après refonte offline), retrait des polices Roboto mortes. *(livré 16/07, contrôle `check-reader-regression`, SW `kala-v18`)*
-4. **Logo** — remplacer l'emoji 📚, décliner favicon + icônes PWA (`generate-icons.mjs`). *(quick win, parallélisable)*
+4. ✅ **Logo** — remplacer l'emoji 📚, décliner favicon + icônes PWA (`generate-icons.mjs`). *(livré 16/07, SW `kala-v19`)*
 
 ### 🟧 P1 — Fondations structurantes (prérequis de TOUT le commerce)
 5. **Modèle de données « Livre + Offres »** (D3) — ⚠️ **le pivot** : plusieurs tâches P1/P2/P3 en dépendent. Invisible mais prioritaire.
