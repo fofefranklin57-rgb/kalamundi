@@ -15,7 +15,7 @@ Statut : ✅ tranché · 🟡 proposé (attente Franklin) · ⬜ ouvert
 | D0 | Vision « super-app du livre », construite espace par espace | Oui | 🟡 |
 | D1 | Persona cœur = **l'étudiant** | Oui | 🟡 |
 | D2 | **Numérique d'abord**, papier en pilote plus tard | Oui | 🟡 |
-| D3 | Modèle de données **Livre + Offres** (progressif) | Oui | 🟡 |
+| **D3** | Modèle de données **Livre + Offres** (progressif) : `livres` + `livre_editions` + `livre_offres`, reliés à `oeuvres` sans casser la lecture actuelle | Oui | ✅ **validé par Franklin** — migration `V007__livres_offres.sql` |
 | D4 | Paiement : **Fapshi à chaque acte** d'abord, « Pièces » plus tard | Oui | 🟡 |
 | D5 | Périmètre : **Cameroun + diaspora d'abord**, puis extension aux autres pays africains si ça réussit | Oui | ✅ **validé** |
 | D6 | Prêt limité d'abord à **notre fonds d'auteurs** | Oui | 🟡 |
@@ -42,7 +42,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 - [x] Bible + Planification + Évolution + Journal d'erreurs
 - [ ] Validation des décisions D0–D9 par Franklin
 - [ ] Architecture d'information détaillée (navigation, fiche livre unifiée)
-- [ ] Modèle de données cible (schéma Livre / Offre / Édition)
+- [x] Modèle de données cible (schéma Livre / Offre / Édition) — ✅ Codex 16/07 (`V007__livres_offres.sql`)
 
 ### Phase 1 — Enrichir l'existant (peu risqué, gros effet)
 > 🎨 **Priorité transverse : moderniser TOUTES les interfaces clés** — auteur (dashboard, publication), lecteur (confort de lecture), boutique, éducation. Cf. direction design `BIBLE §10`.
@@ -63,7 +63,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 - [ ] Option **« Kalamundi Select »** (exclusivité → 70 % + inclusion abonnement)
 
 ### Phase 2 — Espace Acheter (numérique, sans logistique)
-- [ ] Entité Livre/produit + offres
+- [x] Entité Livre/produit + offres — ✅ Socle DB progressif livré (`livres`, `livre_editions`, `livre_offres`) ; reste UI panier/checkout en P3
 - [ ] Panier + checkout multi-articles (Fapshi)
 - [ ] Store à rails (nouveautés, promos, catégories), prix FCFA barré/soldé
 - [ ] Historique de commandes, bibliothèque achetée
@@ -111,7 +111,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 4. ✅ **Logo** — remplacer l'emoji 📚, décliner favicon + icônes PWA (`generate-icons.mjs`). *(livré 16/07, SW `kala-v19`)*
 
 ### 🟧 P1 — Fondations structurantes (prérequis de TOUT le commerce)
-5. **Modèle de données « Livre + Offres »** (D3) — ⚠️ **le pivot** : plusieurs tâches P1/P2/P3 en dépendent. Invisible mais prioritaire.
+5. ✅ **Modèle de données « Livre + Offres »** (D3) — ⚠️ **le pivot** : plusieurs tâches P1/P2/P3 en dépendent. *(livré 16/07, migration `V007__livres_offres.sql`)*
 6. **Pipeline EPUB** — convertisseur (Word/PDF/EPUB → chapitres normalisés + build EPUB, epubcheck) + **lecteur EPUB web** (Readium/foliate). `⟶ 5`
 7. **Standards publication** — formulaire métadonnées complet + checklist bloquante + couverture 1,6:1. `⟶ 5`
 8. **Traduction** — nœuds de texte + langue source depuis métadonnées. `⟶ 6`
