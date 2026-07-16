@@ -23,6 +23,19 @@ if (!reader.includes('function normaliserChapitresOeuvre')) {
   errors.push('reader.js doit garder un fallback depuis les chapitres embarqués dans l’oeuvre.');
 }
 
+if (!reader.includes('demarrerLecteurEpubSiDisponible')) {
+  errors.push('reader.js doit conserver le démarrage EPUB en parallèle du lecteur chapitres.');
+}
+
+if (!reader.includes('https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js')) {
+  errors.push('reader.js doit charger epub.js pour le lecteur EPUB web.');
+}
+
+const readerHtml = fs.readFileSync(path.join(root, 'pages/reader.html'), 'utf8');
+if (!readerHtml.includes('id="reader-epub-viewport"')) {
+  errors.push('reader.html doit garder le viewport EPUB.');
+}
+
 const scanRoots = ['assets', 'pages', 'index.html', 'offline.html', 'sw.js', 'manifest.json'];
 
 function walk(target) {

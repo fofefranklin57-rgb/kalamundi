@@ -432,6 +432,38 @@ export const api = {
     return data;
   },
 
+  async getEditionEpub(oeuvreId) {
+    let { data, error } = await supabase
+      .from('livre_editions')
+      .select('id, livre_id, source_oeuvre_id, format, statut, fichier_url, epub_url, livres!inner(oeuvre_id)')
+      .eq('format', 'epub')
+      .eq('statut', 'publie')
+      .eq('livres.oeuvre_id', oeuvreId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      const retry = await supabase
+        .from('livre_editions')
+        .select('id, livre_id, source_oeuvre_id, format, statut, fichier_url, epub_url')
+        .eq('format', 'epub')
+        .eq('source_oeuvre_id', oeuvreId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      data = retry.data;
+      error = retry.error;
+    }
+
+    if (error) {
+      console.warn('Edition EPUB indisponible :', error);
+      return null;
+    }
+
+    return data || null;
+  },
+
   async updateChapitre(id, champs) {
     const { data, error } = await supabase
       .from('chapitres')

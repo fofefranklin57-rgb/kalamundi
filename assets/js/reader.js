@@ -76,6 +76,10 @@ const etat = {
   pages:          0,   // nombre de pages dans le chapitre courant (après pagination)
   pageCourante:   1,   // page courante (1-indexed)
   pageInitiale:   1,
+  modeEpub:       false,
+  epub:           null,
+  epubRendition:  null,
+  epubSourceUrl:  null,
 };
 
 /* ============================================================
@@ -214,6 +218,12 @@ async function entrerDansLecteur() {
   appliquerPreferences();
   await mettreAJourStatutHorsLigne();
 
+  if (await demarrerLecteurEpubSiDisponible()) {
+    api.incrementerLectures(etat.oeuvreId).catch(() => {});
+    if (window.innerWidth > 900) ouvrirNavPanel();
+    return;
+  }
+
   // Init annotations (localStorage + Supabase sync)
   const chapDepart0 = etat.chapitreNum;
   await initAnnotations({
@@ -246,6 +256,135 @@ async function entrerDansLecteur() {
   if (window.innerWidth > 900) ouvrirNavPanel();
 
   // La progression est gérée par la pagination (pas de scroll)
+}
+
+async function demarrerLecteurEpubSiDisponible() {
+  if (etat.sourceLocale || etat.modeEpub) return etat.modeEpub;
+  const sourceUrl = await trouverSourceEpub();
+  if (!sourceUrl) return false;
+
+  const contentEl = document.getElementById('reader-content');
+  const epubEl = document.getElementById('reader-epub');
+  const viewport = document.getElementById('reader-epub-viewport');
+  const loadingEl = document.getElementById('reader-loading');
+
+  if (!epubEl || !viewport) return false;
+
+  try {
+    loadingEl.style.display = 'flex';
+    loadingEl.querySelector('span').textContent = 'Préparation du livre EPUB…';
+    await chargerScriptLecteur('https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js');
+    if (!window.ePub) throw new Error('Lecteur EPUB indisponible.');
+
+    etat.modeEpub = true;
+    etat.epubSourceUrl = sourceUrl;
+    contentEl.hidden = true;
+    epubEl.hidden = false;
+    viewport.innerHTML = '';
+
+    etat.epub = window.ePub(sourceUrl);
+    etat.epubRendition = etat.epub.renderTo(viewport, {
+      width: '100%',
+      height: '100%',
+      spread: window.innerWidth >= 980 ? 'always' : 'none',
+      flow: 'paginated',
+      manager: 'default',
+    });
+
+    await etat.epub.ready;
+    await etat.epubRendition.display();
+    appliquerThemeEpub();
+    brancherEvenementsEpub();
+    loadingEl.style.display = 'none';
+    rendreInfosTopbar();
+    mettreAJourNavigation();
+    _mettreAJourPositionPage();
+    toast('Lecture EPUB activée.', 'success');
+    return true;
+  } catch (err) {
+    console.warn('Fallback lecteur chapitres après échec EPUB :', err);
+    etat.modeEpub = false;
+    etat.epub = null;
+    etat.epubRendition = null;
+    etat.epubSourceUrl = null;
+    epubEl.hidden = true;
+    contentEl.hidden = false;
+    loadingEl.style.display = 'none';
+    toast('EPUB indisponible — ouverture du lecteur Kalamundi classique.', 'info');
+    return false;
+  }
+}
+
+async function trouverSourceEpub() {
+  const fichier = etat.oeuvre?.fichier_url || '';
+  if (/\.epub(\?|$)/i.test(fichier)) {
+    return fichier.startsWith('http') ? fichier : api.getUrlFichierSecurise(fichier).catch(() => null);
+  }
+
+  const edition = await api.getEditionEpub(etat.oeuvreId).catch(() => null);
+  const url = edition?.epub_url || edition?.fichier_url || '';
+  if (!url) return null;
+  return url.startsWith('http') ? url : api.getUrlFichierSecurise(url).catch(() => null);
+}
+
+function chargerScriptLecteur(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Impossible de charger ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function brancherEvenementsEpub() {
+  etat.epubRendition?.on('relocated', location => {
+    const debut = location?.start;
+    etat.pageCourante = Number(debut?.displayed?.page || 1);
+    etat.pages = Number(debut?.displayed?.total || 1);
+    _mettreAJourPositionPage();
+    sauvegarderProgression();
+  });
+}
+
+function appliquerThemeEpub() {
+  if (!etat.epubRendition?.themes) return;
+  etat.epubRendition.themes.register('kalamundi-light', {
+    body: {
+      color: '#2B241B',
+      background: '#fffdf7',
+      'font-family': policeEpub(),
+      'line-height': String(etat.lineHeight),
+    },
+    p: { 'font-size': `${etat.fontSize}px`, 'line-height': String(etat.lineHeight), 'text-align': 'justify' },
+  });
+  etat.epubRendition.themes.register('kalamundi-dark', {
+    body: {
+      color: '#e6e2d6',
+      background: '#111611',
+      'font-family': policeEpub(),
+      'line-height': String(etat.lineHeight),
+    },
+    p: { 'font-size': `${etat.fontSize}px`, 'line-height': String(etat.lineHeight), 'text-align': 'justify' },
+  });
+  etat.epubRendition.themes.register('kalamundi-sepia', {
+    body: {
+      color: '#4a321f',
+      background: '#fbf3df',
+      'font-family': policeEpub(),
+      'line-height': String(etat.lineHeight),
+    },
+    p: { 'font-size': `${etat.fontSize}px`, 'line-height': String(etat.lineHeight), 'text-align': 'justify' },
+  });
+  etat.epubRendition.themes.select(`kalamundi-${etat.theme || 'light'}`);
+  etat.epubRendition.themes.fontSize(`${etat.fontSize}px`);
+}
+
+function policeEpub() {
+  if (etat.fontFamily === 'sans') return 'Inter, Arial, sans-serif';
+  if (etat.fontFamily === 'display') return 'Fraunces, Georgia, serif';
+  return 'Georgia, "Times New Roman", serif';
 }
 
 async function mettreAJourStatutHorsLigne() {
@@ -618,6 +757,11 @@ async function obtenirTraduction(chapitreId, contenu, langue) {
 function _rendreOptionLangues() {
   const conteneur = document.getElementById('lang-options');
   rendreOptionLangues(conteneur, etat.langueAffichee, async (code) => {
+    if (etat.modeEpub && code !== 'original') {
+      toast('La traduction EPUB sera branchée sur les chapitres normalisés à l’étape P1.8.', 'info');
+      document.getElementById('reader-lang-panel').classList.remove('is-open');
+      return;
+    }
     etat.langueAffichee = code;
     lsSet('reader_langue', code);
 
@@ -644,6 +788,11 @@ function _rendreOptionLangues() {
 function rendreInfosTopbar() {
   if (!etat.oeuvre) return;
   document.getElementById('topbar-titre').textContent = etat.oeuvre.titre;
+  if (etat.modeEpub) {
+    document.getElementById('topbar-chapitre').textContent = 'EPUB · Livre complet';
+    document.getElementById('back-btn')?.setAttribute('href', `/pages/work.html?id=${etat.oeuvreId}`);
+    return;
+  }
   const ch = etat.chapitres.find(c => c.numero === etat.chapitreNum);
   document.getElementById('topbar-chapitre').textContent =
     ch?.titre ? `Chapitre ${etat.chapitreNum} — ${ch.titre}` : `Chapitre ${etat.chapitreNum} / ${etat.chapitres.length}`;
@@ -715,6 +864,11 @@ function remplirTOC() {
 
   listEl.querySelectorAll('.toc-item').forEach(item => {
     item.addEventListener('click', () => {
+      if (etat.modeEpub) {
+        toast('Le sommaire EPUB se parcourt directement dans le livre.', 'info');
+        fermerTOC();
+        return;
+      }
       const numCible = parseInt(item.dataset.num);
       if (_visiteurBloque() && numCible !== etat.chapitreNum) {
         fermerTOC();
@@ -939,6 +1093,11 @@ function remplirNavPanelPages() {
   if (!listEl) return;
   listEl.innerHTML = '';
 
+  if (etat.modeEpub) {
+    listEl.innerHTML = '<p class="nav-panel__empty">La pagination EPUB est gérée par le livre.</p>';
+    return;
+  }
+
   if (!etat.pages) {
     listEl.innerHTML = '<p class="nav-panel__empty">Chargement…</p>';
     return;
@@ -1017,6 +1176,11 @@ function remplirNavPanelChapitres() {
 
   listEl.querySelectorAll('.nav-ch-item').forEach(item => {
     item.addEventListener('click', () => {
+      if (etat.modeEpub) {
+        toast('Le sommaire EPUB se parcourt directement dans le livre.', 'info');
+        if (window.innerWidth <= 900) fermerNavPanel();
+        return;
+      }
       const numCible = parseInt(item.dataset.num);
       if (_visiteurBloque() && numCible !== etat.chapitreNum) {
         fermerNavPanel();
@@ -1046,6 +1210,11 @@ function remplirNavPanelTitres() {
   const listEl    = document.getElementById('nav-headings-list');
   const contentEl = document.getElementById('reader-content');
   if (!listEl || !contentEl) return;
+
+  if (etat.modeEpub) {
+    listEl.innerHTML = '<p class="nav-panel__empty">Sommaire EPUB disponible dans le livre.</p>';
+    return;
+  }
 
   const headings = contentEl.querySelectorAll('h2, h3');
   if (!headings.length) {
@@ -1088,6 +1257,11 @@ function _visiteurBloque() {
 }
 
 function mettreAJourNavigation() {
+  if (etat.modeEpub) {
+    document.getElementById('btn-prev').disabled = false;
+    document.getElementById('btn-next').disabled = _visiteurBloque();
+    return;
+  }
   const bloque       = _visiteurBloque();
   const dernierePageVisible = estModeDoublePage() ? Math.min(etat.pageCourante + 1, etat.pages) : etat.pageCourante;
   const premiumBloque = chapitrePremiumBloqueSync(etat.chapitreNum + (dernierePageVisible >= etat.pages ? 1 : 0));
@@ -1187,6 +1361,10 @@ function appliquerFontSize() {
   document.getElementById('reader-content').style.fontSize  = `${etat.fontSize}px`;
   document.getElementById('font-size-display').textContent  = `${etat.fontSize}px`;
   lsSet('reader_fontsize', etat.fontSize);
+  if (etat.modeEpub) {
+    appliquerThemeEpub();
+    return;
+  }
   repaginerSiLectureOuverte();
 }
 
@@ -1196,6 +1374,10 @@ document.querySelectorAll('.font-family-btn').forEach(btn => {
     etat.fontFamily = btn.dataset.font || 'serif';
     appliquerPoliceLecture();
     lsSet('reader_font_family', etat.fontFamily);
+    if (etat.modeEpub) {
+      appliquerThemeEpub();
+      return;
+    }
     repaginerSiLectureOuverte();
   });
 });
@@ -1208,6 +1390,10 @@ document.querySelectorAll('.line-height-btn').forEach(btn => {
     etat.lineHeight = parseFloat(btn.dataset.lh);
     document.getElementById('reader-content').style.lineHeight = etat.lineHeight;
     lsSet('reader_lh', etat.lineHeight);
+    if (etat.modeEpub) {
+      appliquerThemeEpub();
+      return;
+    }
     repaginerSiLectureOuverte();
   });
 });
@@ -1220,7 +1406,12 @@ document.querySelectorAll('.width-btn').forEach(btn => {
     etat.maxWidth = parseInt(btn.dataset.width);
     document.getElementById('reader-content').style.maxWidth = 'none';
     document.getElementById('reader-content').style.setProperty('--reader-width', `${etat.maxWidth}px`);
+    document.getElementById('reader-epub')?.style.setProperty('--reader-width', `${etat.maxWidth}px`);
     lsSet('reader_width', etat.maxWidth);
+    if (etat.modeEpub) {
+      etat.epubRendition?.resize('100%', '100%');
+      return;
+    }
     if (!etat.couvertureVisible) chargerChapitre(etat.chapitreNum, true);
   });
 });
@@ -1239,6 +1430,7 @@ function appliquerThemeLecteur(theme) {
     metaTheme.setAttribute('content', etat.theme === 'dark' ? '#101410' : etat.theme === 'sepia' ? '#8B6914' : '#1B4332');
   }
   lsSet('reader_theme', etat.theme);
+  if (etat.modeEpub) appliquerThemeEpub();
 }
 
 function appliquerPoliceLecture() {
@@ -1254,6 +1446,11 @@ function appliquerPoliceLecture() {
 
 function repaginerSiLectureOuverte() {
   if (etat.couvertureVisible) return;
+  if (etat.modeEpub) {
+    etat.epubRendition?.resize('100%', '100%');
+    appliquerThemeEpub();
+    return;
+  }
   chargerChapitre(etat.chapitreNum, true);
 }
 
@@ -1293,6 +1490,7 @@ function appliquerPreferences() {
   // Largeur
   document.getElementById('reader-content').style.maxWidth = 'none';
   document.getElementById('reader-content').style.setProperty('--reader-width', `${etat.maxWidth}px`);
+  document.getElementById('reader-epub')?.style.setProperty('--reader-width', `${etat.maxWidth}px`);
   const wBtn = document.querySelector(`.width-btn[data-width="${etat.maxWidth}"]`);
   if (wBtn) {
     document.querySelectorAll('.width-btn').forEach(b => b.classList.remove('is-active'));
@@ -1356,6 +1554,10 @@ function _appliquerStyleParatextuel(contentEl, chapitre) {
 
 // Marque-page
 document.getElementById('btn-marque-page')?.addEventListener('click', async () => {
+  if (etat.modeEpub) {
+    toast('Marque-pages EPUB avancés : prévu après l’ancrage complet Readium/foliate.', 'info');
+    return;
+  }
   const chapitre = etat.chapitres.find(c => c.numero === etat.chapitreNum);
   const label    = chapitre?.titre ? `${chapitre.titre}` : `Chapitre ${etat.chapitreNum}`;
   await toggleMarquePage(label);
@@ -1364,6 +1566,10 @@ document.getElementById('btn-marque-page')?.addEventListener('click', async () =
 
 // Panneau annotations
 document.getElementById('btn-annotations')?.addEventListener('click', () => {
+  if (etat.modeEpub) {
+    toast('Annotations EPUB : prévues sur les chapitres normalisés.', 'info');
+    return;
+  }
   afficherPanneauAnnotations((chapitreNum) => {
     chargerChapitre(chapitreNum);
   });
@@ -1594,6 +1800,17 @@ function _jouerFeuilletage(contentEl, pageActuelle, direction) {
 
 /** Page suivante, puis chapitre suivant si on est à la dernière page */
 function _pageNext() {
+  if (etat.modeEpub) {
+    if (_visiteurBloque()) {
+      _modalMontree = true;
+      document.body.style.overflow = 'hidden';
+      _afficherModalAbonnement();
+      return;
+    }
+    if (!etat.utilisateur) _pagesVisiteurLues++;
+    etat.epubRendition?.next();
+    return;
+  }
   const pas = estModeDoublePage() ? 2 : 1;
   const derniereVisible = estModeDoublePage() ? Math.min(etat.pageCourante + 1, etat.pages) : etat.pageCourante;
   if (derniereVisible < etat.pages) {
@@ -1613,6 +1830,10 @@ function _pageNext() {
 
 /** Page précédente, puis chapitre précédent si on est à la première page */
 function _pagePrev() {
+  if (etat.modeEpub) {
+    etat.epubRendition?.prev();
+    return;
+  }
   if (etat.pageCourante > 1) {
     _allerPage(Math.max(1, etat.pageCourante - (estModeDoublePage() ? 2 : 1)));
   } else if (etat.chapitreNum > 1) {
@@ -1624,6 +1845,16 @@ function _pagePrev() {
 function _mettreAJourPositionPage() {
   const el = document.getElementById('reader-position');
   if (!el) return;
+  if (etat.modeEpub) {
+    const label = etat.pages > 1
+      ? `Page <strong>${etat.pageCourante}</strong> / ${etat.pages}`
+      : 'Lecture EPUB';
+    el.innerHTML = `${label}<span style="color:var(--text-light);margin-left:6px;">· Livre complet</span>`;
+    document.getElementById('progress-fill').style.width = etat.pages > 1
+      ? `${Math.round((etat.pageCourante / etat.pages) * 100)}%`
+      : '0%';
+    return;
+  }
   if (etat.pages > 1) {
     const fin = estModeDoublePage() ? Math.min(etat.pageCourante + 1, etat.pages) : etat.pageCourante;
     const label = fin > etat.pageCourante ? `${etat.pageCourante}-${fin}` : String(etat.pageCourante);
