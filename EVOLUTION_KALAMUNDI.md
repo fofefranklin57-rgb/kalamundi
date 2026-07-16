@@ -11,9 +11,11 @@ Types : `feat` (fonctionnalité) · `decision` (choix produit) · `fix` (correct
 
 ## 2026-07
 
+- **2026-07-16 — fix** : fiabilisation du mode hors-ligne lecteur : `offline.html` devient une bibliothèque locale listant les livres sauvegardés, le lecteur peut démarrer depuis IndexedDB sans réseau, et le cache PWA passe en `kala-v13`.
 - **2026-07-16 — feat** : ajout d'une porte d'entrée `Kalamundi Campus` sur l'accueil, alignée avec D12 : accès clair aux annales, examens simulés, Super Répétiteur et espaces institutions, textes internationalisés et cache PWA bumpé en `kala-v12`.
 - **2026-07-16 — feat** : ajout du shell mobile Phase 1 : barre d'onglets basse commune (Accueil · Explorer · Apprendre · Biblio · Profil) injectée sur les pages cœur, avec exclusions lecteur/paiement/login/admin/owner et cache PWA bumpé en `kala-v11`.
 - **2026-07-16 — style** : application du socle design global Phase 1 : polices Fraunces/Inter auto-hébergées, tokens `base.css` modernisés (base crème, bordures neutres, rayons/ombres), composants communs adoucis (boutons, cartes, inputs, search, skeleton) et Service Worker bumpé en `kala-v10`.
+- **2026-07-16 — decision ✅** : deux piliers stratégiques ajoutés — **D13 canal maisons d'édition** (comptes catalogue, ONIX/EPUB, revenus négociés, onboarding via collectifs) et **D14 mission culturelle** (Fonds patrimoine « Kalamundi Héritage » public-bien + partenariat MINAC/OIF/UNESCO). Nuance factuelle : le Cameroun a une BN + loi dépôt légal 2000 + programme MINAC PNNPC, mais pas d'accès numérique national → Kalamundi = couche d'accès partenaire, pas remplaçant. Doc : `VISION_EDITEURS_ET_PATRIMOINE.md`.
 - **2026-07-16 — docs** : création de `DESIGN_SYSTEM_KALAMUNDI.md` (nouveaux tokens exacts pour `base.css`) + `INTERFACES_KALAMUNDI.md` (inventaire de tous les écrans par rôle + priorités). Référencés dans `AGENTS.md`.
 - **2026-07-16 — docs** : création de `AGENTS.md` + `CLAUDE.md` (contrat de travail pour Codex/agents : documentation d'abord, journalisation obligatoire évolutions + erreurs, direction design, règles code/métier). Codex démarre la mise en œuvre.
 - **2026-07-16 — decision ✅** : **D10 tranchée — royalties 50/50** (50 % auteur). Option « Kalamundi Select » 70 % gardée en réserve, non actée.

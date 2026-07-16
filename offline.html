@@ -8,32 +8,196 @@
   <link rel="stylesheet" href="/assets/css/layout.css">
   <link rel="stylesheet" href="/assets/css/components.css">
   <style>
-    .offline-page {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+    body { background: var(--bg-main); }
+    .offline-shell {
       min-height: 100vh;
-      text-align: center;
-      padding: var(--spacing-xl);
+      padding: var(--spacing-xl) var(--spacing-md);
+    }
+    .offline-hero {
+      max-width: var(--container-xl);
+      margin: 0 auto var(--spacing-xl);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--spacing-lg);
+      align-items: end;
+    }
+    .offline-kicker {
+      display: inline-flex;
+      width: fit-content;
+      margin-bottom: var(--spacing-sm);
+      border-radius: var(--border-radius-full);
+      padding: 5px 12px;
+      background: var(--bg-secondary);
+      color: var(--color-primary);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .offline-title {
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+    .offline-text {
+      color: var(--text-secondary);
+      max-width: 680px;
+      margin: 0;
+    }
+    .offline-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .offline-stats {
+      max-width: var(--container-xl);
+      margin: 0 auto var(--spacing-lg);
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--spacing-md);
+    }
+    .offline-stat {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    .offline-stat__label {
+      display: block;
+      color: var(--text-light);
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .offline-stat__value {
+      color: var(--color-primary);
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-bold);
+    }
+    .offline-stat__value.is-offline { color: var(--color-warning); }
+    .offline-books {
+      max-width: var(--container-xl);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: var(--spacing-lg);
     }
-    .offline-icon { font-size: 72px; }
-    .offline-title { color: var(--color-primary); }
-    .offline-text { color: var(--text-secondary); max-width: 400px; }
+    .offline-loading {
+      grid-column: 1 / -1;
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      color: var(--text-secondary);
+    }
+    .offline-empty { grid-column: 1 / -1; }
+    .offline-book {
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr);
+      gap: var(--spacing-md);
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: var(--spacing-md);
+    }
+    .offline-book__cover {
+      display: block;
+      aspect-ratio: 2 / 3;
+      border-radius: var(--border-radius-md);
+      overflow: hidden;
+      background: var(--bg-secondary);
+      box-shadow: var(--shadow-md);
+    }
+    .offline-book__cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .offline-book__body {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .offline-book__meta,
+    .offline-book__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-sm);
+      color: var(--text-light);
+      font-size: var(--font-size-xs);
+    }
+    .offline-book__title {
+      font-size: var(--font-size-lg);
+      margin: 0;
+    }
+    .offline-book__title a { color: var(--text-primary); }
+    .offline-book__author {
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+      margin: 0;
+    }
+    .offline-book__resume {
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin: 0;
+    }
+    .offline-book__footer { margin-top: auto; }
+    @media (max-width: 720px) {
+      .offline-shell { padding-bottom: 96px; }
+      .offline-hero { grid-template-columns: 1fr; }
+      .offline-actions { justify-content: flex-start; }
+      .offline-stats { grid-template-columns: 1fr; }
+      .offline-books { grid-template-columns: 1fr; }
+      .offline-book { grid-template-columns: 92px minmax(0, 1fr); }
+    }
   </style>
 </head>
 <body>
-  <div class="offline-page">
-    <div class="offline-icon">📖</div>
-    <h1 class="offline-title">Vous êtes hors ligne</h1>
-    <p class="offline-text">
-      Pas de connexion internet détectée. Les pages déjà visitées sont disponibles hors ligne.
-      Reconnectez-vous pour accéder au catalogue complet.
-    </p>
-    <button class="btn btn--primary" onclick="window.location.reload()">Réessayer</button>
-    <a href="/" class="btn btn--outline">Retour à l'accueil</a>
+  <div class="offline-shell">
+    <section class="offline-hero">
+      <div>
+        <div class="offline-kicker">Mode hors-ligne</div>
+        <h1 class="offline-title">Ma bibliothèque locale</h1>
+        <p class="offline-text">
+          Les livres sauvegardés restent lisibles même sans internet. Reconnectez-vous pour explorer le catalogue complet, acheter un ouvrage ou synchroniser votre progression.
+        </p>
+      </div>
+      <div class="offline-actions">
+        <button class="btn btn--primary" onclick="window.location.reload()">Actualiser</button>
+        <a href="/pages/library.html" class="btn btn--outline">Explorer</a>
+        <a href="/" class="btn btn--ghost">Accueil</a>
+      </div>
+    </section>
+
+    <section class="offline-stats" aria-label="Résumé hors-ligne">
+      <div class="offline-stat">
+        <span class="offline-stat__label">Réseau</span>
+        <strong class="offline-stat__value" id="offline-network-state">—</strong>
+      </div>
+      <div class="offline-stat">
+        <span class="offline-stat__label">Livres disponibles</span>
+        <strong class="offline-stat__value" id="offline-count">—</strong>
+      </div>
+      <div class="offline-stat">
+        <span class="offline-stat__label">Espace utilisé</span>
+        <strong class="offline-stat__value" id="offline-size">—</strong>
+      </div>
+    </section>
+
+    <section class="offline-books" id="offline-books" aria-live="polite">
+      <div class="offline-loading"><span class="spinner"></span><span>Chargement…</span></div>
+    </section>
   </div>
   <script type="module" src="/assets/js/i18n-boot.js"></script>
+  <script type="module" src="/assets/js/offline-page.js"></script>
 </body>
 </html>

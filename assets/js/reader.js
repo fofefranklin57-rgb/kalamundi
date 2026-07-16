@@ -68,6 +68,7 @@ const etat = {
   theme:          lsGet('reader_theme') || 'light',
   chapitres:      [],
   oeuvre:         null,
+  sourceLocale:   false,
   utilisateur:    null,
   accesPremium:   false,
   couvertureVisible: true,
@@ -94,8 +95,15 @@ const etat = {
       api.getChapitres(etat.oeuvreId),
     ]);
   } catch {
-    toastErreur('Impossible de charger cette œuvre.');
-    return;
+    const livreLocal = await getLivre(etat.oeuvreId).catch(() => null);
+    if (!livreLocal) {
+      toastErreur('Impossible de charger cette œuvre.');
+      return;
+    }
+    etat.oeuvre = normaliserOeuvreLocale(livreLocal);
+    etat.chapitres = normaliserChapitresLocaux(livreLocal);
+    etat.sourceLocale = true;
+    toast('Mode hors-ligne — livre ouvert depuis ta bibliothèque locale.', 'info');
   }
 
   if (etat.utilisateur && etat.oeuvre?.statut === 'premium') {
@@ -303,32 +311,35 @@ async function chargerChapitre(numero, sansAnimation = false) {
     toast('Chapitre demandé indisponible — ouverture du premier chapitre.', 'info');
   }
 
-  // Charger le texte — réseau d'abord, IndexedDB en fallback hors-ligne
+  // Charger le texte — local direct si livre hors-ligne, sinon réseau puis IndexedDB en fallback.
   let contenu = '';
-  try {
-    const ch = await api.getChapitre(chapitre.id);
-    contenu = ch.contenu_texte || ch.contenu || '';
-  } catch {
-    // Tentative lecture hors-ligne
+  if (etat.sourceLocale || chapitre._offline) {
+    contenu = chapitre.contenu || chapitre.contenu_texte || '';
+  } else {
     try {
-      const livreLocal = await getLivre(etat.oeuvreId);
-      const chapLocal  = livreLocal?.chapitres?.find(c => c.numero === numero);
-      if (chapLocal?.contenu) {
-        contenu = chapLocal.contenu;
-        if (numero === etat.chapitreNum) {
-          toast('📵 Mode hors-ligne — lecture depuis la mémoire locale.', 'info');
-        }
-      } else {
-        toastErreur('Chapitre indisponible hors-ligne. Connectez-vous pour lire.');
+      const ch = await api.getChapitre(chapitre.id);
+      contenu = ch.contenu_texte || ch.contenu || '';
+    } catch {
+      contenu = await chargerChapitreLocal(numero);
+      if (!contenu) {
         loadingEl.style.display = 'none';
         return;
       }
-    } catch {
-      toastErreur('Erreur de chargement du chapitre.');
+    }
+  }
+
+  if (!contenu && !etat.sourceLocale) {
+    contenu = await chargerChapitreLocal(numero);
+    if (!contenu) {
       loadingEl.style.display = 'none';
       return;
     }
   }
+
+  if (etat.sourceLocale) {
+    toast('📵 Lecture depuis la mémoire locale.', 'info');
+  }
+
   if (!contenu?.trim()) {
     toastErreur('Ce chapitre ne contient pas encore de texte.');
     loadingEl.style.display = 'none';
@@ -393,6 +404,46 @@ async function chargerChapitre(numero, sansAnimation = false) {
   mettreAJourNavigation();
   _mettreAJourPositionPage();
   remplirNavPanelPages();
+}
+
+async function chargerChapitreLocal(numero) {
+  try {
+    const livreLocal = await getLivre(etat.oeuvreId);
+    const chapLocal = livreLocal?.chapitres?.find(c => Number(c.numero) === Number(numero));
+    if (chapLocal?.contenu || chapLocal?.contenu_texte) {
+      toast('📵 Mode hors-ligne — lecture depuis la mémoire locale.', 'info');
+      return chapLocal.contenu || chapLocal.contenu_texte || '';
+    }
+    toastErreur('Chapitre indisponible hors-ligne. Connectez-vous pour lire.');
+    return '';
+  } catch {
+    toastErreur('Erreur de chargement du chapitre.');
+    return '';
+  }
+}
+
+function normaliserOeuvreLocale(livre) {
+  return {
+    id: livre.id,
+    titre: livre.titre || 'Livre hors-ligne',
+    genre: livre.genre || '',
+    resume: livre.resume || '',
+    langue_originale: livre.langue || 'fr',
+    statut: livre.statut || 'gratuit',
+    couverture_url: livre.couverture_url || null,
+    profiles: { nom: livre.auteur || 'Auteur inconnu', pays: '' },
+  };
+}
+
+function normaliserChapitresLocaux(livre) {
+  return (livre.chapitres || []).map((ch, index) => ({
+    id: ch.id || `offline-${livre.id}-${ch.numero || index + 1}`,
+    numero: Number(ch.numero || index + 1),
+    titre: ch.titre || null,
+    contenu: ch.contenu || ch.contenu_texte || '',
+    type_element: ch.type_element || 'chapitre',
+    _offline: true,
+  }));
 }
 
 /* ============================================================
