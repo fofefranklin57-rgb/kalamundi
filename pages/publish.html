@@ -77,6 +77,25 @@
         </div>
       </div>
 
+      <section class="publish-quality" aria-label="Qualité du dépôt">
+        <div class="publish-quality__main">
+          <span class="publish-quality__eyebrow">Standard Kalamundi</span>
+          <h2 class="publish-quality__title">Un dépôt prêt pour les lecteurs</h2>
+          <p class="publish-quality__text">
+            Métadonnées claires, couverture lisible, contenu exploitable et droits confirmés.
+            Le score se met à jour pendant que tu prépares ton livre.
+          </p>
+          <div class="publish-quality__bar" aria-hidden="true">
+            <span id="quality-bar"></span>
+          </div>
+        </div>
+        <div class="publish-quality__score">
+          <strong id="quality-score">0%</strong>
+          <span>qualité du dépôt</span>
+        </div>
+        <div class="publish-quality__checks" id="quality-checklist"></div>
+      </section>
+
       <!-- Alerte globale -->
       <div class="alert alert--error publish-alert hidden" role="alert" id="publish-alert"></div>
 
@@ -145,7 +164,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="resume">Résumé de l'œuvre</label>
+          <label class="form-label form-label--required" for="resume">Résumé de l'œuvre</label>
           <textarea class="form-textarea" id="resume" name="resume"
             placeholder="Décris ton œuvre en quelques phrases — ce qui la rend unique, ce que le lecteur va découvrir..."
             maxlength="1000" rows="4"></textarea>
@@ -164,7 +183,7 @@
 
         <!-- Couverture -->
         <div class="form-group">
-          <label class="form-label">Couverture (optionnel)</label>
+          <label class="form-label">Couverture recommandée</label>
           <div class="cover-picker">
             <div class="cover-preview" id="cover-preview" role="button" tabindex="0" aria-label="Choisir une couverture">
               <div class="cover-preview__placeholder">
@@ -176,8 +195,8 @@
               <input type="file" id="cover-input" name="couverture"
                 accept="image/jpeg,image/png,image/webp" class="hidden" />
               <p style="color:var(--text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--spacing-sm);">
-                Une image de couverture donne envie de lire ton œuvre.
-                Si tu n'en as pas, on en génère une automatiquement.
+                Une couverture nette donne envie de lire ton œuvre.
+                Vise un format vertical proche de 1,6:1.
               </p>
               <button type="button" class="btn btn--outline btn--sm" id="cover-btn">
                 📁 Choisir une image
@@ -186,7 +205,7 @@
                 Retirer
               </button>
               <p class="form-hint" style="margin-top:var(--spacing-xs);">
-                JPG, PNG ou WebP — max 5 Mo
+                JPG, PNG ou WebP — max 5 Mo. Sans image, Kalamundi garde une couverture de secours.
               </p>
             </div>
           </div>
@@ -396,7 +415,7 @@
               <div class="licence-card__titre">⭐ Premium</div>
               <div class="licence-card__desc">
                 Les lecteurs paient pour accéder. Tu fixes le prix.
-                Tu reçois 70% des revenus directs.
+                Les revenus directs sont partagés 50% auteur / 50% Kalamundi.
               </div>
             </div>
           </div>
@@ -494,6 +513,14 @@
               <div class="flex-between">
                 <span class="text-secondary">Contenu</span>
                 <span id="recap-contenu">—</span>
+              </div>
+              <div class="flex-between">
+                <span class="text-secondary">Qualité du dépôt</span>
+                <span id="recap-qualite">—</span>
+              </div>
+              <div class="flex-between">
+                <span class="text-secondary">Royalties</span>
+                <span id="recap-royalties">50% auteur / 50% Kalamundi</span>
               </div>
             </div>
           </div>

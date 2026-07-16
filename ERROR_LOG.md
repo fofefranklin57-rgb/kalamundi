@@ -16,6 +16,13 @@ Format par entrée :
 
 ---
 
+### [2026-07-16] Royalties Premium affichées à 70 %
+- **Symptôme** : le formulaire de publication annonçait que l'auteur recevait 70 % des revenus directs en mode Premium.
+- **Cause** : l'ancienne copie marketing n'avait pas été alignée sur la décision D10 validée : royalties 50/50, option « Kalamundi Select » 70 % non actée.
+- **Correctif** : remplacement du texte Premium par le partage 50 % auteur / 50 % Kalamundi, ajout du rappel dans le récapitulatif et dans le dashboard auteur.
+- **Fichier(s)** : `pages/publish.html`, `assets/js/publish.js`, `pages/author-dashboard.html`.
+- **Leçon** : toute promesse de revenus doit être reliée aux décisions de `PLANIFICATION_KALAMUNDI.md`, pas à une copie antérieure.
+
 ### [2026-07-16] Livre sauvegardé inutilisable hors connexion
 - **Symptôme** : un livre marqué disponible hors-ligne pouvait ne pas s'ouvrir sans réseau ; la page `/offline.html` affichait seulement un message générique au lieu des livres sauvegardés.
 - **Cause** : le lecteur exigeait encore Supabase au démarrage pour charger l'œuvre et la liste des chapitres ; IndexedDB ne servait qu'en secours tardif sur le contenu d'un chapitre.

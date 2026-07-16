@@ -6,7 +6,7 @@
 import { protegerRoute, getUser } from './auth.js';
 import { api } from './api.js';
 import { lireFichier, calculerSHA256, calculerSHA256Fichier, decouperEnChapitres, watermark } from './upload.js';
-import { toast, toastErreur, formatTailleFichier, qs, cacher, afficher, copier } from './utils.js';
+import { toast, toastErreur, formatTailleFichier, qs, cacher, afficher, copier, validerFichier } from './utils.js';
 
 /* ============================================================
    Protection — page réservée aux auteurs connectés
@@ -126,6 +126,8 @@ const etat = {
   oeuvreId:     null,
 };
 
+let qualitePublication = 0;
+
 /* ============================================================
    Éléments DOM
    ============================================================ */
@@ -133,6 +135,68 @@ const etat = {
 const steps    = document.querySelectorAll('.step[data-step]');
 const sections = document.querySelectorAll('.publish-section[data-section]');
 const alertEl  = qs('#publish-alert');
+
+/* ============================================================
+   Qualité du dépôt — checklist auteur
+   ============================================================ */
+
+function texteEditeur() {
+  return qs('#editor-content')?.innerText?.trim() || '';
+}
+
+function calculerQualitePublication() {
+  const titre = qs('#titre')?.value.trim() || '';
+  const genre = qs('#genre')?.value || '';
+  const langue = qs('#langue')?.value || '';
+  const resume = qs('#resume')?.value.trim() || '';
+  const statut = qs('#statut-oeuvre')?.value || 'gratuit';
+  const prix = parseFloat(qs('#prix')?.value || '0');
+  const declaration = Boolean(qs('#declaration-proprio')?.checked);
+  const contenuPret = etat.mode === 'upload' ? Boolean(etat.fichier) : texteEditeur().length >= 200;
+  const chapitres = Boolean(qs('#par-chapitres')?.checked);
+  const premiumPret = statut !== 'premium' || prix >= 100;
+
+  const items = [
+    { label: 'Titre, genre et langue originale', ok: Boolean(titre && genre && langue), points: 18 },
+    { label: 'Résumé pour convaincre le lecteur', ok: resume.length >= 80, points: 18 },
+    { label: 'Contenu importé ou texte saisi', ok: contenuPret, points: 20 },
+    { label: 'Couverture verticale recommandée', ok: Boolean(etat.couverture), points: 12, optional: true },
+    { label: 'Structure par chapitres activée', ok: chapitres, points: 12 },
+    { label: 'Prix premium valide si nécessaire', ok: premiumPret, points: 10 },
+    { label: 'Déclaration de propriété confirmée', ok: declaration, points: 10 },
+  ];
+
+  const score = items.reduce((total, item) => total + (item.ok ? item.points : 0), 0);
+  return { score: Math.min(100, score), items };
+}
+
+function mettreAJourQualitePublication() {
+  const { score, items } = calculerQualitePublication();
+  qualitePublication = score;
+
+  const scoreEl = qs('#quality-score');
+  const barEl = qs('#quality-bar');
+  const listEl = qs('#quality-checklist');
+  if (scoreEl) scoreEl.textContent = `${score}%`;
+  if (barEl) barEl.style.width = `${score}%`;
+  if (listEl) {
+    listEl.innerHTML = items.map(item => `
+      <div class="publish-quality__check ${item.ok ? 'is-ok' : ''}">
+        <span>${item.ok ? '✓' : item.optional ? '•' : '!'}</span>
+        <p>${item.label}</p>
+      </div>
+    `).join('');
+  }
+
+  const recapQualite = qs('#recap-qualite');
+  if (recapQualite) recapQualite.textContent = `${score}%`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  mettreAJourQualitePublication();
+  qs('.publish-page')?.addEventListener('input', mettreAJourQualitePublication);
+  qs('.publish-page')?.addEventListener('change', mettreAJourQualitePublication);
+});
 
 /* ============================================================
    Navigation entre étapes
@@ -186,9 +250,11 @@ function validerEtape1() {
   const titre = qs('#titre').value.trim();
   const genre = qs('#genre').value;
   const langue = qs('#langue').value;
+  const resume = qs('#resume').value.trim();
   if (!titre)  return afficherErreur('Le titre est obligatoire.') || false;
   if (!genre)  return afficherErreur('Choisis un genre littéraire.') || false;
   if (!langue) return afficherErreur('Choisis la langue originale.') || false;
+  if (!resume) return afficherErreur('Ajoute un résumé : il aide les lecteurs à comprendre ton livre.') || false;
   return true;
 }
 
@@ -238,6 +304,7 @@ qs('#cover-input')?.addEventListener('change', (e) => {
   const url = URL.createObjectURL(fichier);
   qs('#cover-preview').innerHTML = `<img src="${url}" alt="Couverture" />`;
   afficher(qs('#cover-remove'));
+  mettreAJourQualitePublication();
 });
 
 qs('#cover-remove')?.addEventListener('click', () => {
@@ -248,6 +315,7 @@ qs('#cover-remove')?.addEventListener('click', () => {
       <span>🖼</span><p>Ajouter une image</p>
     </div>`;
   cacher(qs('#cover-remove'));
+  mettreAJourQualitePublication();
 });
 
 /* Compteur résumé */
@@ -267,6 +335,7 @@ document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
     etat.mode = btn.dataset.mode;
     qs('#zone-upload').classList.toggle('hidden', etat.mode !== 'upload');
     qs('#zone-editor').classList.toggle('hidden', etat.mode !== 'editor');
+    mettreAJourQualitePublication();
   });
 });
 
@@ -305,12 +374,14 @@ fichierInput?.addEventListener('change', (e) => {
 
 async function traiterFichier(fichier) {
   try {
-    const { valide, erreur } = await import('./utils.js').then(m => ({ valide: true }));
+    const { valide, erreur } = validerFichier(fichier);
+    if (!valide) throw new Error(erreur || 'Fichier non accepté.');
     etat.fichier = fichier;
     qs('#fichier-nom').textContent   = fichier.name;
     qs('#fichier-taille').textContent = formatTailleFichier(fichier.size);
     afficher(qs('#fichier-info'));
     cacher(uploadZone);
+    mettreAJourQualitePublication();
     toast(`Fichier "${fichier.name}" prêt à être publié`, 'success');
   } catch (err) {
     toastErreur(err.message);
@@ -323,6 +394,7 @@ qs('#fichier-retirer')?.addEventListener('click', () => {
   fichierInput.value = '';
   cacher(qs('#fichier-info'));
   afficher(uploadZone);
+  mettreAJourQualitePublication();
 });
 
 /* ============================================================
@@ -417,6 +489,7 @@ document.querySelectorAll('[data-statut]').forEach(card => {
     card.classList.add('is-active');
     qs('#statut-oeuvre').value = card.dataset.statut;
     qs('#groupe-prix').classList.toggle('hidden', card.dataset.statut !== 'premium');
+    mettreAJourQualitePublication();
   });
 });
 
@@ -461,6 +534,9 @@ function remplirRecap() {
     ? 'Creative Commons' : 'Tous droits réservés';
   qs('#recap-contenu').textContent = etat.fichier
     ? `Fichier : ${etat.fichier.name}` : 'Texte saisi dans l\'éditeur';
+  qs('#recap-qualite').textContent = `${qualitePublication}%`;
+  qs('#recap-royalties').textContent = qs('#statut-oeuvre').value === 'premium'
+    ? '50% auteur / 50% Kalamundi' : 'Revenus publicité selon disponibilité';
 }
 
 /* ============================================================

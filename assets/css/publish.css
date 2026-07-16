@@ -30,6 +30,122 @@
 }
 
 /* ============================================================
+   Cockpit qualité
+   ============================================================ */
+
+.publish-quality {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) auto minmax(260px, 0.9fr);
+  gap: var(--spacing-lg);
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.publish-quality__eyebrow {
+  display: inline-flex;
+  margin-bottom: var(--spacing-xs);
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+}
+
+.publish-quality__title {
+  margin: 0 0 var(--spacing-xs);
+  color: var(--text-primary);
+  font-family: var(--font-family-heading);
+  font-size: var(--font-size-xl);
+}
+
+.publish-quality__text {
+  margin: 0 0 var(--spacing-md);
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.publish-quality__bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+}
+
+.publish-quality__bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+  transition: width var(--transition-base);
+}
+
+.publish-quality__score {
+  display: grid;
+  place-items: center;
+  min-width: 128px;
+  min-height: 128px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-secondary);
+  text-align: center;
+}
+
+.publish-quality__score strong {
+  color: var(--color-primary);
+  font-family: var(--font-family-heading);
+  font-size: var(--font-size-3xl);
+}
+
+.publish-quality__score span {
+  max-width: 92px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+}
+
+.publish-quality__checks {
+  display: grid;
+  gap: var(--spacing-xs);
+}
+
+.publish-quality__check {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.publish-quality__check span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-bold);
+}
+
+.publish-quality__check p {
+  margin: 0;
+}
+
+.publish-quality__check.is-ok {
+  color: var(--text-primary);
+}
+
+.publish-quality__check.is-ok span {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+/* ============================================================
    Étapes (stepper)
    ============================================================ */
 
@@ -409,6 +525,14 @@
    ============================================================ */
 
 @media (max-width: 600px) {
+  .publish-quality {
+    grid-template-columns: 1fr;
+  }
+
+  .publish-quality__score {
+    min-height: 104px;
+  }
+
   .mode-selector { grid-template-columns: 1fr; }
   .licence-options { grid-template-columns: 1fr; }
   .cover-picker { grid-template-columns: 1fr; }

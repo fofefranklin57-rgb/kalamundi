@@ -47,7 +47,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 ### Phase 1 — Enrichir l'existant (peu risqué, gros effet)
 > 🎨 **Priorité transverse : moderniser TOUTES les interfaces clés** — auteur (dashboard, publication), lecteur (confort de lecture), boutique, éducation. Cf. direction design `BIBLE §10`.
 - [x] **Reskin design (tokens)** — ✅ Codex 16/07 (`464131e`) : webfonts Fraunces/Inter auto-hébergées, base crème `#FBF8F2`, bordures neutres `#E7E0D2`, rayons/ombres, composants adoucis, SW `kala-v10`
-- [ ] **Interface AUTEUR modernisée** : dashboard + formulaire de publication (schéma métadonnées, upload multi-format, aperçu) au nouveau design
+- [x] **Interface AUTEUR modernisée** — ✅ Codex 16/07 (`kala-v15`) : dashboard standard auteur + formulaire publication modernisé (cockpit qualité, résumé obligatoire, validation fichier, royalties 50/50 visibles, rappel couverture 1,6:1)
 - [x] **Interface LECTEUR modernisée** : offline soigné ✅ Codex 16/07 (`f43ddee`, biblio locale + démarrage IndexedDB) ; lecteur premium ✅ Codex 16/07 (polices de lecture, thèmes robustes, repagination des réglages, surlignage/note exposés)
 - [x] **Shell mobile** — ✅ Codex 16/07 (`a28a36d`) : barre d'onglets basse (Accueil · Explorer · Apprendre · Biblio · Profil), SW `kala-v11`
 - [ ] **Home en rails de merchandising** + carte/fiche livre unifiée (offres lire/acheter/emprunter/occasion) — *entrée Campus ajoutée (`fa8ff9b`), rails commerce pas encore*
@@ -106,7 +106,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 
 ### 🟥 P0 — Finir le socle Phase 1 (peu risqué, visible, en cours)
 1. ✅ **Lecteur premium** — réglages typo, bascule thèmes jour/nuit/sépia, surlignage. *(livré 16/07, SW `kala-v14`)*
-2. **Interface auteur modernisée** — dashboard + formulaire de publication au nouveau design.
+2. ✅ **Interface auteur modernisée** — dashboard + formulaire de publication au nouveau design. *(livré 16/07, SW `kala-v15`)*
 3. **Hygiène** — test régression lecture en ligne (après refonte offline), retrait des polices Roboto mortes.
 4. **Logo** — remplacer l'emoji 📚, décliner favicon + icônes PWA (`generate-icons.mjs`). *(quick win, parallélisable)*
 
