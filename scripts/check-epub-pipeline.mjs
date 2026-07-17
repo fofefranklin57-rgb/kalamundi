@@ -78,8 +78,14 @@ if (!clientBuilder.includes('application/epub+zip') || !clientBuilder.includes('
 if (pkg.scripts?.['epub:validate'] !== 'node scripts/validate_epub.mjs') {
   erreurs.push('package.json doit exposer epub:validate pour epubcheck.');
 }
+if (pkg.scripts?.['epub:backfill'] !== 'node scripts/backfill_epub_editions.mjs') {
+  erreurs.push('package.json doit exposer epub:backfill pour les œuvres existantes.');
+}
 if (!fs.existsSync(path.join(root, 'scripts/validate_epub.mjs'))) {
   erreurs.push('scripts/validate_epub.mjs doit exister pour la validation epubcheck.');
+}
+if (!fs.existsSync(path.join(root, 'scripts/backfill_epub_editions.mjs'))) {
+  erreurs.push('scripts/backfill_epub_editions.mjs doit exister pour générer les EPUB des œuvres existantes.');
 }
 
 if (erreurs.length) {
