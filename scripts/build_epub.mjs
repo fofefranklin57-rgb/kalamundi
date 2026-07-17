@@ -193,7 +193,7 @@ p {
 }`;
 }
 
-function zipStore(entries) {
+export function zipStore(entries) {
   const localParts = [];
   const centralParts = [];
   let offset = 0;

@@ -9,11 +9,24 @@ import { validerFichier, formatTailleFichier } from './utils.js';
    Lire le contenu texte d'un fichier
    ============================================================ */
 
+/* Formats extraits côté serveur (/api/import-book) sans dépendance CDN.
+   Le PDF en est exclu : il exige pdf.js, donc il reste converti ici. */
+const FORMATS_SERVEUR = ['txt', 'docx', 'odt', 'epub'];
+
 export async function lireFichier(fichier) {
   const ext = fichier.name.split('.').pop().toLowerCase();
 
   const validation = validerFichier(fichier);
   if (!validation.valide) throw new Error(validation.erreur);
+
+  /* On tente d'abord l'import serveur : il évite de télécharger mammoth /
+     epub.js / JSZip depuis un CDN (plusieurs Mo, data chère). En cas d'échec
+     — hors-ligne, endpoint indisponible — on retombe sur le parsing client,
+     qui reste la roue de secours. */
+  if (FORMATS_SERVEUR.includes(ext)) {
+    const texte = await lireViaServeur(fichier, ext);
+    if (texte) return texte;
+  }
 
   switch (ext) {
     case 'txt':  return lireTxt(fichier);
@@ -22,6 +35,24 @@ export async function lireFichier(fichier) {
     case 'epub': return lireEpub(fichier);
     case 'odt':  return lireOdt(fichier);
     default:     throw new Error('Format non supporté.');
+  }
+}
+
+/* ---- Import serveur (avec repli silencieux sur le client) -- */
+
+async function lireViaServeur(fichier, format) {
+  try {
+    const form = new FormData();
+    form.append('fichier', fichier);
+    form.append('format', format);
+
+    const reponse = await fetch('/api/import-book', { method: 'POST', body: form });
+    if (!reponse.ok) return null;
+
+    const donnees = await reponse.json();
+    return donnees?.texte?.trim() ? donnees.texte : null;
+  } catch {
+    return null; // repli client
   }
 }
 
