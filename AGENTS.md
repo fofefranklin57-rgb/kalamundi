@@ -16,6 +16,7 @@ Kalamundi = **super-app du livre africain** (lire · apprendre · publier · ach
 | `RECONCEPTION_KALAMUNDI.md` | Le raisonnement stratégique derrière les choix |
 | `ADAPTATION_STANDARDS_KDP.md` | Standards de publication (EPUB, métadonnées, royalties **50/50**, reporting auteur) |
 | `PROPOSITION_EDUCATION.md` | Stratégie éducation = sous-marque **« Kalamundi Campus »** (intégrée, séparable plus tard) |
+| `VISION_EDITEURS_ET_PATRIMOINE.md` | Canal **maisons d'édition** (ONIX) + **mission culturelle** / bibliothèque patrimoniale « Kalamundi Héritage » |
 | `DESIGN_SYSTEM_KALAMUNDI.md` | **Les nouveaux tokens exacts** à appliquer dans `base.css` (couleurs, typo, rayons, composants) |
 | `INTERFACES_KALAMUNDI.md` | **Inventaire de tous les écrans** par rôle + priorité de modernisation |
 | `MEMO_MARKETPLACE_LIVRE.md` | Benchmark mondial + concurrence CEMAC |

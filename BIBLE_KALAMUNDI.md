@@ -20,6 +20,8 @@
 
 **Sous-marque éducation : « Kalamundi Campus »** (D12 option a) — intégrée maintenant dans l'espace Apprendre, détachable plus tard en PWA dédiée sur le backend partagé.
 
+**Double nature (D13/D14)** : Kalamundi n'est pas qu'une super-app commerciale, c'est aussi une **infrastructure culturelle** — canal de vente des **maisons d'édition** ET **bibliothèque numérique patrimoniale** (« Kalamundi Héritage »), en partenariat avec le MINAC/OIF/UNESCO. Détail : `VISION_EDITEURS_ET_PATRIMOINE.md`.
+
 ---
 
 ## 2. Ce qui nous distingue (nos douves)
@@ -42,6 +44,8 @@
 | **Libraire / éditeur** | Écouler du stock via le mobile | Moyenne |
 | **École / bibliothèque** | Donner accès à des fonds | B2B (revenu récurrent) |
 | **Diaspora** (D11) | Acheter/louer des livres africains ; **offrir un livre/abonnement à un proche resté au pays** (gifting) | Haute (pouvoir d'achat en devises) |
+| **Maison d'édition** (D13) | Vendre tout son **catalogue** (numérique + papier) via un canal mobile | Haute (profondeur + légitimité du catalogue) |
+| **Institution culturelle / MINAC** (D14) | Numériser, préserver, donner accès au **patrimoine** | Partenaire (financement non commercial) |
 
 ---
 
@@ -55,6 +59,7 @@
 | 🛒 **Acheter** | À créer (grand manque n°1) | Marge ventes | 4 |
 | 💸 **Vendre / occasion** | À créer (grand manque n°2) | Commission C2C | 5 |
 | 🔄 **Emprunter / prêt** | À créer (le plus subtil) | Abonnement institutionnel | 5 |
+| 🏛️ **Kalamundi Héritage** (D14) | À créer (mission culturelle) | Public-bien : subventions/partenariats (hors commercial) | 4 |
 
 Principe d'unité : l'utilisateur ne « change pas d'espace », il **agit sur un livre**. La fiche livre affiche toutes les offres disponibles.
 
