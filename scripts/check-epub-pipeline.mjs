@@ -1,5 +1,6 @@
 import { construireEpub } from './build_epub.mjs';
 import { normaliserLivreDepuisTexte } from './lib/book-normalizer.mjs';
+import { validerEpub } from './lib/epub-validator.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -49,6 +50,11 @@ for (const attendu of [
 ]) {
   if (!brut.includes(attendu)) erreurs.push(`EPUB incomplet : ${attendu} absent.`);
 }
+
+/* Validation structurelle réelle de l'EPUB produit (OCF, OPF, manifest/spine,
+   namespaces XML) — sans Java, donc elle tourne vraiment à chaque `npm run check`. */
+const validation = validerEpub(epub);
+validation.erreurs.forEach(e => erreurs.push(`EPUB invalide : ${e}`));
 
 if (erreurs.length) {
   console.error(erreurs.map(e => `- ${e}`).join('\n'));

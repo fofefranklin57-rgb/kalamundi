@@ -3,6 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { validerEpub } from './lib/epub-validator.mjs';
 
 const args = process.argv.slice(2);
 const files = args.filter(arg => !arg.startsWith('--'));
@@ -12,64 +13,60 @@ if (!files.length || args.includes('--help')) {
   console.log(`Usage:
   node scripts/validate_epub.mjs livre.epub [autre.epub]
 
-Configuration epubcheck:
-  - définir EPUBCHECK_JAR=C:\\chemin\\epubcheck.jar
-  - ou placer le jar dans tools/epubcheck/epubcheck.jar
+Deux passes :
+  1. Validation structurelle native (toujours) — OCF, OPF, manifest/spine, namespaces XML.
+  2. epubcheck officiel (optionnel, passe profonde) si Java + jar disponibles :
+     - EPUBCHECK_JAR=C:\\chemin\\epubcheck.jar
+     - ou tools/epubcheck/epubcheck.jar
 
-Le script lance l'epubcheck officiel quand Java + jar sont disponibles.`);
+La passe native seule suffit à faire échouer le script : un EPUB
+structurellement invalide ne doit jamais être publié.`);
   process.exit(files.length ? 0 : 1);
 }
 
 const root = process.cwd();
-const jarPath = process.env.EPUBCHECK_JAR
-  || path.join(root, 'tools', 'epubcheck', 'epubcheck.jar');
+const jarPath = process.env.EPUBCHECK_JAR || path.join(root, 'tools', 'epubcheck', 'epubcheck.jar');
 
-const report = {
-  validator: 'epubcheck',
-  jarPath,
-  javaAvailable: false,
-  jarAvailable: fs.existsSync(jarPath),
-  files: [],
-};
+const jarAvailable = fs.existsSync(jarPath);
+const javaAvailable = spawnSync('java', ['-version'], { encoding: 'utf8' }).status === 0;
+const epubcheckDispo = jarAvailable && javaAvailable;
 
-const javaProbe = spawnSync('java', ['-version'], { encoding: 'utf8' });
-report.javaAvailable = javaProbe.status === 0;
-
-if (!report.javaAvailable || !report.jarAvailable) {
-  const missing = [
-    !report.javaAvailable ? 'Java absent' : null,
-    !report.jarAvailable ? `epubcheck.jar absent (${jarPath})` : null,
-  ].filter(Boolean);
-  const message = `Validation epubcheck indisponible : ${missing.join(' ; ')}.`;
-  if (json) console.log(JSON.stringify({ ...report, ok: false, skipped: true, message }, null, 2));
-  else console.warn(message);
-  process.exit(2);
-}
-
+const report = { validator: 'kalamundi-native', epubcheck: { jarPath, jarAvailable, javaAvailable, used: epubcheckDispo }, files: [] };
 let hasError = false;
+
 for (const file of files) {
   const full = path.resolve(file);
   if (!fs.existsSync(full)) {
     hasError = true;
-    report.files.push({ file, ok: false, error: 'Fichier introuvable' });
+    report.files.push({ file, ok: false, erreurs: ['Fichier introuvable'] });
+    if (!json) console.error(`ERREUR — ${file} : fichier introuvable`);
     continue;
   }
 
-  const result = spawnSync('java', ['-jar', jarPath, full], { encoding: 'utf8' });
-  const ok = result.status === 0;
-  hasError ||= !ok;
-  report.files.push({
-    file,
-    ok,
-    status: result.status,
-    stdout: result.stdout,
-    stderr: result.stderr,
-  });
+  /* Passe 1 — native, toujours */
+  const natif = validerEpub(fs.readFileSync(full));
+  const entree = { file, ok: natif.ok, erreurs: natif.erreurs, avertissements: natif.avertissements };
+  hasError ||= !natif.ok;
+
+  /* Passe 2 — epubcheck officiel, si disponible */
+  if (epubcheckDispo) {
+    const result = spawnSync('java', ['-jar', jarPath, full], { encoding: 'utf8' });
+    entree.epubcheck = { ok: result.status === 0, status: result.status, sortie: `${result.stdout || ''}${result.stderr || ''}`.trim() };
+    if (result.status !== 0) hasError = true;
+  }
+
+  report.files.push(entree);
 
   if (!json) {
-    console.log(`\n${ok ? 'OK' : 'ERREUR'} — ${file}`);
-    const output = `${result.stdout || ''}${result.stderr || ''}`.trim();
-    if (output) console.log(output);
+    console.log(`\n${entree.ok ? 'OK' : 'ERREUR'} — ${file} (validation native)`);
+    natif.erreurs.forEach(e => console.error(`  - ${e}`));
+    natif.avertissements.forEach(a => console.warn(`  ~ ${a}`));
+    if (entree.epubcheck) {
+      console.log(`${entree.epubcheck.ok ? 'OK' : 'ERREUR'} — ${file} (epubcheck)`);
+      if (entree.epubcheck.sortie) console.log(entree.epubcheck.sortie);
+    } else {
+      console.log('epubcheck non exécuté (Java ou jar absent) — passe native uniquement.');
+    }
   }
 }
 

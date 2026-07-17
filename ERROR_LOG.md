@@ -16,6 +16,34 @@ Format par entrée :
 
 ---
 
+### [2026-07-16] Tous les EPUB générés étaient invalides (préfixe `epub:` non déclaré)
+- **Symptôme** : aucun — et c'est le problème. Les EPUB se construisaient sans erreur mais étaient structurellement invalides ; un lecteur strict (Readium, epubcheck) les aurait rejetés.
+- **Cause** : les documents de chapitre utilisaient `epub:type="chapter"` sans déclarer `xmlns:epub` sur `<html>` (le `nav.xhtml`, lui, le déclarait). Un préfixe XML non déclaré rend le document mal formé. Présent dans **les deux** générateurs.
+- **Correctif** : ajout de `xmlns:epub="http://www.idpf.org/2007/ops"` sur le `<html>` des chapitres, dans les deux builders.
+- **Fichier(s)** : `scripts/build_epub.mjs` (`chapitreXhtml`), `assets/js/epub-builder.js`.
+- **Leçon** : si on écrit un attribut préfixé (`epub:`, `dc:`, `xsi:`), on déclare le namespace **dans le même document**. Corollaire : un défaut sans symptôme visible ne se trouve que si une validation tourne vraiment (cf. entrée suivante).
+
+### [2026-07-16] La validation epubcheck ne s'exécutait jamais
+- **Symptôme** : `npm run epub:validate` sortait en « Validation epubcheck indisponible » (code 2) et le pipeline restait vert — donc des EPUB invalides passaient (cf. entrée précédente).
+- **Cause** : la validation dépendait entièrement d'un **epubcheck externe (Java + jar)** absent de la machine et de la CI. Sans dépendance installée, aucun contrôle n'était effectué du tout.
+- **Correctif** : ajout d'un **validateur structurel natif** (sans Java) — OCF (mimetype premier/stocké/exact), container → rootfile, OPF (unique-identifier, `dc:title`, `dc:language`, `dcterms:modified`), cohérence manifest ↔ archive, spine ↔ manifest, item `properties="nav"`, et préfixes de namespace XML non déclarés. Il tourne **toujours** ; epubcheck devient une passe profonde optionnelle. Branché dans `check-epub-pipeline` donc dans `npm run check`.
+- **Fichier(s)** : `scripts/lib/epub-validator.mjs` (nouveau), `scripts/validate_epub.mjs`, `scripts/check-epub-pipeline.mjs`.
+- **Leçon** : une validation qui dépend d'un binaire externe optionnel n'est pas une validation — c'est un vœu. Un contrôle qui peut « skipper » silencieusement doit avoir un socle natif qui, lui, échoue vraiment.
+
+### [2026-07-16] `npm run epub:build` ne faisait rien sur Windows
+- **Symptôme** : `node scripts/build_epub.mjs --help` (ou `--input/--out`) n'affichait rien, ne produisait aucun fichier, et sortait en code 0.
+- **Cause** : la garde d'exécution CLI comparait `import.meta.url` à `` `file://${process.argv[1].replace(/\\/g,'/')}` `` → `file://C:/...` alors que `import.meta.url` vaut `file:///C:/...` (trois barres). Jamais égal → `main()` jamais appelé. Invisible car `check-epub-pipeline` passe par un `import`, pas par la CLI.
+- **Correctif** : comparaison via `pathToFileURL(process.argv[1]).href`, robuste sur toutes les plateformes.
+- **Fichier(s)** : `scripts/build_epub.mjs`.
+- **Leçon** : ne jamais reconstruire une URL de fichier à la main — utiliser `pathToFileURL`. Et un script CLI doit être testé **via la CLI**, pas seulement via ses exports.
+
+### [2026-07-16] `main()` crashait sur `CRC_TABLE` (zone morte temporelle)
+- **Symptôme** : une fois la garde CLI réparée, `build_epub.mjs` levait `ReferenceError: Cannot access 'CRC_TABLE' before initialization`.
+- **Cause** : `main()` était appelé en **tête** de module alors que `const CRC_TABLE` est initialisé en **bas** du fichier → accès en zone morte temporelle. Le bug était masqué par la garde cassée (main() ne s'exécutait jamais) et invisible à l'import (le module est alors entièrement évalué avant usage).
+- **Correctif** : déplacement de l'appel `main()` en fin de module, après l'initialisation de `CRC_TABLE`, avec un commentaire expliquant la contrainte.
+- **Fichier(s)** : `scripts/build_epub.mjs`.
+- **Leçon** : l'appel CLI d'un module ESM se met **en fin de fichier**. Un bug peut en masquer un autre : après avoir réparé une garde, re-tester le chemin qu'elle protégeait.
+
 ### [2026-07-16] Lecteur EPUB cherchait un statut inexistant
 - **Symptôme** : le mode EPUB pouvait ne jamais trouver une édition EPUB créée par le modèle `livre_editions`.
 - **Cause** : le lecteur filtrait `livre_editions.statut = 'publie'`, alors que la migration `V007` définit les statuts valides comme `active`, `brouillon`, `retiree`, `archivee`.

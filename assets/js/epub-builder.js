@@ -106,7 +106,7 @@ function chapitreXhtml({ titre, langue, chapitre }) {
     .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="${xml(langue)}" xml:lang="${xml(langue)}">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="${xml(langue)}" xml:lang="${xml(langue)}">
 <head><title>${xml(titre)} - ${xml(chapitre.titre)}</title><link rel="stylesheet" href="../styles/book.css"/></head>
 <body>
   <section epub:type="chapter" data-kalamundi-chapitre-id="${xml(chapitre.chapitre_id)}">

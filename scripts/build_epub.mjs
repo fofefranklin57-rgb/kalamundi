@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   escapeXml,
   normaliserLivreDepuisTexte,
@@ -18,10 +19,6 @@ function arg(nom, defaut = null) {
 
 function has(nom) {
   return args.includes(nom);
-}
-
-if (import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`) {
-  main();
 }
 
 function main() {
@@ -157,7 +154,7 @@ function chapitreXhtml({ titre, langue, chapitre }) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="${escapeXml(langue)}" xml:lang="${escapeXml(langue)}">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="${escapeXml(langue)}" xml:lang="${escapeXml(langue)}">
 <head>
   <title>${escapeXml(titre)} - ${escapeXml(heading)}</title>
   <link rel="stylesheet" href="../styles/book.css"/>
@@ -277,3 +274,13 @@ const CRC_TABLE = (() => {
   }
   return table;
 })();
+
+/* Exécution CLI — DOIT rester en fin de module : main() utilise CRC_TABLE,
+   qui est un const initialisé plus haut. Appelé en tête de fichier, il tombait
+   dans la zone morte temporelle (ReferenceError).
+   Comparaison via pathToFileURL : sur Windows `file://${chemin}` produit
+   file://C:/... quand import.meta.url vaut file:///C:/... → main() n'était
+   jamais appelé et `npm run epub:build` ne faisait rien. */
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}

@@ -112,7 +112,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 
 ### 🟧 P1 — Fondations structurantes (prérequis de TOUT le commerce)
 5. ✅ **Modèle de données « Livre + Offres »** (D3) — ⚠️ **le pivot** : plusieurs tâches P1/P2/P3 en dépendent. *(livré 16/07, migration `V007__livres_offres.sql`)*
-6. 🟡 **Pipeline EPUB** — convertisseur (Word/PDF/EPUB → chapitres normalisés + build EPUB, epubcheck) + **lecteur EPUB web** (Readium/foliate). `⟶ 5` *(socle chapitres normalisés + build EPUB local/navigateur + lecteur EPUB web + édition EPUB publication livrés ; reste import serveur robuste + validation epubcheck complète)*
+6. 🟡 **Pipeline EPUB** — convertisseur (Word/PDF/EPUB → chapitres normalisés + build EPUB, epubcheck) + **lecteur EPUB web** (Readium/foliate). `⟶ 5` *(socle chapitres normalisés + build EPUB local/navigateur + lecteur EPUB web + édition EPUB publication livrés ; **validation ✅ 16/07** : validateur natif `scripts/lib/epub-validator.mjs` branché dans `npm run check`, epubcheck en passe profonde optionnelle, 4 bugs corrigés — cf. ERROR_LOG ; **reste : import serveur robuste**)*
 7. ✅ **Standards publication** — formulaire métadonnées complet + checklist bloquante + couverture 1,6:1. `⟶ 5` *(livré 16/07)*
 8. ✅ **Traduction** — nœuds de texte + langue source depuis métadonnées. `⟶ 6` *(livré 16/07)*
 
