@@ -267,6 +267,12 @@
   border-left: 3px solid var(--color-accent);
 }
 
+.publish-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--spacing-md);
+}
+
 /* ============================================================
    Sélecteur de mode de saisie
    ============================================================ */
@@ -534,6 +540,7 @@
   }
 
   .mode-selector { grid-template-columns: 1fr; }
+  .publish-form-grid { grid-template-columns: 1fr; }
   .licence-options { grid-template-columns: 1fr; }
   .cover-picker { grid-template-columns: 1fr; }
   .cover-preview { width: 100%; max-width: 200px; margin-inline: auto; }

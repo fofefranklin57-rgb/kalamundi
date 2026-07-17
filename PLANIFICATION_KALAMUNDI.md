@@ -54,11 +54,11 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 - [x] Lecteur premium (réglages typo, thèmes jour/nuit/sépia, surlignage couleur) — ✅ Codex 16/07, SW `kala-v14`
 - [x] **Lecteur EPUB web** (Readium/foliate-js) en parallèle du lecteur actuel — ✅ Codex 16/07 : mode EPUB via `epub.js`, fichier `.epub`/`livre_editions`, URL signée, thèmes/réglages, fallback lecteur chapitres, SW `kala-v21`
 - [ ] **Convertisseur « égalisateur »** : Word/PDF/EPUB → chapitres normalisés + build EPUB (epubcheck), avec relecture auteur pour le PDF — *socle livré 16/07 : `V008`, normaliseur, build EPUB local + navigateur, upload `canonique.epub`, synchronisation `livre_editions` ; reste import serveur robuste + epubcheck strict*
-- [ ] Checklist de dépôt auteur (langue originale obligatoire) au formulaire de publication
+- [x] Checklist de dépôt auteur (langue originale obligatoire) au formulaire de publication — ✅ Codex 16/07 : score bloquant, mots-clés, catégories, couverture 1,6:1
 - [ ] Traduction : traiter les nœuds de texte + lire la langue source depuis les métadonnées
 - [ ] Couche sociale : notes, avis, étagères « à lire », stats à la Wattpad
 - [ ] Publier : royalties transparentes côté auteur
-- [ ] **Standards KDP** : formulaire de publication au schéma métadonnées complet (§3 `ADAPTATION_STANDARDS_KDP.md`) + checklist bloquante + couverture 1,6:1
+- [x] **Standards KDP** : formulaire de publication au schéma métadonnées complet (§3 `ADAPTATION_STANDARDS_KDP.md`) + checklist bloquante + couverture 1,6:1 — ✅ Codex 16/07
 - [ ] **Reporting auteur niveau KDP** : ventes + pages lues (analogue KENP) + payouts Mobile Money
 - [ ] Option **« Kalamundi Select »** (exclusivité → 70 % + inclusion abonnement)
 
@@ -113,7 +113,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 ### 🟧 P1 — Fondations structurantes (prérequis de TOUT le commerce)
 5. ✅ **Modèle de données « Livre + Offres »** (D3) — ⚠️ **le pivot** : plusieurs tâches P1/P2/P3 en dépendent. *(livré 16/07, migration `V007__livres_offres.sql`)*
 6. 🟡 **Pipeline EPUB** — convertisseur (Word/PDF/EPUB → chapitres normalisés + build EPUB, epubcheck) + **lecteur EPUB web** (Readium/foliate). `⟶ 5` *(socle chapitres normalisés + build EPUB local/navigateur + lecteur EPUB web + édition EPUB publication livrés ; reste import serveur robuste + validation epubcheck complète)*
-7. **Standards publication** — formulaire métadonnées complet + checklist bloquante + couverture 1,6:1. `⟶ 5`
+7. ✅ **Standards publication** — formulaire métadonnées complet + checklist bloquante + couverture 1,6:1. `⟶ 5` *(livré 16/07)*
 8. **Traduction** — nœuds de texte + langue source depuis métadonnées. `⟶ 6`
 
 ### 🟨 P2 — Engagement & monétisation auteur

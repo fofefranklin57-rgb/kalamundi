@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "check": "node scripts/check-js.mjs && node scripts/check-reader-regression.mjs && node scripts/check-epub-pipeline.mjs",
+    "check": "node scripts/check-js.mjs && node scripts/check-reader-regression.mjs && node scripts/check-epub-pipeline.mjs && node scripts/check-publish-standards.mjs",
     "chapters:repair": "node scripts/redecouper_chapitres.mjs",
     "epub:build": "node scripts/build_epub.mjs",
     "epub:validate": "node scripts/validate_epub.mjs",

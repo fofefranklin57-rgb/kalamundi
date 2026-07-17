@@ -471,15 +471,20 @@ export const api = {
       oeuvre_id: oeuvre.id,
       auteur_id: oeuvre.auteur_id,
       titre: oeuvre.titre,
+      sous_titre: oeuvre.sous_titre || null,
       description: oeuvre.resume || null,
       langue_originale: oeuvre.langue_originale || 'fr',
+      isbn13: oeuvre.isbn || null,
       couverture_url: oeuvre.couverture_url || null,
       public_cible: oeuvre.public_cible || 'tous',
+      mots_cles: oeuvre.mots_cles || [],
       statut: oeuvre.visible === false ? 'retire' : 'actif',
       type_catalogue: 'auto_edition',
       metadata: {
         source: 'publication_kalamundi',
         hash_sha256: oeuvre.hash_sha256 || null,
+        standards: 'kalamundi_kdp_like_v1',
+        ...oeuvre.metadata_publication,
       },
     };
 
@@ -506,6 +511,7 @@ export const api = {
         metadata: {
           format_source: extOriginale,
           normalisation: 'chapitres_internes',
+          standards: 'kalamundi_kdp_like_v1',
         },
       },
     ];
@@ -524,6 +530,7 @@ export const api = {
           generated_by: 'kalamundi_epub_builder',
           canonical: true,
           format_source: extOriginale,
+          standards: 'kalamundi_kdp_like_v1',
         },
       });
     }

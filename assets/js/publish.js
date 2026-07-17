@@ -30,10 +30,20 @@ function sauvegarderBrouillon() {
   _brouillonTimer = setTimeout(() => {
     const data = {
       titre:       qs('#titre')?.value || '',
+      sousTitre:   qs('#sous-titre')?.value || '',
+      serie:       qs('#serie')?.value || '',
+      numeroSerie: qs('#numero-serie')?.value || '',
       genre:       qs('#genre')?.value || '',
+      categoriePrincipale: qs('#categorie-principale')?.value || '',
+      categorieSecondaire: qs('#categorie-secondaire')?.value || '',
       langue:      qs('#langue')?.value || '',
       resume:      qs('#resume')?.value || '',
+      motsCles:    qs('#mots-cles')?.value || '',
+      isbn:        qs('#isbn')?.value || '',
+      editeur:     qs('#editeur')?.value || '',
       public_cible: qs('#public_cible')?.value || '',
+      territoires: qs('#territoires')?.value || 'monde',
+      drmProtection: qs('#drm-protection')?.value || 'standard',
       mode:        etat.mode,
       editorHTML:  qs('#editor-content')?.innerHTML || '',
       statut:      qs('#statut-oeuvre')?.value || 'gratuit',
@@ -54,10 +64,20 @@ function effacerBrouillon() {
 
 function restaurerBrouillon(data) {
   if (data.titre)       { const el = qs('#titre');        if (el) el.value = data.titre; }
+  if (data.sousTitre)   { const el = qs('#sous-titre');   if (el) el.value = data.sousTitre; }
+  if (data.serie)       { const el = qs('#serie');        if (el) el.value = data.serie; }
+  if (data.numeroSerie) { const el = qs('#numero-serie'); if (el) el.value = data.numeroSerie; }
   if (data.genre)       { const el = qs('#genre');        if (el) el.value = data.genre; }
+  if (data.categoriePrincipale) { const el = qs('#categorie-principale'); if (el) el.value = data.categoriePrincipale; }
+  if (data.categorieSecondaire) { const el = qs('#categorie-secondaire'); if (el) el.value = data.categorieSecondaire; }
   if (data.langue)      { const el = qs('#langue');       if (el) el.value = data.langue; }
   if (data.resume)      { const el = qs('#resume');       if (el) { el.value = data.resume; qs('#resume-counter').textContent = `${data.resume.length} / 1000 caractères`; } }
+  if (data.motsCles)    { const el = qs('#mots-cles');    if (el) el.value = data.motsCles; }
+  if (data.isbn)        { const el = qs('#isbn');         if (el) el.value = data.isbn; }
+  if (data.editeur)     { const el = qs('#editeur');      if (el) el.value = data.editeur; }
   if (data.public_cible){ const el = qs('#public_cible'); if (el) el.value = data.public_cible; }
+  if (data.territoires) { const el = qs('#territoires');  if (el) el.value = data.territoires; }
+  if (data.drmProtection) { const el = qs('#drm-protection'); if (el) el.value = data.drmProtection; }
   if (data.editorHTML)  { const el = qs('#editor-content'); if (el) el.innerHTML = data.editorHTML; }
   if (data.prix)        { const el = qs('#prix');          if (el) el.value = data.prix; }
   if (data.statut === 'premium') {
@@ -106,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* Auto-sauvegarde sur chaque modification */
-['#titre','#genre','#langue','#resume','#public_cible','#prix','#statut-oeuvre','#editor-content'].forEach(sel => {
+['#titre','#sous-titre','#serie','#numero-serie','#genre','#categorie-principale','#categorie-secondaire','#langue','#resume','#mots-cles','#isbn','#editeur','#public_cible','#territoires','#drm-protection','#prix','#statut-oeuvre','#editor-content'].forEach(sel => {
   document.addEventListener('DOMContentLoaded', () => {
     qs(sel)?.addEventListener('input', sauvegarderBrouillon);
     qs(sel)?.addEventListener('change', sauvegarderBrouillon);
@@ -122,6 +142,7 @@ const etat = {
   mode:         'upload',  // 'upload' | 'editor'
   fichier:      null,
   couverture:   null,
+  couvertureOk: false,
   contenuTexte: '',
   hash:         '',
   oeuvreId:     null,
@@ -145,26 +166,75 @@ function texteEditeur() {
   return qs('#editor-content')?.innerText?.trim() || '';
 }
 
+function lireMotsCles() {
+  return (qs('#mots-cles')?.value || '')
+    .split(',')
+    .map(mot => mot.trim())
+    .filter(Boolean)
+    .slice(0, 7);
+}
+
+function collecterMetadonneesPublication() {
+  const categories = [
+    qs('#categorie-principale')?.value || '',
+    qs('#categorie-secondaire')?.value || '',
+  ].filter(Boolean);
+
+  return {
+    sous_titre: qs('#sous-titre')?.value.trim() || null,
+    serie: qs('#serie')?.value.trim() || null,
+    numero_serie: qs('#numero-serie')?.value ? Number(qs('#numero-serie').value) : null,
+    categories,
+    mots_cles: lireMotsCles(),
+    isbn: qs('#isbn')?.value.trim() || null,
+    editeur: qs('#editeur')?.value.trim() || 'Auto-édition',
+    territoires: qs('#territoires')?.value || 'monde',
+    drm_protection: qs('#drm-protection')?.value || 'standard',
+    licence: qs('#licence-oeuvre')?.value || 'tous_droits',
+  };
+}
+
+function verifierRatioCouverture(fichier) {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(fichier);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const ratio = img.height / Math.max(img.width, 1);
+      resolve({ ok: ratio >= 1.45 && ratio <= 1.75, ratio });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve({ ok: false, ratio: 0 });
+    };
+    img.src = url;
+  });
+}
+
 function calculerQualitePublication() {
   const titre = qs('#titre')?.value.trim() || '';
   const genre = qs('#genre')?.value || '';
+  const categorie = qs('#categorie-principale')?.value || '';
   const langue = qs('#langue')?.value || '';
   const resume = qs('#resume')?.value.trim() || '';
+  const motsCles = lireMotsCles();
   const statut = qs('#statut-oeuvre')?.value || 'gratuit';
   const prix = parseFloat(qs('#prix')?.value || '0');
   const declaration = Boolean(qs('#declaration-proprio')?.checked);
   const contenuPret = etat.mode === 'upload' ? Boolean(etat.fichier) : texteEditeur().length >= 200;
   const chapitres = Boolean(qs('#par-chapitres')?.checked);
   const premiumPret = statut !== 'premium' || prix >= 100;
+  const couverturePret = Boolean(etat.couverture && etat.couvertureOk);
 
   const items = [
-    { label: 'Titre, genre et langue originale', ok: Boolean(titre && genre && langue), points: 18 },
-    { label: 'Résumé pour convaincre le lecteur', ok: resume.length >= 80, points: 18 },
-    { label: 'Contenu importé ou texte saisi', ok: contenuPret, points: 20 },
-    { label: 'Couverture verticale recommandée', ok: Boolean(etat.couverture), points: 12, optional: true },
-    { label: 'Structure par chapitres activée', ok: chapitres, points: 12 },
-    { label: 'Prix premium valide si nécessaire', ok: premiumPret, points: 10 },
-    { label: 'Déclaration de propriété confirmée', ok: declaration, points: 10 },
+    { label: 'Titre, genre, catégorie et langue originale', ok: Boolean(titre && genre && categorie && langue), points: 18 },
+    { label: 'Résumé professionnel pour convaincre', ok: resume.length >= 80, points: 16 },
+    { label: 'Mots-clés de découverte renseignés', ok: motsCles.length >= 1 && motsCles.length <= 7, points: 12 },
+    { label: 'Contenu importé ou texte saisi', ok: contenuPret, points: 18 },
+    { label: 'Couverture verticale 1,6:1 validée', ok: couverturePret, points: 14 },
+    { label: 'Structure par chapitres activée', ok: chapitres, points: 8 },
+    { label: 'Prix premium valide si nécessaire', ok: premiumPret, points: 7 },
+    { label: 'Droits, territoires et déclaration confirmés', ok: Boolean(declaration && qs('#territoires')?.value), points: 7 },
   ];
 
   const score = items.reduce((total, item) => total + (item.ok ? item.points : 0), 0);
@@ -250,12 +320,18 @@ function validerEtape1() {
   cacherErreur();
   const titre = qs('#titre').value.trim();
   const genre = qs('#genre').value;
+  const categorie = qs('#categorie-principale')?.value || '';
   const langue = qs('#langue').value;
   const resume = qs('#resume').value.trim();
+  const motsCles = lireMotsCles();
   if (!titre)  return afficherErreur('Le titre est obligatoire.') || false;
   if (!genre)  return afficherErreur('Choisis un genre littéraire.') || false;
+  if (!categorie) return afficherErreur('Choisis une catégorie principale pour classer le livre.') || false;
   if (!langue) return afficherErreur('Choisis la langue originale.') || false;
   if (!resume) return afficherErreur('Ajoute un résumé : il aide les lecteurs à comprendre ton livre.') || false;
+  if (resume.length < 80) return afficherErreur('Le résumé doit faire au moins 80 caractères pour présenter correctement le livre.') || false;
+  if (!motsCles.length) return afficherErreur('Ajoute au moins un mot-clé pour aider les lecteurs à trouver ton livre.') || false;
+  if (motsCles.length > 7) return afficherErreur('Limite les mots-clés à 7 maximum, comme les standards ebook.') || false;
   return true;
 }
 
@@ -284,6 +360,22 @@ function validerEtape3() {
   if (!qs('#declaration-proprio').checked) {
     return afficherErreur('Tu dois déclarer être l\'auteur(e) de cette œuvre.') || false;
   }
+  if (!qs('#territoires')?.value) {
+    return afficherErreur('Choisis les territoires où Kalamundi peut diffuser ton livre.') || false;
+  }
+  return true;
+}
+
+function validerChecklistFinale() {
+  if (!etat.couverture) {
+    return afficherErreur('Ajoute une couverture avant publication. Un livre commercialisable doit avoir une couverture lisible.') || false;
+  }
+  if (!etat.couvertureOk) {
+    return afficherErreur('La couverture doit être verticale, proche du ratio 1,6:1 recommandé pour les ebooks.') || false;
+  }
+  if (qualitePublication < 85) {
+    return afficherErreur('Complète la checklist de dépôt avant publication : vise au moins 85%.') || false;
+  }
   return true;
 }
 
@@ -301,6 +393,13 @@ qs('#cover-input')?.addEventListener('change', (e) => {
   const fichier = e.target.files[0];
   if (!fichier) return;
   if (fichier.size > 5 * 1024 * 1024) return toastErreur('Image trop lourde (max 5 Mo).');
+  verifierRatioCouverture(fichier).then(({ ok }) => {
+    etat.couvertureOk = ok;
+    if (!ok) {
+      toast('Couverture acceptée, mais ratio à corriger : vise 1,6:1.', 'info', 5000);
+    }
+    mettreAJourQualitePublication();
+  });
   etat.couverture = fichier;
   const url = URL.createObjectURL(fichier);
   qs('#cover-preview').innerHTML = `<img src="${url}" alt="Couverture" />`;
@@ -310,6 +409,7 @@ qs('#cover-input')?.addEventListener('change', (e) => {
 
 qs('#cover-remove')?.addEventListener('click', () => {
   etat.couverture = null;
+  etat.couvertureOk = false;
   qs('#cover-input').value = '';
   qs('#cover-preview').innerHTML = `
     <div class="cover-preview__placeholder">
@@ -528,7 +628,12 @@ function remplirRecap() {
 
   qs('#recap-titre').textContent   = qs('#titre').value || '—';
   qs('#recap-genre').textContent   = genres[qs('#genre').value] || '—';
+  qs('#recap-categories').textContent = [
+    qs('#categorie-principale')?.selectedOptions?.[0]?.textContent || '',
+    qs('#categorie-secondaire')?.selectedOptions?.[0]?.textContent || '',
+  ].filter(t => t && !t.includes('Optionnel')).join(' · ') || '—';
   qs('#recap-langue').textContent  = langues[qs('#langue').value] || '—';
+  qs('#recap-mots-cles').textContent = lireMotsCles().join(', ') || '—';
   qs('#recap-statut').textContent  = qs('#statut-oeuvre').value === 'premium'
     ? `Premium — ${qs('#prix').value || '?'} FCFA · ${qs('#chapitres-gratuits')?.value || 0} chapitre(s) gratuit(s)` : 'Gratuit';
   qs('#recap-licence').textContent = qs('#licence-oeuvre').value === 'cc'
@@ -553,6 +658,9 @@ qs('#btn-publier')?.addEventListener('click', async () => {
   try {
     const user = await getUser();
     if (!user) throw new Error('Tu dois être connecté pour publier.');
+    if (!validerEtape1() || !validerEtape2() || !validerEtape3() || !validerChecklistFinale()) {
+      return;
+    }
 
     // 1. Lire le contenu
     let contenu = '';
@@ -569,6 +677,7 @@ qs('#btn-publier')?.addEventListener('click', async () => {
     // 3. Créer l'œuvre en base
     const frequence      = qs('#frequence-publication')?.value || 'immediate';
     const dateDebut      = qs('#date-debut-publication')?.value || null;
+    const metadonneesPublication = collecterMetadonneesPublication();
     const oeuvreData = {
       auteur_id:              user.id,
       titre:                  qs('#titre').value.trim(),
@@ -672,6 +781,8 @@ qs('#btn-publier')?.addEventListener('click', async () => {
       ...oeuvreData,
       couverture_url: urlCouverture,
       fichier_url: cheminFichier,
+      ...metadonneesPublication,
+      metadata_publication: metadonneesPublication,
     }, {
       chapitres,
       fichierOriginal: etat.fichier,

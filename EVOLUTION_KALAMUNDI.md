@@ -11,6 +11,7 @@ Types : `feat` (fonctionnalité) · `decision` (choix produit) · `fix` (correct
 
 ## 2026-07
 
+- **2026-07-16 — feat** : P1.7 livré — formulaire de publication aligné standards KDP/Kobo : sous-titre, série, catégories, mots-clés (max 7), ISBN, éditeur, territoires, protection numérique, checklist bloquante à 85 %, couverture obligatoire avec ratio vertical 1,6:1, métadonnées synchronisées dans `livres.metadata` et contrôle `check-publish-standards`.
 - **2026-07-16 — infra** : P1.6 backfill ajouté — commande `npm run epub:backfill` (`scripts/backfill_epub_editions.mjs`) pour générer les EPUB canoniques des œuvres existantes, uploader `oeuvres/{id}/canonique.epub`, synchroniser `livres`, `livre_editions` et `livre_offres`. Mode test par défaut, écriture uniquement avec `--apply`.
 - **2026-07-16 — infra** : P1.6 validation préparée — ajout de `scripts/validate_epub.mjs`, commande `npm run epub:validate` et mémo `tools/epubcheck/README.md` pour lancer l'epubcheck officiel dès que Java + `epubcheck.jar` sont disponibles. Sur cette machine, Java n'est pas installé, donc la validation stricte reste à activer côté environnement.
 - **2026-07-16 — feat** : P1.6 avancé — publication reliée au pipeline commerce/EPUB : génération d'un **EPUB canonique navigateur** (`assets/js/epub-builder.js`), upload privé `canonique.epub`, synchronisation automatique `livres`, `livre_editions` (`chapitres` + `epub`) et `livre_offres` pour chaque nouvelle publication, plus contrôle de régression. Cache PWA `kala-v22`.

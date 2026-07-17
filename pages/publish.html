@@ -118,6 +118,25 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label" for="sous-titre">Sous-titre</label>
+          <input class="form-input" type="text" id="sous-titre" name="sous_titre"
+            placeholder="Ex : Chroniques d'une jeunesse à Douala" maxlength="200" />
+        </div>
+
+        <div class="publish-form-grid">
+          <div class="form-group">
+            <label class="form-label" for="serie">Série / collection</label>
+            <input class="form-input" type="text" id="serie" name="serie"
+              placeholder="Ex : Saga Mboa" maxlength="120" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="numero-serie">Numéro</label>
+            <input class="form-input" type="number" id="numero-serie" name="numero_serie"
+              min="1" max="999" placeholder="1" />
+          </div>
+        </div>
+
+        <div class="form-group">
           <label class="form-label form-label--required" for="genre">Genre littéraire</label>
           <select class="form-select" id="genre" name="genre" required>
             <option value="">— Choisir un genre —</option>
@@ -140,6 +159,41 @@
             <option value="humour">Humour / Satire</option>
             <option value="bd">Bande dessinée / Roman graphique</option>
           </select>
+        </div>
+
+        <div class="publish-form-grid">
+          <div class="form-group">
+            <label class="form-label form-label--required" for="categorie-principale">Catégorie principale</label>
+            <select class="form-select" id="categorie-principale" required>
+              <option value="">— Choisir —</option>
+              <option value="fiction_africaine">Fiction africaine</option>
+              <option value="romance">Romance</option>
+              <option value="thriller_policier">Thriller / Policier</option>
+              <option value="poesie_oralite">Poésie & Oralité</option>
+              <option value="jeunesse">Jeunesse</option>
+              <option value="essai_societe">Essai / Société</option>
+              <option value="memoire_temoin">Mémoires / Témoignage</option>
+              <option value="education">Éducation</option>
+              <option value="spiritualite">Spiritualité</option>
+              <option value="business">Business / Développement</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="categorie-secondaire">Catégorie secondaire</label>
+            <select class="form-select" id="categorie-secondaire">
+              <option value="">— Optionnel —</option>
+              <option value="fiction_africaine">Fiction africaine</option>
+              <option value="romance">Romance</option>
+              <option value="thriller_policier">Thriller / Policier</option>
+              <option value="poesie_oralite">Poésie & Oralité</option>
+              <option value="jeunesse">Jeunesse</option>
+              <option value="essai_societe">Essai / Société</option>
+              <option value="memoire_temoin">Mémoires / Témoignage</option>
+              <option value="education">Éducation</option>
+              <option value="spiritualite">Spiritualité</option>
+              <option value="business">Business / Développement</option>
+            </select>
+          </div>
         </div>
 
         <div class="form-group">
@@ -169,6 +223,26 @@
             placeholder="Décris ton œuvre en quelques phrases — ce qui la rend unique, ce que le lecteur va découvrir..."
             maxlength="1000" rows="4"></textarea>
           <span class="form-hint" id="resume-counter">0 / 1000 caractères</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label--required" for="mots-cles">Mots-clés</label>
+          <input class="form-input" type="text" id="mots-cles" name="mots_cles"
+            placeholder="Ex : famille, Douala, héritage, amour, secrets" maxlength="220" />
+          <span class="form-hint">Jusqu'à 7 mots-clés, séparés par des virgules.</span>
+        </div>
+
+        <div class="publish-form-grid">
+          <div class="form-group">
+            <label class="form-label" for="isbn">ISBN</label>
+            <input class="form-input" type="text" id="isbn" name="isbn"
+              placeholder="Optionnel — sinon ID Kalamundi" maxlength="20" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editeur">Éditeur</label>
+            <input class="form-input" type="text" id="editeur" name="editeur"
+              placeholder="Auto-édition" maxlength="160" />
+          </div>
         </div>
 
         <div class="form-group">
@@ -457,6 +531,26 @@
           <input type="hidden" id="licence-oeuvre" name="licence" value="tous_droits" />
         </div>
 
+        <div class="publish-form-grid" style="margin-top:var(--spacing-lg);">
+          <div class="form-group">
+            <label class="form-label form-label--required" for="territoires">Territoires de diffusion</label>
+            <select class="form-select" id="territoires">
+              <option value="monde" selected>Monde entier</option>
+              <option value="afrique">Afrique</option>
+              <option value="cemac">CEMAC</option>
+              <option value="cameroun">Cameroun uniquement</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="drm-protection">Protection numérique</label>
+            <select class="form-select" id="drm-protection">
+              <option value="standard" selected>Standard Kalamundi</option>
+              <option value="sans_drm">Sans DRM</option>
+              <option value="pret_lcp_futur">Préparer prêt numérique LCP</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Déclaration de propriété -->
         <div class="form-group" style="margin-top:var(--spacing-lg);">
           <div class="form-check">
@@ -499,8 +593,16 @@
                 <span id="recap-genre">—</span>
               </div>
               <div class="flex-between">
+                <span class="text-secondary">Catégories</span>
+                <span id="recap-categories">—</span>
+              </div>
+              <div class="flex-between">
                 <span class="text-secondary">Langue</span>
                 <span id="recap-langue">—</span>
+              </div>
+              <div class="flex-between">
+                <span class="text-secondary">Mots-clés</span>
+                <span id="recap-mots-cles">—</span>
               </div>
               <div class="flex-between">
                 <span class="text-secondary">Accès</span>
