@@ -34,9 +34,8 @@ export async function onRequestPost({ request, env }) {
     }
 
     const paiements = await getPaiements(env, transId);
-    if (!paiements.length) return json({ error: 'Paiement introuvable.' }, 404);
-    const dejaConfirmes = paiements.every(p => p.statut === 'confirme');
-    if (dejaConfirmes) return json({ success: true, alreadyConfirmed: true, count: paiements.length });
+    const cadeaux = await getCadeaux(env, transId);
+    if (!paiements.length && !cadeaux.length) return json({ error: 'Paiement introuvable.' }, 404);
 
     for (const paiement of paiements) {
       if (paiement.statut !== 'confirme') {
@@ -49,7 +48,17 @@ export async function onRequestPost({ request, env }) {
       }
     }
 
-    return json({ success: true, count: paiements.length });
+    /* Cadeaux (diaspora) : on ne donne PAS l'accès à l'acheteur — on marque
+       le cadeau « paye » (il deviendra réclamable) et on crédite l'auteur. */
+    let cadeauxConfirmes = 0;
+    for (const cadeau of cadeaux) {
+      if (cadeau.statut !== 'en_attente') continue; // idempotent
+      await updateCadeau(env, cadeau.id, { statut: 'paye' });
+      await crediterAuteur(env, cadeau.oeuvre_id, Number(cadeau.montant_xaf) || 0, { type: 'vente_cadeau' });
+      cadeauxConfirmes++;
+    }
+
+    return json({ success: true, count: paiements.length, cadeaux: cadeauxConfirmes });
   } catch (err) {
     return json({ error: err.message || 'Erreur webhook Fapshi.' }, 500);
   }
@@ -83,26 +92,51 @@ async function activerAccesOeuvre(env, paiement) {
     }),
   });
 
+  await crediterAuteur(env, paiement.oeuvre_id, Number(paiement.montant) || 0, {
+    type: 'vente_premium',
+    paiementId: paiement.id,
+    devise: paiement.devise || 'XAF',
+  });
+}
+
+/* Crédite l'auteur de sa part (50 %) sur une vente — achat direct OU cadeau.
+   L'auteur est payé dans les deux cas : ce qui change, c'est qui reçoit l'accès. */
+async function crediterAuteur(env, oeuvreId, montantXaf, { type = 'vente_premium', paiementId = null, devise = 'XAF' } = {}) {
+  if (!oeuvreId || !montantXaf) return;
+
   const oeuvre = await supabaseFetch(
     env,
-    `${SUPABASE_URL}/rest/v1/oeuvres?id=eq.${encodeURIComponent(paiement.oeuvre_id)}&select=auteur_id&limit=1`
+    `${SUPABASE_URL}/rest/v1/oeuvres?id=eq.${encodeURIComponent(oeuvreId)}&select=auteur_id&limit=1`
   ).then(rows => rows?.[0]);
+  if (!oeuvre?.auteur_id) return;
 
-  if (!oeuvre?.auteur_id || !paiement.montant) return;
-  const partAuteur = Math.round(Number(paiement.montant) * SPLIT_AUTEUR_PREMIUM * 100) / 100;
+  const partAuteur = Math.round(montantXaf * SPLIT_AUTEUR_PREMIUM * 100) / 100;
   await supabaseFetch(env, `${SUPABASE_URL}/rest/v1/revenus`, {
     method: 'POST',
     headers: { Prefer: 'return=minimal' },
     body: JSON.stringify({
       auteur_id: oeuvre.auteur_id,
-      oeuvre_id: paiement.oeuvre_id,
-      paiement_id: paiement.id,
+      oeuvre_id: oeuvreId,
+      paiement_id: paiementId,
       montant: partAuteur,
-      devise: paiement.devise || 'XAF',
-      type: 'vente_premium',
+      devise,
+      type,
       statut: 'en_attente',
     }),
   }).catch(() => {});
+}
+
+async function getCadeaux(env, reference) {
+  const url = `${SUPABASE_URL}/rest/v1/cadeaux?paiement_id=eq.${encodeURIComponent(reference)}&select=*`;
+  return await supabaseFetch(env, url) || [];
+}
+
+async function updateCadeau(env, id, champs) {
+  await supabaseFetch(env, `${SUPABASE_URL}/rest/v1/cadeaux?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify(champs),
+  });
 }
 
 async function activerAbonnement(env, paiement) {

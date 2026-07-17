@@ -12,6 +12,7 @@
  */
 
 import { convertirVersXaf, tauxUsdDepuisEnv, DEVISE_BASE } from '../../scripts/lib/devises.mjs';
+import { genererCodeCadeau } from '../../scripts/lib/cadeaux.mjs';
 
 const FAPSHI_BASE = 'https://live.fapshi.com';
 const SUPABASE_URL = 'https://iobieffnaauecyukecds.supabase.co';
@@ -33,7 +34,8 @@ export async function onRequestPost({ request, env }) {
   }
 
   const { montant, devise, description, userId, oeuvreId, plan, redirectUrl } = body;
-  const items = Array.isArray(body.items)
+  const estCadeau = body.cadeau === true;
+  const items = estCadeau ? [] : Array.isArray(body.items)
     ? body.items
         .filter(item => item?.oeuvreId && Number(item.prix || 0) > 0)
         .map(item => ({
@@ -63,6 +65,9 @@ export async function onRequestPost({ request, env }) {
   if (!montantXAF || montantXAF < 100) {
     return new Response(JSON.stringify({ error: 'Montant invalide (min 100 XAF)' }), { status: 400, headers: corsHeaders });
   }
+  if (estCadeau && !oeuvreId) {
+    return new Response(JSON.stringify({ error: 'Cadeau : œuvre à offrir manquante.' }), { status: 400, headers: corsHeaders });
+  }
   if (items.length) {
     const totalItems = items.reduce((sum, item) => sum + item.montant, 0);
     if (Math.abs(totalItems - montantXAF) > 1) {
@@ -85,7 +90,9 @@ export async function onRequestPost({ request, env }) {
         message:     description || (items.length ? `Kalamundi — ${items.length} livre(s)` : 'Kalamundi'),
         redirect_url: redirectUrl || 'https://kalamundi.com/pages/payment.html?fapshi=success',
         userId:      userId,
-        externalId:  items.length ? `cart-${userId}-${Date.now()}` : (oeuvreId || plan || userId),
+        externalId:  estCadeau ? `gift-${userId}-${Date.now()}`
+                   : items.length ? `cart-${userId}-${Date.now()}`
+                   : (oeuvreId || plan || userId),
       }),
     });
   } catch (e) {
@@ -98,6 +105,31 @@ export async function onRequestPost({ request, env }) {
   }
 
   const data = await fapshiRes.json();
+
+  if (estCadeau) {
+    /* Un cadeau ne donne PAS d'accès à l'acheteur : on crée une ligne cadeaux
+       en attente, réclamable via un code. Le webhook la passera à « paye ». */
+    const code = await enregistrerCadeau({
+      env,
+      offreurId: userId,
+      oeuvreId,
+      montant,
+      devise: (devise || DEVISE_BASE).toUpperCase(),
+      montantXaf: montantXAF,
+      transId: data.transId,
+      beneficiaireContact: body.beneficiaireContact,
+      message: body.message,
+    }).catch(() => null);
+
+    if (!code) {
+      return new Response(JSON.stringify({ error: 'Cadeau non enregistré.' }), { status: 500, headers: corsHeaders });
+    }
+    return new Response(JSON.stringify({ link: data.link, transId: data.transId, code }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
+
   await enregistrerPaiement({
     env,
     userId,
@@ -113,6 +145,41 @@ export async function onRequestPost({ request, env }) {
     status: 200,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
   });
+}
+
+async function enregistrerCadeau({ env, offreurId, oeuvreId, montant, devise, montantXaf, transId, beneficiaireContact, message }) {
+  if (!env.SUPABASE_SERVICE_KEY || !offreurId || !oeuvreId || !transId) return null;
+
+  /* Insertion avec code unique ; en cas de collision (rarissime), on régénère. */
+  for (let tentative = 0; tentative < 3; tentative++) {
+    const code = genererCodeCadeau();
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/cadeaux`, {
+      method: 'POST',
+      headers: {
+        apikey: env.SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({
+        offreur_id: offreurId,
+        oeuvre_id: oeuvreId,
+        code,
+        beneficiaire_contact: beneficiaireContact || null,
+        message: message ? String(message).slice(0, 500) : null,
+        montant: Number(montant) || 0,
+        devise,
+        montant_xaf: montantXaf,
+        paiement_id: transId,
+        statut: 'en_attente',
+      }),
+    });
+
+    if (res.ok) return code;
+    const texte = await res.text();
+    if (!/duplicate|unique/i.test(texte)) throw new Error(texte); // vraie erreur : on ne réessaie pas
+  }
+  throw new Error('Impossible de générer un code cadeau unique.');
 }
 
 async function enregistrerPaiement({ env, userId, oeuvreId, plan, montant, transId, items = [] }) {
