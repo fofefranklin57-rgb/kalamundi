@@ -16,6 +16,20 @@ Format par entrée :
 
 ---
 
+### [2026-07-16] Un paiement en euros valait 655 fois trop peu
+- **Symptôme** : un acheteur de la diaspora payant en EUR aurait été débité d'un montant absurde — 10 € auraient été encaissés comme **10 FCFA** (≈ 0,015 €).
+- **Cause** : `fapshi-pay.js` ne convertissait que l'USD ; toute autre devise tombait dans `parseInt(montant)` et était donc **traitée comme des XAF**. L'EUR n'était pas géré du tout, et une devise inconnue passait silencieusement.
+- **Correctif** : conversion centralisée dans `scripts/lib/devises.mjs` (parité fixe légale 1 EUR = 655,957 XAF) ; toute devise non reconnue est désormais **refusée** au lieu d'être supposée en XAF. `normaliserDevise` n'a volontairement **aucun repli implicite**.
+- **Fichier(s)** : `functions/api/fapshi-pay.js`, `scripts/lib/devises.mjs`, `scripts/check-devises.mjs`.
+- **Leçon** : un défaut silencieux sur une devise est une faute comptable. En cas de doute, refuser — jamais supposer la devise de base.
+
+### [2026-07-16] Le dollar était converti avec la parité de l'euro
+- **Symptôme** : un paiement en USD était converti au taux **655,957**, soit une surfacturation d'environ 8-10 %.
+- **Cause** : 655,957 est la **parité fixe du franc CFA à l'EURO** (arrimage légal depuis 1999), pas un taux du dollar. Le code l'appliquait à l'USD, traitant de fait 1 USD = 1 EUR.
+- **Correctif** : le taux USD devient configurable (`TAUX_USD_XAF`, car le dollar **flotte**), avec un garde-fou de plage et un **tripwire nommé** qui refuse explicitement 655,957 comme taux USD.
+- **Fichier(s)** : `functions/api/fapshi-pay.js`, `scripts/lib/devises.mjs`.
+- **Leçon** : ne jamais réutiliser une constante monétaire hors de sa devise. Une parité fixe (EUR) et un taux flottant (USD) sont deux natures différentes — le code doit le dire.
+
 ### [2026-07-16] Tous les EPUB générés étaient invalides (préfixe `epub:` non déclaré)
 - **Symptôme** : aucun — et c'est le problème. Les EPUB se construisaient sans erreur mais étaient structurellement invalides ; un lecteur strict (Readium, epubcheck) les aurait rejetés.
 - **Cause** : les documents de chapitre utilisaient `epub:type="chapter"` sans déclarer `xmlns:epub` sur `<html>` (le `nav.xhtml`, lui, le déclarait). Un préfixe XML non déclaré rend le document mal formé. Présent dans **les deux** générateurs.

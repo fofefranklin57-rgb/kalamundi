@@ -5,7 +5,13 @@
  * Variables d'environnement requises (Cloudflare Pages → Settings → Variables) :
  *   FAPSHI_API_KEY  — clé API Fapshi (dashboard.fapshi.com → API Keys)
  *   FAPSHI_API_USER — email du compte Fapshi
+ *
+ * Optionnel (diaspora, D11) :
+ *   TAUX_USD_XAF    — taux USD→XAF courant (le dollar flotte, à rafraîchir).
+ *                     L'euro n'en a pas besoin : parité fixe 655,957.
  */
+
+import { convertirVersXaf, tauxUsdDepuisEnv, DEVISE_BASE } from '../../scripts/lib/devises.mjs';
 
 const FAPSHI_BASE = 'https://live.fapshi.com';
 const SUPABASE_URL = 'https://iobieffnaauecyukecds.supabase.co';
@@ -43,9 +49,16 @@ export async function onRequestPost({ request, env }) {
     return new Response(JSON.stringify({ error: 'Session invalide.' }), { status: 401, headers: corsHeaders });
   }
 
-  /* Montant en XAF (Fapshi travaille en XAF) */
-  let montantXAF = parseInt(montant, 10);
-  if (devise === 'USD') montantXAF = Math.round(parseFloat(montant) * 655.957);
+  /* Montant en XAF (Fapshi encaisse en XAF).
+     La conversion passe par scripts/lib/devises.mjs : une devise inconnue est
+     refusée, jamais traitée comme des XAF (10 EUR ne doivent pas devenir
+     10 FCFA), et le dollar n'utilise plus la parité fixe de l'euro. */
+  let montantXAF;
+  try {
+    montantXAF = convertirVersXaf(montant, devise || DEVISE_BASE, { tauxUsdXaf: tauxUsdDepuisEnv(env) });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders });
+  }
 
   if (!montantXAF || montantXAF < 100) {
     return new Response(JSON.stringify({ error: 'Montant invalide (min 100 XAF)' }), { status: 400, headers: corsHeaders });
