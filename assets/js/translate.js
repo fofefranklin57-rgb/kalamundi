@@ -40,10 +40,11 @@ const _cacheMemoire = new Map(); // clé : "chapitreId_langue"
    Ordre : cache mémoire → cache Supabase → Edge Function
    ============================================================ */
 
-export async function traduire(chapitreId, contenu, langueCible, langueSource = 'fr') {
+export async function traduire(chapitre, contenu, langueCible, langueSource = 'fr') {
   if (langueCible === 'original') return contenu;
 
-  const cleCache = `${chapitreId}_${langueCible}`;
+  const ref = normaliserReferenceChapitre(chapitre);
+  const cleCache = `${ref.cacheKey}_${langueSource}_${langueCible}`;
 
   /* 1. Cache mémoire (instantané) */
   if (_cacheMemoire.has(cleCache)) {
@@ -51,7 +52,7 @@ export async function traduire(chapitreId, contenu, langueCible, langueSource = 
   }
 
   /* 2. Cache Supabase (persistant entre sessions) */
-  const cached = await api.getTraduction(chapitreId, langueCible);
+  const cached = await api.getTraduction(ref.stableId, langueCible, { chapitreId: ref.dbId });
   if (cached?.contenu_traduit) {
     _cacheMemoire.set(cleCache, cached.contenu_traduit);
     return cached.contenu_traduit;
@@ -61,10 +62,28 @@ export async function traduire(chapitreId, contenu, langueCible, langueSource = 
   const traduit = await _appelEdgeFunction(contenu, langueCible, langueSource);
 
   /* Sauvegarder en base + cache mémoire */
-  await api.saveTraduction(chapitreId, langueCible, traduit).catch(() => {});
+  await api.saveTraduction(ref.stableId, langueCible, traduit, {
+    chapitreId: ref.dbId,
+    langueSource,
+    sourceHash: ref.sourceHash,
+  }).catch(() => {});
   _cacheMemoire.set(cleCache, traduit);
 
   return traduit;
+}
+
+function normaliserReferenceChapitre(chapitre) {
+  if (typeof chapitre === 'string') {
+    return { stableId: chapitre, dbId: chapitre, sourceHash: null, cacheKey: chapitre };
+  }
+  const stableId = chapitre?.chapitre_id || chapitre?.chapitre_ref || chapitre?.id;
+  const dbId = chapitre?.id || stableId;
+  return {
+    stableId,
+    dbId,
+    sourceHash: chapitre?.source_hash || null,
+    cacheKey: stableId || dbId || 'chapitre',
+  };
 }
 
 /* ============================================================

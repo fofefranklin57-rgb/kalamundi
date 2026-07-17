@@ -488,7 +488,7 @@ async function chargerChapitre(numero, sansAnimation = false) {
   if (etat.langueAffichee !== 'original') {
     loadingEl.querySelector('span').textContent = 'Traduction en cours…';
     try {
-      contenu = await obtenirTraduction(chapitre.id, contenu, etat.langueAffichee);
+      contenu = await obtenirTraduction(chapitre, contenu, etat.langueAffichee);
     } catch {
       toast('Traduction indisponible — affichage en langue originale.', 'info');
       etat.langueAffichee = 'original';
@@ -595,6 +595,8 @@ function normaliserOeuvreLocale(livre) {
 function normaliserChapitresLocaux(livre) {
   return (livre.chapitres || []).map((ch, index) => ({
     id: ch.id || `offline-${livre.id}-${ch.numero || index + 1}`,
+    chapitre_id: ch.chapitre_id || ch.chapitre_ref || ch.id || `offline-${livre.id}-${ch.numero || index + 1}`,
+    source_hash: ch.source_hash || null,
     numero: Number(ch.numero || index + 1),
     titre: ch.titre || null,
     contenu: ch.contenu || ch.contenu_texte || '',
@@ -609,6 +611,8 @@ function normaliserChapitresOeuvre(oeuvre) {
     .sort((a, b) => Number(a.numero || 0) - Number(b.numero || 0))
     .map((ch, index) => ({
       id: ch.id,
+      chapitre_id: ch.chapitre_id || ch.chapitre_ref || ch.id,
+      source_hash: ch.source_hash || null,
       numero: Number(ch.numero || index + 1),
       titre: ch.titre || null,
       type_element: ch.type_element || 'chapitre',
@@ -745,9 +749,9 @@ function formaterTexte(texte) {
    TRADUCTION
    ============================================================ */
 
-async function obtenirTraduction(chapitreId, contenu, langue) {
+async function obtenirTraduction(chapitre, contenu, langue) {
   const langueSource = etat.oeuvre?.langue_originale || 'fr';
-  return traduire(chapitreId, contenu, langue, langueSource);
+  return traduire(chapitre, contenu, langue, langueSource);
 }
 
 /* ============================================================

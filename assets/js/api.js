@@ -340,7 +340,7 @@ export const api = {
   async getChapitres(oeuvreId, { inclureNonPublies = false } = {}) {
     let query = supabase
       .from('chapitres')
-      .select('id, numero, titre, type_element, visible, date_publication, created_at')
+      .select('id, numero, titre, chapitre_id, source_hash, type_element, visible, date_publication, created_at')
       .eq('oeuvre_id', oeuvreId)
       .order('numero');
     if (!inclureNonPublies) {
@@ -349,7 +349,13 @@ export const api = {
         .or(`date_publication.is.null,date_publication.lte.${new Date().toISOString()}`);
     }
     let { data, error } = await query;
-    if (error && (colonneManquante(error, 'date_publication') || colonneManquante(error, 'visible') || colonneManquante(error, 'type_element'))) {
+    if (error && (
+      colonneManquante(error, 'date_publication')
+      || colonneManquante(error, 'visible')
+      || colonneManquante(error, 'type_element')
+      || colonneManquante(error, 'chapitre_id')
+      || colonneManquante(error, 'source_hash')
+    )) {
       const retry = await supabase
         .from('chapitres')
         .select('id, numero, titre, created_at')
@@ -365,10 +371,19 @@ export const api = {
   async getChapitre(chapitreId) {
     let { data, error } = await supabase
       .from('chapitres')
-      .select('id, oeuvre_id, numero, titre, contenu, contenu_texte, type_element, visible, date_publication')
+      .select('id, oeuvre_id, numero, titre, contenu, contenu_texte, chapitre_id, source_hash, type_element, visible, date_publication')
       .eq('id', chapitreId)
       .single();
     if (error && colonneManquante(error, 'contenu')) {
+      const retry = await supabase
+        .from('chapitres')
+        .select('id, oeuvre_id, numero, titre, contenu_texte, chapitre_id, source_hash, type_element, visible, date_publication')
+        .eq('id', chapitreId)
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
+    if (error && (colonneManquante(error, 'chapitre_id') || colonneManquante(error, 'source_hash'))) {
       const retry = await supabase
         .from('chapitres')
         .select('id, oeuvre_id, numero, titre, contenu_texte, type_element, visible, date_publication')
@@ -384,15 +399,21 @@ export const api = {
   async getChapitresOffline(oeuvreId) {
     let { data, error } = await supabase
       .from('chapitres')
-      .select('numero, titre, contenu, contenu_texte, visible, date_publication')
+      .select('id, numero, titre, contenu, contenu_texte, chapitre_id, source_hash, visible, date_publication')
       .eq('oeuvre_id', oeuvreId)
       .eq('visible', true)
       .or(`date_publication.is.null,date_publication.lte.${new Date().toISOString()}`)
       .order('numero');
-    if (error && (colonneManquante(error, 'contenu') || colonneManquante(error, 'date_publication') || colonneManquante(error, 'visible'))) {
+    if (error && (
+      colonneManquante(error, 'contenu')
+      || colonneManquante(error, 'date_publication')
+      || colonneManquante(error, 'visible')
+      || colonneManquante(error, 'chapitre_id')
+      || colonneManquante(error, 'source_hash')
+    )) {
       const retry = await supabase
         .from('chapitres')
-        .select('numero, titre, contenu_texte')
+        .select('id, numero, titre, contenu_texte')
         .eq('oeuvre_id', oeuvreId)
         .order('numero');
       data = retry.data;
@@ -400,8 +421,11 @@ export const api = {
     }
     if (error) throw error;
     return (data || []).map(ch => ({
+      id: ch.id,
       numero: ch.numero,
       titre: ch.titre,
+      chapitre_id: ch.chapitre_id || ch.id,
+      source_hash: ch.source_hash || null,
       contenu: ch.contenu || ch.contenu_texte || '',
     }));
   },
@@ -585,26 +609,48 @@ export const api = {
 
   /* ---- Traductions -------------------------------------- */
 
-  async getTraduction(chapitreId, langueCible) {
-    const { data } = await supabase
+  async getTraduction(chapitreRef, langueCible, { chapitreId = null } = {}) {
+    let { data, error } = await supabase
       .from('traductions')
       .select('contenu_traduit')
-      .eq('chapitre_id', chapitreId)
+      .eq('chapitre_ref', chapitreRef)
       .eq('langue_cible', langueCible)
       .maybeSingle();
+    if (error && colonneManquante(error, 'chapitre_ref')) {
+      const retry = await supabase
+        .from('traductions')
+        .select('contenu_traduit')
+        .eq('chapitre_id', chapitreId || chapitreRef)
+        .eq('langue_cible', langueCible)
+        .maybeSingle();
+      data = retry.data;
+    }
     return data;
   },
 
-  async saveTraduction(chapitreId, langueCible, contenuTraduit) {
+  async saveTraduction(chapitreRef, langueCible, contenuTraduit, { chapitreId = null, langueSource = 'fr', sourceHash = null } = {}) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return; // skip silencieux si non authentifié (RLS bloquerait de toute façon)
-    const { error } = await supabase
+    let { error } = await supabase
       .from('traductions')
       .upsert({
-        chapitre_id:     chapitreId,
+        chapitre_id:     chapitreId || chapitreRef,
+        chapitre_ref:    chapitreRef,
+        langue_source:   langueSource,
+        source_hash:     sourceHash,
         langue_cible:    langueCible,
         contenu_traduit: contenuTraduit,
-      }, { onConflict: 'chapitre_id,langue_cible' });
+      }, { onConflict: 'chapitre_ref,langue_cible' });
+    if (error && colonneManquante(error, 'chapitre_ref')) {
+      const retry = await supabase
+        .from('traductions')
+        .upsert({
+          chapitre_id:     chapitreId || chapitreRef,
+          langue_cible:    langueCible,
+          contenu_traduit: contenuTraduit,
+        }, { onConflict: 'chapitre_id,langue_cible' });
+      error = retry.error;
+    }
     if (error) throw error;
   },
 
