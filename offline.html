@@ -92,6 +92,16 @@
       gap: var(--spacing-sm);
       color: var(--text-secondary);
     }
+    .offline-section-head {
+      max-width: var(--container-xl);
+      margin: var(--spacing-xl) auto var(--spacing-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: var(--spacing-md);
+    }
+    .offline-section-head h2 { margin: 0; color: var(--color-primary); }
+    .offline-section-head p { margin: 4px 0 0; color: var(--text-secondary); font-size: var(--font-size-sm); }
     .offline-empty { grid-column: 1 / -1; }
     .offline-book {
       display: grid;
@@ -195,6 +205,17 @@
 
     <section class="offline-books" id="offline-books" aria-live="polite">
       <div class="offline-loading"><span class="spinner"></span><span>Chargement…</span></div>
+    </section>
+
+    <div class="offline-section-head">
+      <div>
+        <h2>Mes achats</h2>
+        <p>Les livres premium confirmés par Fapshi restent accessibles depuis votre compte.</p>
+      </div>
+      <a class="btn btn--outline btn--sm" href="/pages/library.html?statut=premium">Voir les premium</a>
+    </div>
+    <section class="offline-books" id="purchased-books" aria-live="polite">
+      <div class="offline-loading"><span class="spinner"></span><span>Chargement des achats…</span></div>
     </section>
   </div>
   <script type="module" src="/assets/js/i18n-boot.js"></script>

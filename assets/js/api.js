@@ -879,6 +879,26 @@ export const api = {
     if (error) throw error;
   },
 
+  async getAchatsUtilisateur(userId) {
+    if (!userId) return [];
+    const { data, error } = await supabase
+      .from('paiements')
+      .select(`
+        id, oeuvre_id, montant, devise, statut, confirme_at, created_at,
+        oeuvres(id, titre, genre, couverture_url, resume, auteur_id,
+          profiles!oeuvres_auteur_id_fkey(nom))
+      `)
+      .eq('user_id', userId)
+      .eq('statut', 'confirme')
+      .not('oeuvre_id', 'is', null)
+      .order('confirme_at', { ascending: false });
+    if (error) {
+      console.warn('Achats indisponibles :', error);
+      return [];
+    }
+    return data || [];
+  },
+
   /* ---- Commentaires & Notes ----------------------------- */
 
   async getCommentaires(oeuvreId) {

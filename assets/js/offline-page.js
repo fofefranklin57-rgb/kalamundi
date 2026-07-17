@@ -3,11 +3,14 @@
    ============================================================ */
 
 import { listerLivres, supprimerLivre, espaceTotalKo } from './offline.js';
+import { getSession } from './auth.js';
+import { api } from './api.js';
 import { genererCouverture } from './cover-generator.js';
 import { echapperAttr, normaliserUrlImage } from './cover-utils.js';
 import { formatDateCourt, toast, toastErreur } from './utils.js';
 
 const listeEl = document.getElementById('offline-books');
+const achatsEl = document.getElementById('purchased-books');
 const countEl = document.getElementById('offline-count');
 const sizeEl = document.getElementById('offline-size');
 const stateEl = document.getElementById('offline-network-state');
@@ -18,7 +21,10 @@ async function init() {
   mettreAJourEtatReseau();
   window.addEventListener('online', mettreAJourEtatReseau);
   window.addEventListener('offline', mettreAJourEtatReseau);
-  await rendreBibliothequeLocale();
+  await Promise.all([
+    rendreBibliothequeLocale(),
+    rendreAchats(),
+  ]);
 }
 
 async function rendreBibliothequeLocale() {
@@ -60,6 +66,69 @@ async function rendreBibliothequeLocale() {
         Impossible d'ouvrir la bibliothèque hors-ligne sur cet appareil.
       </div>`;
   }
+}
+
+async function rendreAchats() {
+  if (!achatsEl) return;
+  const session = await getSession().catch(() => null);
+  if (!session?.user) {
+    achatsEl.innerHTML = `
+      <div class="empty-state offline-empty">
+        <div class="empty-state__icon">🔐</div>
+        <p class="empty-state__title">Connectez-vous pour voir vos achats</p>
+        <a href="/pages/login.html?redirect=/offline.html" class="btn btn--primary">Se connecter</a>
+      </div>`;
+    return;
+  }
+
+  try {
+    const achats = await api.getAchatsUtilisateur(session.user.id);
+    if (!achats.length) {
+      achatsEl.innerHTML = `
+        <div class="empty-state offline-empty">
+          <div class="empty-state__icon">💎</div>
+          <p class="empty-state__title">Aucun achat confirmé</p>
+          <p class="empty-state__text">Vos livres premium achetés via Fapshi apparaîtront ici.</p>
+          <a href="/pages/library.html?statut=premium" class="btn btn--primary">Découvrir les premium</a>
+        </div>`;
+      return;
+    }
+    achatsEl.innerHTML = achats.map(carteLivreAchete).join('');
+  } catch (err) {
+    console.error(err);
+    achatsEl.innerHTML = '<div class="alert alert--error">Impossible de charger vos achats.</div>';
+  }
+}
+
+function carteLivreAchete(achat) {
+  const oeuvre = achat.oeuvres || {};
+  const coverUrl = normaliserUrlImage(oeuvre.couverture_url);
+  const auteur = oeuvre.profiles?.nom || 'Auteur inconnu';
+  const fallback = genererCouverture(oeuvre.titre, auteur, oeuvre.genre, 220, 330);
+  const cover = coverUrl || fallback;
+  const date = achat.confirme_at || achat.created_at;
+  return `
+    <article class="offline-book">
+      <a class="offline-book__cover" href="/pages/reader.html?id=${encodeURIComponent(oeuvre.id || achat.oeuvre_id)}">
+        <img src="${echapperAttr(cover)}" alt="Couverture ${echapperAttr(oeuvre.titre || 'Livre acheté')}"
+          onerror="this.onerror=null;this.src='${echapperAttr(fallback)}'" />
+      </a>
+      <div class="offline-book__body">
+        <div class="offline-book__meta">
+          <span>Achat Fapshi</span>
+          <span>${Number(achat.montant || 0).toLocaleString('fr-FR')} ${achat.devise || 'XAF'}</span>
+        </div>
+        <h2 class="offline-book__title">
+          <a href="/pages/reader.html?id=${encodeURIComponent(oeuvre.id || achat.oeuvre_id)}">${echapper(oeuvre.titre || 'Livre acheté')}</a>
+        </h2>
+        <p class="offline-book__author">${echapper(auteur)}</p>
+        ${oeuvre.resume ? `<p class="offline-book__resume">${echapper(oeuvre.resume)}</p>` : ''}
+        <div class="offline-book__footer">
+          <span>Confirmé le ${date ? formatDateCourt(date) : '—'}</span>
+          <a class="btn btn--ghost btn--sm" href="/pages/reader.html?id=${encodeURIComponent(oeuvre.id || achat.oeuvre_id)}">Lire</a>
+        </div>
+      </div>
+    </article>`;
 }
 
 function carteLivreLocal(livre) {
