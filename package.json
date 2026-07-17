@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "check": "node scripts/check-js.mjs && node scripts/check-reader-regression.mjs && node scripts/check-epub-pipeline.mjs && node scripts/check-book-import.mjs && node scripts/check-publish-standards.mjs && node scripts/check-translation-normalization.mjs && node scripts/check-commerce-rails.mjs && node scripts/check-social-layer.mjs && node scripts/check-author-reporting.mjs && node scripts/check-cart-checkout.mjs && node scripts/check-purchase-history.mjs && node scripts/check-devises.mjs",
+    "check": "node scripts/check-js.mjs && node scripts/check-reader-regression.mjs && node scripts/check-epub-pipeline.mjs && node scripts/check-book-import.mjs && node scripts/check-publish-standards.mjs && node scripts/check-translation-normalization.mjs && node scripts/check-commerce-rails.mjs && node scripts/check-social-layer.mjs && node scripts/check-author-reporting.mjs && node scripts/check-cart-checkout.mjs && node scripts/check-purchase-history.mjs && node scripts/check-devises.mjs && node scripts/check-cadeaux.mjs",
     "chapters:repair": "node scripts/redecouper_chapitres.mjs",
     "epub:build": "node scripts/build_epub.mjs",
     "epub:validate": "node scripts/validate_epub.mjs",

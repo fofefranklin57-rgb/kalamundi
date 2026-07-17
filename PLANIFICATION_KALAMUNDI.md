@@ -124,7 +124,10 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 
 ### 🟩 P3 — Espace Acheter (Phase 2, numérique, sans logistique)
 12. 🟡 Entité produit/offres → **panier** → **checkout Fapshi** → store à rails → historique de commandes. `⟶ 5` *(panier, checkout multi-livres et historique achats livrés 17/07 ; reste store avancé/promos)*
-13. **Diaspora (D11)** — paiement international (cartes/PayPal) + multi-devises + **gifting**. `⟶ 12`
+13. 🟡 **Diaspora (D11)** — paiement international (cartes/PayPal) + multi-devises + **gifting**. `⟶ 12`
+    - ✅ **Multi-devises** (16/07) : `scripts/lib/devises.mjs` — XAF/EUR/USD, parité fixe EUR 655,957, USD flottant via `TAUX_USD_XAF`, devise inconnue refusée. A corrigé 2 bugs graves (cf. ERROR_LOG). Contrôle `check-devises`.
+    - ✅ **Gifting** (16/07) : migration `V011__cadeaux_diaspora.sql` + RPC `reclamer_cadeau` SECURITY DEFINER + codes `scripts/lib/cadeaux.mjs`. Contrôle `check-cadeaux`. ⚠️ **V011 reste à appliquer sur Supabase.**
+    - ⬜ **Reste** : connecteur de paiement international (cartes/PayPal — nécessite un compte marchand + secrets), UI d'achat cadeau et page de réclamation du code, branchement du webhook (marquer le cadeau `paye`).
 
 ### 🟦 P4 — Espaces avancés (chacun livré seul, dans l'ordre)
 14. **Vendre / occasion** (Phase 3) — listing ISBN, escrow, payout, logistique pilote. *(le plus dur)*
