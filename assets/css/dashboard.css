@@ -278,6 +278,68 @@
   font-size: var(--font-size-2xl);
 }
 
+.author-kdp {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.4fr);
+  gap: var(--spacing-lg);
+  align-items: stretch;
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.author-kdp__intro h2,
+.author-kdp__intro p {
+  margin: 0;
+}
+
+.author-kdp__intro h2 {
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+}
+
+.author-kdp__intro p {
+  margin-top: var(--spacing-xs);
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.author-kdp__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.author-kdp-card {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+}
+
+.author-kdp-card span,
+.author-kdp-card small {
+  display: block;
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+}
+
+.author-kdp-card span {
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: var(--font-weight-bold);
+}
+
+.author-kdp-card strong {
+  display: block;
+  margin: 6px 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
+}
+
 .author-top-list {
   margin-bottom: var(--spacing-md);
 }
@@ -334,6 +396,11 @@
   .author-command,
   .author-insights,
   .author-standard {
+    grid-template-columns: 1fr;
+  }
+
+  .author-kdp,
+  .author-kdp__grid {
     grid-template-columns: 1fr;
   }
 

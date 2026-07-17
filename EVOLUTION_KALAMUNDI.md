@@ -11,6 +11,7 @@ Types : `feat` (fonctionnalité) · `decision` (choix produit) · `fix` (correct
 
 ## 2026-07
 
+- **2026-07-17 — feat** : P2.11 livré — reporting auteur niveau KDP renforcé : API `getReportingAuteur`, dashboard avec ventes premium, pages suivies, royalties 50/50, seuil payout Mobile Money, Select affiché comme option en réserve, montants en XAF et contrôle `check-author-reporting`.
 - **2026-07-17 — feat** : P2.10 livré — couche sociale lecteur : migration `V010__etageres_sociales_stats.sql` (`oeuvre_etageres`, RPC `get_oeuvre_social_stats`), API stats/étagères, fiche œuvre avec compteurs avis/à lire/en cours/terminés/favoris, actions “À lire / En cours / Terminé / Favori”, marquage automatique “en cours” à la lecture et contrôle `check-social-layer`.
 - **2026-07-16 — feat** : P2.9 livré — accueil en **rails de lecture/commerce** et fiche livre unifiée : API `getOffresLivre`/`getRailsMarchands`, rails “Les plus lus / Nouveautés / Gratuit / Premium”, bloc offres sur `work.html` (lecture, achat Fapshi, hors ligne, emprunt et occasion préparés), recommandations nettoyées au design-system et contrôle `check-commerce-rails`.
 - **2026-07-16 — feat** : P1.8 livré — traduction ancrée sur `chapitre_id` stable : migration `V009__traductions_chapitres_stables.sql`, cache `chapitre_ref + langue_source + source_hash`, lecteur passant l'objet chapitre complet au traducteur, fallback compatible avec l'ancien `chapitre_id` technique et contrôle `check-translation-normalization`.

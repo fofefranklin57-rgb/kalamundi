@@ -76,6 +76,7 @@ const etat = {
 
     rendreHeader(profil);
     rendreStats(stats);
+    rendreReportingKdp(stats.reporting || {});
     rendrePilotageAuteur(stats, profil);
     rendreOeuvres(etat.oeuvres);
     remplirFormulaireProfil(profil);
@@ -162,11 +163,30 @@ function rendreStats(stats) {
   document.getElementById('stat-note').textContent =
     noteMoyenne !== '—' ? `⭐ ${noteMoyenne}` : '—';
   document.getElementById('stat-revenus').textContent =
-    stats.revenus?.total ? formatMontant(stats.revenus.total) : '0,00 $';
+    stats.revenus?.total ? formatMontant(stats.revenus.total, 'XAF') : formatMontant(0, 'XAF');
   document.getElementById('stat-premium').textContent = `${premium} premium`;
   document.getElementById('stat-moyenne-lectures').textContent = `${formatNombre(moyenneLectures)} / œuvre`;
   document.getElementById('stat-note-detail').textContent = `${notesMoyennes.length} œuvre${notesMoyennes.length > 1 ? 's' : ''} notée${notesMoyennes.length > 1 ? 's' : ''}`;
-  document.getElementById('stat-revenus-attente').textContent = `${formatMontant(stats.revenus?.en_attente || 0)} en attente`;
+  document.getElementById('stat-revenus-attente').textContent = `${formatMontant(stats.revenus?.en_attente || 0, 'XAF')} en attente`;
+}
+
+function rendreReportingKdp(reporting = {}) {
+  setText('kdp-ventes', formatNombre(reporting.ventes || 0));
+  setText('kdp-pages', formatNombre(reporting.pagesSuivies || 0));
+  setText('kdp-royalties', reporting.selectActif ? '70%' : '50%');
+  setText('kdp-royalties-detail', reporting.selectActif
+    ? 'Kalamundi Select actif'
+    : reporting.selectEligible
+      ? 'Select possible plus tard, non activé'
+      : 'Standard auteur indépendant');
+
+  const attente = Number(reporting.revenusAttente || 0);
+  const seuil = Number(reporting.seuilPayout || 5000);
+  const reste = Number(reporting.resteAvantPayout || Math.max(0, seuil - attente));
+  setText('kdp-payout', attente >= seuil ? 'Prêt' : formatMontant(reste, 'XAF'));
+  setText('kdp-payout-detail', attente >= seuil
+    ? `${formatMontant(attente, 'XAF')} en attente de payout`
+    : `Avant seuil ${formatMontant(seuil, 'XAF')}`);
 }
 
 function rendrePilotageAuteur(stats, profil) {
@@ -226,7 +246,7 @@ function rendrePilotageAuteur(stats, profil) {
     ? `${premium.length} œuvre${premium.length > 1 ? 's' : ''} premium`
     : totalLectures >= 50 ? 'Prêt pour un test premium' : 'Construire l’audience');
   const attente = revenus.filter(r => r.statut === 'en_attente').reduce((s, r) => s + Number(r.montant || 0), 0);
-  setText('author-revenue-pending', formatMontant(attente));
+  setText('author-revenue-pending', formatMontant(attente, 'XAF'));
 
   rendreTopOeuvres(oeuvres.slice(0, 3));
 }
@@ -339,8 +359,8 @@ function rendreRevenus(revenus) {
   const total   = revenus.reduce((s, r) => s + Number(r.montant || 0), 0);
   const attente = revenus.filter(r => r.statut === 'en_attente')
                          .reduce((s, r) => s + Number(r.montant || 0), 0);
-  document.getElementById('rev-total').textContent   = formatMontant(total);
-  document.getElementById('rev-attente').textContent = formatMontant(attente);
+  document.getElementById('rev-total').textContent   = formatMontant(total, 'XAF');
+  document.getElementById('rev-attente').textContent = formatMontant(attente, 'XAF');
 
   const conteneur = document.getElementById('liste-revenus');
   if (!revenus.length) return;
@@ -350,7 +370,7 @@ function rendreRevenus(revenus) {
         <div class="revenu-row">
           <span class="revenu-row__titre">${r.oeuvres?.titre || '—'}</span>
           <span class="revenu-row__date">${formatDateCourt(r.created_at)}</span>
-          <span class="revenu-row__montant">+${formatMontant(r.montant)}</span>
+          <span class="revenu-row__montant">+${formatMontant(r.montant, 'XAF')}</span>
           <span class="revenu-row__statut badge badge--${r.statut === 'paye' ? 'success' : 'warning'}">
             ${r.statut === 'paye' ? 'Payé' : 'En attente'}
           </span>

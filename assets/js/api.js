@@ -1058,6 +1058,59 @@ export const api = {
     return { total, en_attente };
   },
 
+  async getReportingAuteur(auteurId) {
+    const seuilPayout = 5000;
+    const lireRevenus = async () => {
+      try {
+        const result = await supabase
+          .from('revenus')
+          .select('id, oeuvre_id, montant, statut, type, created_at, oeuvres(titre, statut, prix)')
+          .eq('auteur_id', auteurId);
+        if (result.error) throw result.error;
+        return result;
+      } catch {
+        return { data: [] };
+      }
+    };
+    const lireLectures = async () => {
+      try {
+        const result = await supabase
+          .from('lectures')
+          .select('user_id, oeuvre_id, chapitre_courant, page_courante, updated_at, oeuvres!inner(auteur_id, titre, statut, prix)')
+          .eq('oeuvres.auteur_id', auteurId);
+        if (result.error) throw result.error;
+        return result;
+      } catch {
+        return { data: [] };
+      }
+    };
+    const [revenusResult, lecturesResult] = await Promise.all([lireRevenus(), lireLectures()]);
+
+    const revenus = revenusResult.data || [];
+    const lectures = lecturesResult.data || [];
+    const totalRevenus = revenus.reduce((s, r) => s + Number(r.montant || 0), 0);
+    const revenusAttente = revenus
+      .filter(r => r.statut === 'en_attente')
+      .reduce((s, r) => s + Number(r.montant || 0), 0);
+    const ventes = revenus.filter(r => ['premium', 'vente_premium'].includes(r.type)).length;
+    const pagesSuivies = lectures.reduce((s, l) => s + Math.max(1, Number(l.page_courante || 1)), 0);
+    const chapitresSuivis = lectures.reduce((s, l) => s + Math.max(1, Number(l.chapitre_courant || 1)), 0);
+    const lecteursUniques = new Set(lectures.map(l => l.user_id).filter(Boolean)).size;
+
+    return {
+      ventes,
+      totalRevenus,
+      revenusAttente,
+      seuilPayout,
+      resteAvantPayout: Math.max(0, seuilPayout - revenusAttente),
+      pagesSuivies,
+      chapitresSuivis,
+      lecteursUniques,
+      selectActif: false,
+      selectEligible: ventes > 0 || pagesSuivies >= 250,
+    };
+  },
+
   /* ---- Institutions ------------------------------------- */
 
   async getInstitution(userId) {
@@ -1856,9 +1909,10 @@ export const api = {
         .eq('visible', true);
       if (oeuvres.data) oeuvres.data = oeuvres.data.map(o => ({ ...o, chapitres_gratuits: 0 }));
     }
-    const [, revenus] = await Promise.all([
+    const [, revenus, reporting] = await Promise.all([
       Promise.resolve(oeuvres),
       api.getTotalRevenus(auteurId),
+      api.getReportingAuteur(auteurId),
     ]);
     if (oeuvres.error) throw oeuvres.error;
 
@@ -1867,6 +1921,7 @@ export const api = {
       nbOeuvres:     oeuvres.data.length,
       totalLectures,
       revenus,
+      reporting,
       oeuvres:       oeuvres.data,
     };
   },
