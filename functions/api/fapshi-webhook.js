@@ -33,19 +33,23 @@ export async function onRequestPost({ request, env }) {
       return json({ ignored: true, reason: `Statut ignore: ${status}` });
     }
 
-    const paiement = await getPaiement(env, transId);
-    if (!paiement) return json({ error: 'Paiement introuvable.' }, 404);
-    if (paiement.statut === 'confirme') return json({ success: true, alreadyConfirmed: true });
+    const paiements = await getPaiements(env, transId);
+    if (!paiements.length) return json({ error: 'Paiement introuvable.' }, 404);
+    const dejaConfirmes = paiements.every(p => p.statut === 'confirme');
+    if (dejaConfirmes) return json({ success: true, alreadyConfirmed: true, count: paiements.length });
 
-    await updatePaiement(env, paiement.id, { statut: 'confirme', confirme_at: new Date().toISOString() });
-
-    if (paiement.oeuvre_id) {
-      await activerAccesOeuvre(env, paiement);
-    } else {
-      await activerAbonnement(env, paiement);
+    for (const paiement of paiements) {
+      if (paiement.statut !== 'confirme') {
+        await updatePaiement(env, paiement.id, { statut: 'confirme', confirme_at: new Date().toISOString() });
+      }
+      if (paiement.oeuvre_id) {
+        await activerAccesOeuvre(env, paiement);
+      } else {
+        await activerAbonnement(env, paiement);
+      }
     }
 
-    return json({ success: true });
+    return json({ success: true, count: paiements.length });
   } catch (err) {
     return json({ error: err.message || 'Erreur webhook Fapshi.' }, 500);
   }
@@ -55,10 +59,9 @@ export async function onRequestOptions() {
   return new Response(null, { status: 204, headers });
 }
 
-async function getPaiement(env, reference) {
-  const url = `${SUPABASE_URL}/rest/v1/paiements?reference_transaction=eq.${encodeURIComponent(reference)}&select=*&limit=1`;
-  const data = await supabaseFetch(env, url);
-  return data?.[0] || null;
+async function getPaiements(env, reference) {
+  const url = `${SUPABASE_URL}/rest/v1/paiements?reference_transaction=eq.${encodeURIComponent(reference)}&select=*`;
+  return await supabaseFetch(env, url) || [];
 }
 
 async function updatePaiement(env, id, champs) {

@@ -7,6 +7,7 @@ import { api } from './api.js';
 import { getUser } from './auth.js';
 import { injecterPub } from './pub.js';
 import { estSauvegarde, sauvegarderLivre, supprimerLivre } from './offline.js';
+import { addToCart } from './cart.js';
 import { getParam, formatNombre, formatDate, toast, toastErreur, toastSucces } from './utils.js';
 import { genererCouverture } from './cover-generator.js';
 import { echapperAttr, normaliserUrlImage } from './cover-utils.js';
@@ -266,6 +267,9 @@ async function rendreActions(oeuvre) {
       <button class="btn btn--accent btn--lg js-buy">
         Accéder — ${formatPrixXaf(prix || 300)}
       </button>
+      <button class="btn btn--outline btn--lg js-cart">
+        Ajouter au panier
+      </button>
       <button class="btn btn--outline" id="btn-partager">Partager</button>`;
   }
 
@@ -280,6 +284,20 @@ async function rendreActions(oeuvre) {
       return;
     }
     window.location.href = `/pages/payment.html?oeuvre=${oeuvre.id}&montant=${encodeURIComponent(prix || 300)}&titre=${encodeURIComponent(oeuvre.titre || 'Kalamundi')}`;
+  }));
+
+  document.querySelectorAll('.js-cart').forEach(btn => btn.addEventListener('click', () => {
+    addToCart({
+      oeuvreId: oeuvre.id,
+      titre: oeuvre.titre || 'Livre Kalamundi',
+      auteur: oeuvre.profiles?.nom || '',
+      prix: prix || Number(oeuvre.prix || 300),
+      devise: 'XAF',
+    });
+    toast('Livre ajouté au panier.', 'success');
+    btn.textContent = 'Dans le panier';
+    btn.disabled = true;
+    setTimeout(() => { window.location.href = '/pages/payment.html?cart=1'; }, 450);
   }));
 
   // Bouton hors-ligne
@@ -376,7 +394,7 @@ function renderOffresLivre(oeuvre, offres, { deja, acces, prix }) {
         <h3 class="offer-card__title">${premium ? formatPrixXaf(prix || offreAchat?.prix || 300) : 'Inclus gratuitement'}</h3>
         <p class="offer-card__text">${premium ? 'Paiement Fapshi, accès complet et part auteur visible.' : 'Ce livre est déjà en accès libre.'}</p>
         ${premium && !acces
-          ? `<button class="btn btn--accent btn--sm js-buy">Payer avec Fapshi</button>`
+          ? `<div class="offer-card__actions"><button class="btn btn--accent btn--sm js-buy">Payer avec Fapshi</button><button class="btn btn--outline btn--sm js-cart">Panier</button></div>`
           : `<span class="offer-card__status">Accès complet</span>`}
       </article>
       <article class="offer-card">

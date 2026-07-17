@@ -27,6 +27,15 @@ export async function onRequestPost({ request, env }) {
   }
 
   const { montant, devise, description, userId, oeuvreId, plan, redirectUrl } = body;
+  const items = Array.isArray(body.items)
+    ? body.items
+        .filter(item => item?.oeuvreId && Number(item.prix || 0) > 0)
+        .map(item => ({
+          oeuvreId: item.oeuvreId,
+          titre: item.titre || 'Livre Kalamundi',
+          montant: parseInt(item.prix, 10),
+        }))
+    : [];
   const authHeader = request.headers.get('Authorization') || '';
   const jwt = authHeader.replace('Bearer ', '').trim();
   const user = await getUser(jwt, env);
@@ -41,6 +50,12 @@ export async function onRequestPost({ request, env }) {
   if (!montantXAF || montantXAF < 100) {
     return new Response(JSON.stringify({ error: 'Montant invalide (min 100 XAF)' }), { status: 400, headers: corsHeaders });
   }
+  if (items.length) {
+    const totalItems = items.reduce((sum, item) => sum + item.montant, 0);
+    if (Math.abs(totalItems - montantXAF) > 1) {
+      return new Response(JSON.stringify({ error: 'Total panier incohérent.' }), { status: 400, headers: corsHeaders });
+    }
+  }
 
   /* Appel API Fapshi — initier paiement */
   let fapshiRes;
@@ -54,10 +69,10 @@ export async function onRequestPost({ request, env }) {
       },
       body: JSON.stringify({
         amount:      montantXAF,
-        message:     description || 'Kalamundi',
+        message:     description || (items.length ? `Kalamundi — ${items.length} livre(s)` : 'Kalamundi'),
         redirect_url: redirectUrl || 'https://kalamundi.com/pages/payment.html?fapshi=success',
         userId:      userId,
-        externalId:  oeuvreId || plan || userId,
+        externalId:  items.length ? `cart-${userId}-${Date.now()}` : (oeuvreId || plan || userId),
       }),
     });
   } catch (e) {
@@ -77,6 +92,7 @@ export async function onRequestPost({ request, env }) {
     plan,
     montant: montantXAF,
     transId: data.transId,
+    items,
   }).catch(() => {});
 
   /* Fapshi retourne { link, transId } */
@@ -86,8 +102,29 @@ export async function onRequestPost({ request, env }) {
   });
 }
 
-async function enregistrerPaiement({ env, userId, oeuvreId, plan, montant, transId }) {
+async function enregistrerPaiement({ env, userId, oeuvreId, plan, montant, transId, items = [] }) {
   if (!env.SUPABASE_SERVICE_KEY || !userId || !transId) return;
+  const payload = items.length
+    ? items.map(item => ({
+        user_id: userId,
+        oeuvre_id: item.oeuvreId,
+        type: 'achat_oeuvre',
+        montant: item.montant,
+        devise: 'XAF',
+        methode: 'fapshi',
+        reference_transaction: transId,
+        statut: 'en_attente',
+      }))
+    : {
+        user_id: userId,
+        oeuvre_id: oeuvreId || null,
+        type: plan || 'achat_oeuvre',
+        montant,
+        devise: 'XAF',
+        methode: 'fapshi',
+        reference_transaction: transId,
+        statut: 'en_attente',
+      };
   const res = await fetch(`${SUPABASE_URL}/rest/v1/paiements`, {
     method: 'POST',
     headers: {
@@ -96,16 +133,7 @@ async function enregistrerPaiement({ env, userId, oeuvreId, plan, montant, trans
       'Content-Type': 'application/json',
       Prefer: 'return=minimal',
     },
-    body: JSON.stringify({
-      user_id: userId,
-      oeuvre_id: oeuvreId || null,
-      type: plan || 'achat_oeuvre',
-      montant,
-      devise: 'XAF',
-      methode: 'fapshi',
-      reference_transaction: transId,
-      statut: 'en_attente',
-    }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(await res.text());
 }

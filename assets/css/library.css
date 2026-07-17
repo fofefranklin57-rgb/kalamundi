@@ -849,6 +849,12 @@
   font-weight: var(--font-weight-bold);
 }
 
+.offer-card__actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
 .work-social {
   background: var(--bg-card);
   border: 1px solid var(--border-color);

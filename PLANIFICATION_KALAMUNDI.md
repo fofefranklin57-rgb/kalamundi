@@ -64,7 +64,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 
 ### Phase 2 — Espace Acheter (numérique, sans logistique)
 - [x] Entité Livre/produit + offres — ✅ Socle DB progressif livré (`livres`, `livre_editions`, `livre_offres`) ; reste UI panier/checkout en P3
-- [ ] Panier + checkout multi-articles (Fapshi)
+- [x] Panier + checkout multi-articles (Fapshi) — ✅ Codex 17/07 : panier local, page paiement `cart=1`, paiements multi-lignes confirmés par webhook
 - [ ] Store à rails (nouveautés, promos, catégories), prix FCFA barré/soldé
 - [ ] Historique de commandes, bibliothèque achetée
 
@@ -122,7 +122,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 11. ✅ **Royalties 50/50 + reporting auteur niveau KDP + option Kalamundi Select.** `⟶ 5` *(livré 17/07 : reporting KDP dashboard, 50/50 visible, Select préparé mais non activé)*
 
 ### 🟩 P3 — Espace Acheter (Phase 2, numérique, sans logistique)
-12. Entité produit/offres → **panier** → **checkout Fapshi** → store à rails → historique de commandes. `⟶ 5`
+12. 🟡 Entité produit/offres → **panier** → **checkout Fapshi** → store à rails → historique de commandes. `⟶ 5` *(panier + checkout multi-livres livrés 17/07 ; reste historique commandes/store avancé)*
 13. **Diaspora (D11)** — paiement international (cartes/PayPal) + multi-devises + **gifting**. `⟶ 12`
 
 ### 🟦 P4 — Espaces avancés (chacun livré seul, dans l'ordre)

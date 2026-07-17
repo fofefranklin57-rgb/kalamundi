@@ -5,6 +5,8 @@
    ============================================================ */
 
 import { getSession } from './auth.js';
+import { api } from './api.js';
+import { getCart, cartTotal, clearCart } from './cart.js';
 
 /* ============================================================
    Config paiements
@@ -31,6 +33,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const qs = new URLSearchParams(window.location.search);
   if (qs.get('fapshi') === 'success') {
+    if (localStorage.getItem('kalamundi_cart_pending') === '1') {
+      clearCart();
+      localStorage.removeItem('kalamundi_cart_pending');
+    }
     document.getElementById('payment-card').style.display = 'none';
     document.getElementById('zone-succes').style.display = 'block';
     return;
@@ -52,12 +58,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   PARAMS = {
     plan:      qs.get('plan'),      /* abonnement */
     oeuvreId:  qs.get('oeuvre'),   /* achat œuvre */
+    cart:      qs.get('cart') === '1',
     montant:   parseFloat(qs.get('montant')) || 0,
     titre:     qs.get('titre') || '',
   };
 
   /* Déterminer le type de transaction */
-  if (PARAMS.oeuvreId) {
+  if (PARAMS.cart) {
+    chargerPanier();
+  } else if (PARAMS.oeuvreId) {
     await chargerInfoOeuvre();
   } else if (PARAMS.plan && PLANS[PARAMS.plan]) {
     const plan = PLANS[PARAMS.plan];
@@ -86,6 +95,39 @@ async function chargerInfoOeuvre() {
   } catch {
     afficherErreur('Œuvre introuvable.');
   }
+}
+
+function chargerPanier() {
+  const items = getCart().filter(item => Number(item.prix || 0) > 0);
+  if (!items.length) {
+    afficherErreur('Votre panier est vide.');
+    return;
+  }
+  PARAMS.items = items;
+  PARAMS.montant = cartTotal(items);
+  PARAMS.devise = 'XAF';
+  PARAMS.type = 'panier_livres';
+  PARAMS.titre = `${items.length} livre${items.length > 1 ? 's' : ''} Kalamundi`;
+  afficherHeader('Panier livres', PARAMS.titre, PARAMS.montant, 'XAF');
+  afficherResumePanier(items);
+}
+
+function afficherResumePanier(items) {
+  const body = document.querySelector('.payment-body');
+  if (!body || document.getElementById('cart-summary')) return;
+  const resume = document.createElement('div');
+  resume.id = 'cart-summary';
+  resume.className = 'instruction-box';
+  resume.innerHTML = `
+    <h3>Votre panier</h3>
+    <div style="display:grid;gap:8px">
+      ${items.map(item => `
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:var(--font-size-sm)">
+          <span>${escapeHtml(item.titre || 'Livre Kalamundi')}</span>
+          <strong>${Number(item.prix || 0).toLocaleString('fr-FR')} XAF</strong>
+        </div>`).join('')}
+    </div>`;
+  body.prepend(resume);
 }
 
 /* ============================================================
@@ -153,12 +195,14 @@ async function _fapshiHandler() {
         userId:      SESSION.user.id,
         oeuvreId:    PARAMS.oeuvreId || null,
         plan:        PARAMS.type || null,
+        items:       PARAMS.items || null,
         redirectUrl: window.location.origin + '/pages/payment.html?fapshi=success',
       }),
     });
 
     if (!res.ok) throw new Error('Erreur initialisation Fapshi');
     const { link } = await res.json();
+    if (PARAMS.items?.length) localStorage.setItem('kalamundi_cart_pending', '1');
     window.location.href = link;
 
   } catch (e) {
@@ -170,4 +214,13 @@ async function _fapshiHandler() {
     errDiv.textContent = 'Erreur : ' + e.message;
     btn.parentElement.appendChild(errDiv);
   }
+}
+
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
