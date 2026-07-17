@@ -236,48 +236,48 @@ function _injecterMetaOG(oeuvre) {
 
 async function rendreActions(oeuvre) {
   const actionsEl = document.getElementById('work-actions');
+  const offresEl = document.getElementById('work-offers-panel');
+  const [offres, deja, acces] = await Promise.all([
+    api.getOffresLivre(oeuvre.id, oeuvre).catch(() => []),
+    estSauvegarde(oeuvre.id).catch(() => false),
+    verifierAccesPremium(oeuvre.id),
+  ]);
+  const estPremium = oeuvre.statut === 'premium';
+  const peutLire = !estPremium || acces || Number(oeuvre.chapitres_gratuits || 0) > 0;
+  const prix = Number(oeuvre.prix || offres.find(o => Number(o.prix || 0) > 0)?.prix || 0);
 
-  if (oeuvre.statut === 'gratuit') {
-    const deja = await estSauvegarde(oeuvre.id).catch(() => false);
+  if (!estPremium || acces) {
     actionsEl.innerHTML = `
       <a href="/pages/reader.html?id=${oeuvre.id}&ch=1" class="btn btn--accent btn--lg">
         📖 Lire maintenant
       </a>
-      <button class="btn btn--outline" id="btn-offline" data-id="${oeuvre.id}" data-sauvegarde="${deja}">
-        ${deja ? '✅ Disponible hors-ligne' : '⬇️ Lire hors-ligne'}
-      </button>
       <button class="btn btn--outline" id="btn-partager">
         Partager
       </button>`;
   } else {
-    const acces = utilisateur ? await verifierAccesPremium(oeuvre.id) : false;
-    if (acces) {
-      actionsEl.innerHTML = `
-        <a href="/pages/reader.html?id=${oeuvre.id}&ch=1" class="btn btn--accent btn--lg">
-          📖 Lire maintenant
-        </a>`;
-    } else {
-      actionsEl.innerHTML = `
-        <button class="btn btn--accent btn--lg" id="btn-acheter">
-          ⭐ Accéder — ${formatPrixXaf(oeuvre.prix)}
-        </button>
-        <p style="color:rgba(255,255,255,0.6);font-size:var(--font-size-xs);margin-top:4px;">
-          ${Number(oeuvre.chapitres_gratuits || 0) > 0 ? `${oeuvre.chapitres_gratuits} chapitre(s) gratuit(s) · ` : ''}Paiement sécurisé · 50% reversés à l'auteur
-        </p>`;
-    }
+    actionsEl.innerHTML = `
+      ${peutLire ? `<a href="/pages/reader.html?id=${oeuvre.id}&ch=1" class="btn btn--outline btn--lg">Lire l'extrait</a>` : ''}
+      <button class="btn btn--accent btn--lg js-buy">
+        Accéder — ${formatPrixXaf(prix || 300)}
+      </button>
+      <button class="btn btn--outline" id="btn-partager">Partager</button>`;
   }
 
-  document.getElementById('btn-acheter')?.addEventListener('click', () => {
+  if (offresEl) {
+    offresEl.innerHTML = renderOffresLivre(oeuvre, offres, { deja, acces, prix });
+  }
+
+  document.querySelectorAll('.js-buy').forEach(btn => btn.addEventListener('click', () => {
     if (!utilisateur) {
       const retour = encodeURIComponent(`/pages/payment.html?oeuvre=${oeuvre.id}`);
       window.location.href = `/pages/login.html?redirect=${retour}`;
       return;
     }
-    window.location.href = `/pages/payment.html?oeuvre=${oeuvre.id}&montant=${encodeURIComponent(oeuvre.prix || 300)}&titre=${encodeURIComponent(oeuvre.titre || 'Kalamundi')}`;
-  });
+    window.location.href = `/pages/payment.html?oeuvre=${oeuvre.id}&montant=${encodeURIComponent(prix || 300)}&titre=${encodeURIComponent(oeuvre.titre || 'Kalamundi')}`;
+  }));
 
   // Bouton hors-ligne
-  document.getElementById('btn-offline')?.addEventListener('click', async (e) => {
+  document.querySelectorAll('.js-offline').forEach(btnOffline => btnOffline.addEventListener('click', async (e) => {
     const btn      = e.currentTarget;
     const deja     = btn.dataset.sauvegarde === 'true';
     if (deja) {
@@ -315,7 +315,7 @@ async function rendreActions(oeuvre) {
       btn.disabled = false;
       btn.textContent = '⬇️ Lire hors-ligne';
     }
-  });
+  }));
 
   // Partager — lien avec titre + auteur pour URL lisible
   document.getElementById('btn-partager')?.addEventListener('click', async () => {
@@ -333,6 +333,67 @@ async function rendreActions(oeuvre) {
       }
     } catch { /* annulé */ }
   });
+}
+
+function renderOffresLivre(oeuvre, offres, { deja, acces, prix }) {
+  const premium = oeuvre.statut === 'premium';
+  const chapitresGratuits = Number(oeuvre.chapitres_gratuits || offres.find(o => o.chapitres_gratuits)?.chapitres_gratuits || 0);
+  const offreLecture = offres.find(o => o.type === 'lecture_gratuite') || (!premium ? offres[0] : null);
+  const offreAchat = offres.find(o => o.type === 'achat_numerique') || (premium ? offres[0] : null);
+
+  const lireTitre = premium && !acces
+    ? (chapitresGratuits > 0 ? 'Lire l’extrait gratuit' : 'Aperçu indisponible')
+    : 'Lire le livre';
+  const lireTexte = premium && !acces
+    ? (chapitresGratuits > 0 ? `${chapitresGratuits} chapitre(s) offert(s) avant paiement.` : 'L’auteur n’a pas encore défini d’extrait gratuit.')
+    : 'Accès complet dans le lecteur EPUB/chapitres.';
+
+  return `
+    <div class="work-offers__head">
+      <div>
+        <h2 class="work-offers__title">Offres disponibles</h2>
+        <p class="work-offers__text">Une fiche unique pour lire, acheter, sauvegarder et préparer les prochains usages du livre.</p>
+      </div>
+      <span class="work-offers__badge">Royalties auteur 50%</span>
+    </div>
+    <div class="work-offers__grid">
+      <article class="offer-card ${offreLecture || !premium || acces ? 'offer-card--active' : 'offer-card--disabled'}">
+        <div class="offer-card__kicker">Lecture</div>
+        <h3 class="offer-card__title">${lireTitre}</h3>
+        <p class="offer-card__text">${lireTexte}</p>
+        ${offreLecture || !premium || acces || chapitresGratuits > 0
+          ? `<a href="/pages/reader.html?id=${oeuvre.id}&ch=1" class="btn btn--primary btn--sm">Ouvrir</a>`
+          : `<button class="btn btn--outline btn--sm" disabled>Bientôt</button>`}
+      </article>
+      <article class="offer-card ${premium && !acces ? 'offer-card--active' : ''}">
+        <div class="offer-card__kicker">Achat numérique</div>
+        <h3 class="offer-card__title">${premium ? formatPrixXaf(prix || offreAchat?.prix || 300) : 'Inclus gratuitement'}</h3>
+        <p class="offer-card__text">${premium ? 'Paiement Fapshi, accès complet et part auteur visible.' : 'Ce livre est déjà en accès libre.'}</p>
+        ${premium && !acces
+          ? `<button class="btn btn--accent btn--sm js-buy">Payer avec Fapshi</button>`
+          : `<span class="offer-card__status">Accès complet</span>`}
+      </article>
+      <article class="offer-card">
+        <div class="offer-card__kicker">Hors ligne</div>
+        <h3 class="offer-card__title">${deja ? 'Déjà sauvegardé' : 'Sauvegarder ce livre'}</h3>
+        <p class="offer-card__text">Téléchargement local des chapitres disponibles pour lire sans connexion.</p>
+        <button class="btn btn--outline btn--sm js-offline" data-sauvegarde="${deja}">
+          ${deja ? 'Retirer' : 'Activer'}
+        </button>
+      </article>
+      <article class="offer-card offer-card--future">
+        <div class="offer-card__kicker">Emprunt</div>
+        <h3 class="offer-card__title">Prêt numérique</h3>
+        <p class="offer-card__text">Accès temporel et files d’attente à venir pour le fonds maison.</p>
+        <button class="btn btn--outline btn--sm" disabled>Bientôt</button>
+      </article>
+      <article class="offer-card offer-card--future">
+        <div class="offer-card__kicker">Occasion</div>
+        <h3 class="offer-card__title">Exemplaires papier</h3>
+        <p class="offer-card__text">Revente entre lecteurs prévue après le panier et le checkout multi-articles.</p>
+        <button class="btn btn--outline btn--sm" disabled>Bientôt</button>
+      </article>
+    </div>`;
 }
 
 async function verifierAccesPremium(oeuvreId) {
@@ -651,20 +712,20 @@ async function chargerRecommandations(genre, oeuvreActuelleId) {
     const grid    = document.getElementById('recommandations-grid');
     if (!section || !grid) return;
 
-    grid.innerHTML = filtrees.map(o => `
-      <a href="/pages/work.html?id=${o.id}" class="book-card" style="text-decoration:none;display:flex;flex-direction:column;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.07);transition:transform 0.15s;">
-        <div style="height:200px;background:linear-gradient(135deg,#1B4332,#2D6A4F);display:flex;align-items:center;justify-content:center;font-size:48px;flex-shrink:0;">
-          ${normaliserUrlImage(o.couverture_url) ? `<img src="${echapperAttr(normaliserUrlImage(o.couverture_url))}" alt="${echapperAttr(o.titre)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='📖'" />` : '📖'}
-        </div>
-        <div style="padding:10px;">
-          <div style="font-weight:600;font-size:13px;color:var(--color-primary);line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${o.titre}</div>
-          <div style="font-size:11px;color:var(--text-light);">${o.profiles?.nom || '—'}</div>
-          <div style="margin-top:6px;">
-            <span style="font-size:10px;padding:2px 7px;border-radius:99px;background:${o.statut==='premium'?'#fef3c7':'#d1fae5'};color:${o.statut==='premium'?'#92400e':'#065f46'};font-weight:600;">${o.statut==='premium'?'⭐ Premium':'🆓 Gratuit'}</span>
+    grid.innerHTML = filtrees.map(o => {
+      const coverUrl = normaliserUrlImage(o.couverture_url);
+      return `
+        <a href="/pages/work.html?id=${o.id}" class="work-reco-card">
+          <div class="work-reco-card__cover">
+            ${coverUrl ? `<img src="${echapperAttr(coverUrl)}" alt="${echapperAttr(o.titre)}" onerror="this.outerHTML='📖'" />` : '📖'}
           </div>
-        </div>
-      </a>
-    `).join('');
+          <div class="work-reco-card__body">
+            <div class="work-reco-card__title">${escapeHtml(o.titre)}</div>
+            <div class="work-reco-card__author">${escapeHtml(o.profiles?.nom || '—')}</div>
+            <div class="work-reco-card__author">${o.statut === 'premium' ? 'Premium' : 'Gratuit'}</div>
+          </div>
+        </a>`;
+    }).join('');
 
     section.style.display = 'block';
   } catch { /* silencieux — les reco sont non-critiques */ }

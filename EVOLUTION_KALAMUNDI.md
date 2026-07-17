@@ -11,6 +11,7 @@ Types : `feat` (fonctionnalité) · `decision` (choix produit) · `fix` (correct
 
 ## 2026-07
 
+- **2026-07-16 — feat** : P2.9 livré — accueil en **rails de lecture/commerce** et fiche livre unifiée : API `getOffresLivre`/`getRailsMarchands`, rails “Les plus lus / Nouveautés / Gratuit / Premium”, bloc offres sur `work.html` (lecture, achat Fapshi, hors ligne, emprunt et occasion préparés), recommandations nettoyées au design-system et contrôle `check-commerce-rails`.
 - **2026-07-16 — feat** : P1.8 livré — traduction ancrée sur `chapitre_id` stable : migration `V009__traductions_chapitres_stables.sql`, cache `chapitre_ref + langue_source + source_hash`, lecteur passant l'objet chapitre complet au traducteur, fallback compatible avec l'ancien `chapitre_id` technique et contrôle `check-translation-normalization`.
 - **2026-07-16 — feat** : P1.7 livré — formulaire de publication aligné standards KDP/Kobo : sous-titre, série, catégories, mots-clés (max 7), ISBN, éditeur, territoires, protection numérique, checklist bloquante à 85 %, couverture obligatoire avec ratio vertical 1,6:1, métadonnées synchronisées dans `livres.metadata` et contrôle `check-publish-standards`.
 - **2026-07-16 — infra** : P1.6 backfill ajouté — commande `npm run epub:backfill` (`scripts/backfill_epub_editions.mjs`) pour générer les EPUB canoniques des œuvres existantes, uploader `oeuvres/{id}/canonique.epub`, synchroniser `livres`, `livre_editions` et `livre_offres`. Mode test par défaut, écriture uniquement avec `--apply`.

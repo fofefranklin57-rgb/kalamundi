@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, { rootMargin: '200px' });
     obs.observe(el);
   };
+  lazyLoad('section-rails-commerce',   () => chargerRailsCommerce());
   lazyLoad('section-nouveautes',       () => chargerNouveautes());
   lazyLoad('section-nouveaux-talents', () => chargerNouveauxTalents());
 
@@ -195,6 +196,13 @@ function formatStat(nombre) {
   return String(valeur);
 }
 
+function formatPrixCourt(prix) {
+  const valeur = Number(prix || 0);
+  if (!valeur) return 'Premium';
+  if (valeur >= 1000) return `${Math.round(valeur / 1000)}k FCFA`;
+  return `${valeur.toLocaleString('fr-FR')} FCFA`;
+}
+
 function mettreAJourStatsHero({ oeuvres, lectures } = {}) {
   const elOeuvres = document.getElementById('stat-oeuvres');
   const elLectures = document.getElementById('stat-lectures');
@@ -267,6 +275,54 @@ async function chargerNouveautes() {
     grid.innerHTML = videState('Impossible de charger les nouveautés.');
     console.error(err);
   }
+}
+
+/* ============================================================
+   Rails de merchandising livre
+   ============================================================ */
+
+async function chargerRailsCommerce() {
+  const wrap = document.getElementById('home-commerce-rails');
+  if (!wrap) return;
+  try {
+    const rails = await api.getRailsMarchands({ limit: 8 });
+    if (!rails.length) {
+      wrap.innerHTML = videState('Aucun rayon disponible pour le moment.');
+      return;
+    }
+    wrap.innerHTML = rails.map(renderCommerceRail).join('');
+    gererErreurImages(wrap);
+  } catch (err) {
+    console.error(err);
+    wrap.innerHTML = videState('Impossible de charger les rayons.');
+  }
+}
+
+function renderCommerceRail(rail) {
+  const items = rail.oeuvres.map(renderBookOfferMini).join('');
+  return `
+    <article class="commerce-rail commerce-rail--${echapperAttr(rail.id)}">
+      <div class="commerce-rail__head">
+        <div>
+          <h3 class="commerce-rail__title">${rail.titre}</h3>
+          <p class="commerce-rail__text">${rail.sousTitre}</p>
+        </div>
+        <a href="/pages/library.html" class="commerce-rail__link">Voir →</a>
+      </div>
+      <div class="commerce-rail__books">${items}</div>
+    </article>`;
+}
+
+function renderBookOfferMini(oeuvre) {
+  const html = renderBookMini(oeuvre);
+  const premium = oeuvre.statut === 'premium';
+  const label = premium
+    ? `${formatPrixCourt(oeuvre.prix)} · Fapshi`
+    : 'Gratuit · hors ligne';
+  return html.replace(
+    '<div class="book-mini__body">',
+    `<div class="book-mini__offer">${label}</div><div class="book-mini__body">`
+  );
 }
 
 /* ============================================================

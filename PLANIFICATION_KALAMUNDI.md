@@ -41,7 +41,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 - [x] Document de reconception (`RECONCEPTION`)
 - [x] Bible + Planification + Évolution + Journal d'erreurs
 - [ ] Validation des décisions D0–D9 par Franklin
-- [ ] Architecture d'information détaillée (navigation, fiche livre unifiée)
+- [x] Architecture d'information détaillée (navigation, fiche livre unifiée) — ✅ Codex 16/07 : fiche œuvre unifiée autour des offres lire/acheter/hors ligne/emprunter/occasion
 - [x] Modèle de données cible (schéma Livre / Offre / Édition) — ✅ Codex 16/07 (`V007__livres_offres.sql`)
 
 ### Phase 1 — Enrichir l'existant (peu risqué, gros effet)
@@ -50,7 +50,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 - [x] **Interface AUTEUR modernisée** — ✅ Codex 16/07 (`kala-v15`) : dashboard standard auteur + formulaire publication modernisé (cockpit qualité, résumé obligatoire, validation fichier, royalties 50/50 visibles, rappel couverture 1,6:1)
 - [x] **Interface LECTEUR modernisée** : offline soigné ✅ Codex 16/07 (`f43ddee`, biblio locale + démarrage IndexedDB) ; lecteur premium ✅ Codex 16/07 (polices de lecture, thèmes robustes, repagination des réglages, surlignage/note exposés)
 - [x] **Shell mobile** — ✅ Codex 16/07 (`a28a36d`) : barre d'onglets basse (Accueil · Explorer · Apprendre · Biblio · Profil), SW `kala-v11`
-- [ ] **Home en rails de merchandising** + carte/fiche livre unifiée (offres lire/acheter/emprunter/occasion) — *entrée Campus ajoutée (`fa8ff9b`), rails commerce pas encore*
+- [x] **Home en rails de merchandising** + carte/fiche livre unifiée (offres lire/acheter/emprunter/occasion) — ✅ Codex 16/07 : rails commerce accueil + bloc offres sur fiche œuvre, achat Fapshi visible, offline exposé
 - [x] Lecteur premium (réglages typo, thèmes jour/nuit/sépia, surlignage couleur) — ✅ Codex 16/07, SW `kala-v14`
 - [x] **Lecteur EPUB web** (Readium/foliate-js) en parallèle du lecteur actuel — ✅ Codex 16/07 : mode EPUB via `epub.js`, fichier `.epub`/`livre_editions`, URL signée, thèmes/réglages, fallback lecteur chapitres, SW `kala-v21`
 - [ ] **Convertisseur « égalisateur »** : Word/PDF/EPUB → chapitres normalisés + build EPUB (epubcheck), avec relecture auteur pour le PDF — *socle livré 16/07 : `V008`, normaliseur, build EPUB local + navigateur, upload `canonique.epub`, synchronisation `livre_editions` ; reste import serveur robuste + epubcheck strict*
@@ -117,7 +117,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 8. ✅ **Traduction** — nœuds de texte + langue source depuis métadonnées. `⟶ 6` *(livré 16/07)*
 
 ### 🟨 P2 — Engagement & monétisation auteur
-9. **Home en rails + fiche livre unifiée** (offres lire/acheter/emprunter/occasion). `⟶ 5`
+9. ✅ **Home en rails + fiche livre unifiée** (offres lire/acheter/emprunter/occasion). `⟶ 5` *(livré 16/07 : API offres, rails accueil, fiche œuvre unifiée, contrôle `check-commerce-rails`)*
 10. **Couche sociale** — notes, avis, étagères « à lire », stats.
 11. **Royalties 50/50 + reporting auteur niveau KDP + option Kalamundi Select.** `⟶ 5`
 

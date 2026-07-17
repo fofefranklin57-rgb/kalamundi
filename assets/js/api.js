@@ -229,6 +229,69 @@ export const api = {
     return data;
   },
 
+  async getOffresLivre(oeuvreId, oeuvreFallback = null) {
+    if (!oeuvreId) return [];
+
+    const fabriquerOffreDepuisOeuvre = (oeuvre) => {
+      if (!oeuvre) return [];
+      const premium = oeuvre.statut === 'premium';
+      return [{
+        id: `legacy-${oeuvre.id}-${premium ? 'achat' : 'lecture'}`,
+        source_oeuvre_id: oeuvre.id,
+        type: premium ? 'achat_numerique' : 'lecture_gratuite',
+        statut: 'active',
+        prix: premium ? Number(oeuvre.prix || 0) : 0,
+        devise: 'XAF',
+        fapshi_enabled: premium,
+        chapitres_gratuits: Number(oeuvre.chapitres_gratuits || 0),
+        royalties_auteur_pct: premium ? 50 : 0,
+        royalties_plateforme_pct: premium ? 50 : 0,
+        ordre: premium ? 20 : 10,
+        metadata: { fallback: true },
+      }];
+    };
+
+    let { data, error } = await supabase
+      .from('livre_offres')
+      .select(`
+        id, livre_id, edition_id, source_oeuvre_id, vendeur_id, type, statut,
+        prix, devise, fapshi_enabled, chapitres_gratuits,
+        royalties_auteur_pct, royalties_plateforme_pct, ordre, metadata,
+        livre_editions(id, format, statut, fichier_url, epub_url, nb_chapitres),
+        livres(id, oeuvre_id, titre, couverture_url, langue_originale, statut)
+      `)
+      .eq('source_oeuvre_id', oeuvreId)
+      .eq('statut', 'active')
+      .order('ordre', { ascending: true });
+
+    if (error) {
+      console.warn('Offres livre indisponibles, fallback oeuvre :', error);
+      return fabriquerOffreDepuisOeuvre(oeuvreFallback);
+    }
+
+    if (!data?.length) {
+      return fabriquerOffreDepuisOeuvre(oeuvreFallback);
+    }
+
+    return data;
+  },
+
+  async getRailsMarchands({ limit = 10 } = {}) {
+    const [populaires, nouveautes, gratuits, premium] = await Promise.all([
+      this.getOeuvres({ limit, tri: 'lectures', exclureSysteme: true }).catch(() => ({ data: [] })),
+      this.getOeuvres({ limit, tri: 'recent', exclureSysteme: true }).catch(() => ({ data: [] })),
+      this.getOeuvres({ limit, tri: 'recent', statut: 'gratuit', exclureSysteme: true }).catch(() => ({ data: [] })),
+      this.getOeuvres({ limit, tri: 'recent', statut: 'premium', exclureSysteme: true }).catch(() => ({ data: [] })),
+    ]);
+
+    return [
+      { id: 'populaires', titre: 'Les plus lus', sousTitre: 'Ce que les lecteurs ouvrent en premier', oeuvres: populaires.data || [] },
+      { id: 'nouveautes', titre: 'Nouveautés auteurs', sousTitre: 'Les publications récentes de la communauté', oeuvres: nouveautes.data || [] },
+      { id: 'gratuits', titre: 'À lire gratuitement', sousTitre: 'Commencer sans paiement, sauvegarder hors ligne ensuite', oeuvres: gratuits.data || [] },
+      { id: 'premium', titre: 'Premium avec extraits', sousTitre: 'Lire une partie, puis payer via Fapshi pour continuer', oeuvres: premium.data || [] },
+    ].filter(rail => rail.oeuvres.length);
+  },
+
   async getOeuvresAuteur(auteurId) {
     const { data, error } = await supabase
       .from('oeuvres')

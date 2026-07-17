@@ -91,6 +91,13 @@
           <span id="badge-frequence" style="display:none;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;background:rgba(255,200,0,0.15);color:#FFD700;font-size:var(--font-size-sm);border:1px solid rgba(255,200,0,0.3);"></span>
         </div>
 
+        <section class="work-offers" id="work-offers-panel" aria-live="polite">
+          <div class="work-offers__loading">
+            <div class="spinner spinner--sm"></div>
+            <span>Préparation des offres...</span>
+          </div>
+        </section>
+
         <!-- Résumé -->
         <h2 style="font-size:var(--font-size-lg);color:var(--color-primary);margin-bottom:var(--spacing-md);">
           À propos de cette œuvre
@@ -219,12 +226,12 @@
   </main>
 
   <!-- Recommandations croisées -->
-  <section id="section-recommandations" style="display:none;background:var(--bg-secondary);padding:var(--spacing-xl) 0;">
+  <section id="section-recommandations" class="work-reco-section">
     <div class="container">
       <h2 style="font-size:var(--font-size-xl);color:var(--color-primary);margin-bottom:var(--spacing-lg);">
         Dans le même genre
       </h2>
-      <div id="recommandations-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:var(--spacing-md);"></div>
+      <div id="recommandations-grid" class="work-reco-grid"></div>
     </div>
   </section>
 

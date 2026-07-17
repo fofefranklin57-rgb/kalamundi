@@ -329,6 +329,18 @@
   object-fit: cover;
 }
 
+.book-mini__offer {
+  margin: 8px 8px 0;
+  padding: 3px 7px;
+  border-radius: var(--border-radius-full);
+  background: var(--bg-secondary);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  text-align: center;
+}
+
 .book-mini__fallback {
   width: 100%;
   height: 100%;
@@ -370,6 +382,71 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ============================================================
+   Rails commerciaux
+   ============================================================ */
+
+.commerce-rails {
+  padding-top: 0;
+}
+
+.commerce-rails__grid {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.commerce-rail {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.commerce-rail__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.commerce-rail__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+}
+
+.commerce-rail__text {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.commerce-rail__link {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
+.commerce-rail__books {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 140px;
+  gap: var(--spacing-md);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+}
+
+.commerce-rail__books .book-mini {
+  width: 140px;
+  scroll-snap-align: start;
 }
 
 /* ============================================================
