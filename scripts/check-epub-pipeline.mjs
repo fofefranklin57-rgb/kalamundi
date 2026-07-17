@@ -58,6 +58,7 @@ if (erreurs.length) {
 const publish = fs.readFileSync(path.join(root, 'assets/js/publish.js'), 'utf8');
 const api = fs.readFileSync(path.join(root, 'assets/js/api.js'), 'utf8');
 const clientBuilder = fs.readFileSync(path.join(root, 'assets/js/epub-builder.js'), 'utf8');
+const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 if (!publish.includes('construireEpubCanonique')) {
   erreurs.push('publish.js doit construire l’EPUB canonique après normalisation.');
@@ -73,6 +74,12 @@ if (!api.includes(".eq('statut', 'active')")) {
 }
 if (!clientBuilder.includes('application/epub+zip') || !clientBuilder.includes('data-kalamundi-chapitre-id')) {
   erreurs.push('epub-builder.js doit générer un EPUB annoté avec les chapitre_id Kalamundi.');
+}
+if (pkg.scripts?.['epub:validate'] !== 'node scripts/validate_epub.mjs') {
+  erreurs.push('package.json doit exposer epub:validate pour epubcheck.');
+}
+if (!fs.existsSync(path.join(root, 'scripts/validate_epub.mjs'))) {
+  erreurs.push('scripts/validate_epub.mjs doit exister pour la validation epubcheck.');
 }
 
 if (erreurs.length) {

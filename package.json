@@ -2,7 +2,8 @@
   "scripts": {
     "check": "node scripts/check-js.mjs && node scripts/check-reader-regression.mjs && node scripts/check-epub-pipeline.mjs",
     "chapters:repair": "node scripts/redecouper_chapitres.mjs",
-    "epub:build": "node scripts/build_epub.mjs"
+    "epub:build": "node scripts/build_epub.mjs",
+    "epub:validate": "node scripts/validate_epub.mjs"
   },
   "devDependencies": {
     "sharp": "^0.34.5"
