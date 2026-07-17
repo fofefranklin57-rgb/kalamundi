@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "check": "node scripts/check-js.mjs && node scripts/check-reader-regression.mjs && node scripts/check-epub-pipeline.mjs && node scripts/check-publish-standards.mjs && node scripts/check-translation-normalization.mjs && node scripts/check-commerce-rails.mjs",
+    "check": "node scripts/check-js.mjs && node scripts/check-reader-regression.mjs && node scripts/check-epub-pipeline.mjs && node scripts/check-publish-standards.mjs && node scripts/check-translation-normalization.mjs && node scripts/check-commerce-rails.mjs && node scripts/check-social-layer.mjs",
     "chapters:repair": "node scripts/redecouper_chapitres.mjs",
     "epub:build": "node scripts/build_epub.mjs",
     "epub:validate": "node scripts/validate_epub.mjs",

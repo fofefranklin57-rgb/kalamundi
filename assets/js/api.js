@@ -741,6 +741,16 @@ export const api = {
         updated_at:       new Date().toISOString(),
       }, { onConflict: 'user_id,oeuvre_id' });
     if (error) throw error;
+
+    try {
+      await supabase.from('oeuvre_etageres').upsert({
+        user_id: userId,
+        oeuvre_id: oeuvreId,
+        statut: 'en_cours',
+        progression_pct: 0,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,oeuvre_id' });
+    } catch {}
   },
 
   async sauvegarderProgressionEleve(userId, oeuvreId, classeId, chapitreNum, nbChapitres) {
@@ -774,6 +784,99 @@ export const api = {
       .order('updated_at', { ascending: false });
     if (error) throw error;
     return data;
+  },
+
+  /* ---- Couche sociale lecteur --------------------------- */
+
+  async getStatsSocialesOeuvre(oeuvreId) {
+    const fallback = {
+      nbAvis: 0,
+      noteMoyenne: 0,
+      aLire: 0,
+      enCours: 0,
+      termines: 0,
+      favoris: 0,
+    };
+    if (!oeuvreId) return fallback;
+
+    const lireAvis = async () => {
+      try {
+        const result = await supabase
+          .from('commentaires')
+          .select('note', { count: 'exact' })
+          .eq('oeuvre_id', oeuvreId)
+          .not('note', 'is', null);
+        if (result.error) throw result.error;
+        return result;
+      } catch {
+        return { data: [], count: 0 };
+      }
+    };
+    const lireEtageres = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_oeuvre_social_stats', { p_oeuvre_id: oeuvreId });
+        if (error) throw error;
+        const row = Array.isArray(data) ? data[0] : data;
+        return { data: [], compteurs: row || {} };
+      } catch {
+        return { data: [], compteurs: {} };
+      }
+    };
+    const [avis, etageres] = await Promise.all([lireAvis(), lireEtageres()]);
+
+    const notes = (avis.data || []).map(a => Number(a.note || 0)).filter(Boolean);
+    const stats = { ...fallback, nbAvis: avis.count || notes.length };
+    stats.noteMoyenne = notes.length
+      ? Math.round((notes.reduce((s, n) => s + n, 0) / notes.length) * 10) / 10
+      : 0;
+
+    stats.aLire = Number(etageres.compteurs?.a_lire || 0);
+    stats.enCours = Number(etageres.compteurs?.en_cours || 0);
+    stats.termines = Number(etageres.compteurs?.termines || 0);
+    stats.favoris = Number(etageres.compteurs?.favoris || 0);
+    return stats;
+  },
+
+  async getEtagereOeuvre(userId, oeuvreId) {
+    if (!userId || !oeuvreId) return null;
+    const { data, error } = await supabase
+      .from('oeuvre_etageres')
+      .select('id, statut, progression_pct, updated_at')
+      .eq('user_id', userId)
+      .eq('oeuvre_id', oeuvreId)
+      .maybeSingle();
+    if (error) {
+      console.warn('Étagère indisponible :', error);
+      return null;
+    }
+    return data || null;
+  },
+
+  async setEtagereOeuvre(userId, oeuvreId, statut, progressionPct = 0) {
+    if (!userId || !oeuvreId || !statut) return null;
+    const { data, error } = await supabase
+      .from('oeuvre_etageres')
+      .upsert({
+        user_id: userId,
+        oeuvre_id: oeuvreId,
+        statut,
+        progression_pct: Math.max(0, Math.min(100, Number(progressionPct || 0))),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,oeuvre_id' })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async retirerEtagereOeuvre(userId, oeuvreId) {
+    if (!userId || !oeuvreId) return;
+    const { error } = await supabase
+      .from('oeuvre_etageres')
+      .delete()
+      .eq('user_id', userId)
+      .eq('oeuvre_id', oeuvreId);
+    if (error) throw error;
   },
 
   /* ---- Commentaires & Notes ----------------------------- */

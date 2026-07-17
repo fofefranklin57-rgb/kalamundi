@@ -56,7 +56,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 - [ ] **Convertisseur « égalisateur »** : Word/PDF/EPUB → chapitres normalisés + build EPUB (epubcheck), avec relecture auteur pour le PDF — *socle livré 16/07 : `V008`, normaliseur, build EPUB local + navigateur, upload `canonique.epub`, synchronisation `livre_editions` ; reste import serveur robuste + epubcheck strict*
 - [x] Checklist de dépôt auteur (langue originale obligatoire) au formulaire de publication — ✅ Codex 16/07 : score bloquant, mots-clés, catégories, couverture 1,6:1
 - [x] Traduction : traiter les nœuds de texte + lire la langue source depuis les métadonnées — ✅ Codex 16/07 : texte propre, `chapitre_ref` stable, `langue_source`, `source_hash`
-- [ ] Couche sociale : notes, avis, étagères « à lire », stats à la Wattpad
+- [x] Couche sociale : notes, avis, étagères « à lire », stats à la Wattpad — ✅ Codex 17/07 : étagères lecteur + compteurs sociaux sur fiche œuvre
 - [ ] Publier : royalties transparentes côté auteur
 - [x] **Standards KDP** : formulaire de publication au schéma métadonnées complet (§3 `ADAPTATION_STANDARDS_KDP.md`) + checklist bloquante + couverture 1,6:1 — ✅ Codex 16/07
 - [ ] **Reporting auteur niveau KDP** : ventes + pages lues (analogue KENP) + payouts Mobile Money
@@ -118,7 +118,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 
 ### 🟨 P2 — Engagement & monétisation auteur
 9. ✅ **Home en rails + fiche livre unifiée** (offres lire/acheter/emprunter/occasion). `⟶ 5` *(livré 16/07 : API offres, rails accueil, fiche œuvre unifiée, contrôle `check-commerce-rails`)*
-10. **Couche sociale** — notes, avis, étagères « à lire », stats.
+10. ✅ **Couche sociale** — notes, avis, étagères « à lire », stats. *(livré 17/07 : migration `V010`, compteurs sociaux, actions étagères, contrôle `check-social-layer`)*
 11. **Royalties 50/50 + reporting auteur niveau KDP + option Kalamundi Select.** `⟶ 5`
 
 ### 🟩 P3 — Espace Acheter (Phase 2, numérique, sans logistique)

@@ -15,6 +15,7 @@ const oeuvreId = getParam('id');
 let noteSelectionnee = 0;
 let utilisateur = null;
 let commentaireReponseId = null;
+let oeuvreCourante = null;
 
 /* ============================================================
    Init
@@ -26,10 +27,11 @@ let commentaireReponseId = null;
     return;
   }
 
-  // Lancer l'œuvre ET l'auth en parallèle — ne pas attendre l'auth pour afficher
-  const [, userResult] = await Promise.all([
-    chargerOeuvre(),
-    getUser().then(u => { utilisateur = u; return u; }),
+  // Lancer l'œuvre ET l'auth en parallèle, puis attendre l'auth avant les actions personnalisées.
+  const authReady = getUser().then(u => { utilisateur = u; return u; });
+  await Promise.all([
+    chargerOeuvre(authReady),
+    authReady,
     chargerCommentaires(),
   ]);
 
@@ -76,9 +78,10 @@ function _afficherBannerPartage() {
    Charger l'œuvre
    ============================================================ */
 
-async function chargerOeuvre() {
+async function chargerOeuvre(authReady = null) {
   try {
     const oeuvre = await api.getOeuvre(oeuvreId);
+    oeuvreCourante = oeuvre;
     const auteur = oeuvre.profiles;
 
     // Meta
@@ -168,9 +171,12 @@ async function chargerOeuvre() {
       }
     }
 
-    // Actions + Chapitres en parallèle
+    if (authReady) await authReady.catch(() => null);
+
+    // Actions, couche sociale + Chapitres en parallèle
     await Promise.all([
       rendreActions(oeuvre),
+      chargerCoucheSociale(oeuvre),
       chargerChapitres(oeuvre),
     ]);
 
@@ -396,6 +402,115 @@ function renderOffresLivre(oeuvre, offres, { deja, acces, prix }) {
     </div>`;
 }
 
+async function chargerCoucheSociale(oeuvre) {
+  const panel = document.getElementById('work-social-panel');
+  if (!panel) return;
+  try {
+    const [stats, etagere] = await Promise.all([
+      api.getStatsSocialesOeuvre(oeuvre.id),
+      utilisateur ? api.getEtagereOeuvre(utilisateur.id, oeuvre.id) : Promise.resolve(null),
+    ]);
+    panel.innerHTML = renderCoucheSociale(oeuvre, stats, etagere);
+    brancherActionsSociales(oeuvre, panel);
+  } catch (err) {
+    console.warn('Couche sociale indisponible :', err);
+    panel.innerHTML = `
+      <div class="work-social__empty">
+        <strong>Activité lecteurs</strong>
+        <span>Les avis restent disponibles plus bas.</span>
+      </div>`;
+  }
+}
+
+function renderCoucheSociale(oeuvre, stats, etagere) {
+  const actif = etagere?.statut || '';
+  const note = stats.noteMoyenne ? `${stats.noteMoyenne.toFixed(1)} / 5` : 'Pas encore';
+  const actions = [
+    ['a_lire', 'À lire'],
+    ['en_cours', 'En cours'],
+    ['termine', 'Terminé'],
+    ['favori', 'Favori'],
+  ].map(([statut, label]) => `
+    <button type="button" class="shelf-action ${actif === statut ? 'is-active' : ''}"
+      data-shelf="${statut}" ${!utilisateur ? 'data-login-required="true"' : ''}>
+      ${label}
+    </button>`).join('');
+
+  return `
+    <div class="work-social__head">
+      <div>
+        <h2 class="work-social__title">Activité des lecteurs</h2>
+        <p class="work-social__text">Notes, avis et étagères donnent de la preuve sociale à l'œuvre.</p>
+      </div>
+      ${actif ? `<span class="work-social__status">Dans votre étagère : ${labelStatutEtagere(actif)}</span>` : ''}
+    </div>
+    <div class="work-social__stats">
+      <div class="social-stat"><strong>${formatNombre(stats.nbAvis)}</strong><span>avis notés</span></div>
+      <div class="social-stat"><strong>${note}</strong><span>note moyenne</span></div>
+      <div class="social-stat"><strong>${formatNombre(stats.aLire)}</strong><span>à lire</span></div>
+      <div class="social-stat"><strong>${formatNombre(stats.enCours)}</strong><span>en cours</span></div>
+      <div class="social-stat"><strong>${formatNombre(stats.termines)}</strong><span>terminés</span></div>
+      <div class="social-stat"><strong>${formatNombre(stats.favoris)}</strong><span>favoris</span></div>
+    </div>
+    <div class="work-social__actions">
+      ${actions}
+      ${actif ? '<button type="button" class="shelf-action shelf-action--muted" data-shelf-remove="true">Retirer</button>' : ''}
+    </div>
+    ${!utilisateur ? '<p class="work-social__login">Connectez-vous pour ajouter ce livre à votre bibliothèque personnelle.</p>' : ''}`;
+}
+
+function labelStatutEtagere(statut) {
+  return {
+    a_lire: 'À lire',
+    en_cours: 'En cours',
+    termine: 'Terminé',
+    favori: 'Favori',
+  }[statut] || statut;
+}
+
+function progressionPourStatut(statut) {
+  if (statut === 'termine') return 100;
+  if (statut === 'en_cours') return 10;
+  return 0;
+}
+
+function brancherActionsSociales(oeuvre, panel) {
+  panel.querySelectorAll('[data-shelf]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!utilisateur || btn.dataset.loginRequired === 'true') {
+        window.location.href = `/pages/login.html?redirect=${encodeURIComponent(`/pages/work.html?id=${oeuvre.id}`)}`;
+        return;
+      }
+      const statut = btn.dataset.shelf;
+      btn.disabled = true;
+      try {
+        await api.setEtagereOeuvre(utilisateur.id, oeuvre.id, statut, progressionPourStatut(statut));
+        toast(`Livre ajouté : ${labelStatutEtagere(statut)}`, 'success');
+        await chargerCoucheSociale(oeuvre);
+      } catch (err) {
+        console.error(err);
+        toastErreur('Impossible de mettre à jour votre étagère.');
+        btn.disabled = false;
+      }
+    });
+  });
+
+  panel.querySelector('[data-shelf-remove="true"]')?.addEventListener('click', async (e) => {
+    if (!utilisateur) return;
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      await api.retirerEtagereOeuvre(utilisateur.id, oeuvre.id);
+      toast('Livre retiré de votre étagère.', 'info');
+      await chargerCoucheSociale(oeuvre);
+    } catch (err) {
+      console.error(err);
+      toastErreur('Impossible de retirer ce livre.');
+      btn.disabled = false;
+    }
+  });
+}
+
 async function verifierAccesPremium(oeuvreId) {
   if (!utilisateur) return false;
   return api.verifierAccesPremium(utilisateur.id, oeuvreId).catch(() => false);
@@ -601,6 +716,7 @@ document.getElementById('btn-commenter')?.addEventListener('click', async () => 
     } else {
       await chargerCommentaires();
     }
+    if (oeuvreCourante) await chargerCoucheSociale(oeuvreCourante);
 
   } catch (err) {
     console.error('Erreur commentaire :', err);
