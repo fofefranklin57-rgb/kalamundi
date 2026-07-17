@@ -253,11 +253,17 @@ async function rendreActions(oeuvre) {
   const peutLire = !estPremium || acces || Number(oeuvre.chapitres_gratuits || 0) > 0;
   const prix = Number(oeuvre.prix || offres.find(o => Number(o.prix || 0) > 0)?.prix || 0);
 
+  const boutonOffrir = estPremium
+    ? `<a href="/pages/payment.html?cadeau=1&oeuvre=${oeuvre.id}&titre=${encodeURIComponent(oeuvre.titre || '')}"
+          class="btn btn--outline btn--lg">🎁 Offrir</a>`
+    : '';
+
   if (!estPremium || acces) {
     actionsEl.innerHTML = `
       <a href="/pages/reader.html?id=${oeuvre.id}&ch=1" class="btn btn--accent btn--lg">
         📖 Lire maintenant
       </a>
+      ${boutonOffrir}
       <button class="btn btn--outline" id="btn-partager">
         Partager
       </button>`;
@@ -270,6 +276,7 @@ async function rendreActions(oeuvre) {
       <button class="btn btn--outline btn--lg js-cart">
         Ajouter au panier
       </button>
+      ${boutonOffrir}
       <button class="btn btn--outline" id="btn-partager">Partager</button>`;
   }
 

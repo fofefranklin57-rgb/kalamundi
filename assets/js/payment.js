@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     document.getElementById('payment-card').style.display = 'none';
     document.getElementById('zone-succes').style.display = 'block';
+    afficherCodeCadeau();
     return;
   }
 
@@ -59,12 +60,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     plan:      qs.get('plan'),      /* abonnement */
     oeuvreId:  qs.get('oeuvre'),   /* achat œuvre */
     cart:      qs.get('cart') === '1',
+    cadeau:    qs.get('cadeau') === '1', /* offrir à un proche (diaspora) */
     montant:   parseFloat(qs.get('montant')) || 0,
     titre:     qs.get('titre') || '',
   };
 
   /* Déterminer le type de transaction */
-  if (PARAMS.cart) {
+  if (PARAMS.cadeau && PARAMS.oeuvreId) {
+    await chargerInfoCadeau();
+  } else if (PARAMS.cart) {
     chargerPanier();
   } else if (PARAMS.oeuvreId) {
     await chargerInfoOeuvre();
@@ -95,6 +99,75 @@ async function chargerInfoOeuvre() {
   } catch {
     afficherErreur('Œuvre introuvable.');
   }
+}
+
+/* ============================================================
+   Mode cadeau (diaspora) — offrir un livre à un proche
+   ============================================================ */
+async function chargerInfoCadeau() {
+  try {
+    const oeuvre = await api.getOeuvre(PARAMS.oeuvreId);
+    PARAMS.titre   = oeuvre.titre;
+    PARAMS.montant = parseFloat(oeuvre.prix) || 0;
+    PARAMS.devise  = 'XAF';
+    PARAMS.type    = 'cadeau';
+    afficherHeader('🎁 Offrir ce livre', oeuvre.titre, PARAMS.montant, 'XAF');
+    rendreChampsCadeau();
+  } catch {
+    afficherErreur('Œuvre introuvable.');
+  }
+}
+
+function rendreChampsCadeau() {
+  const zone = document.getElementById('gift-fields');
+  if (!zone) return;
+  zone.innerHTML = `
+    <div class="instruction-box" style="margin-bottom:var(--spacing-md)">
+      <h3>🎁 Un cadeau pour un proche</h3>
+      <p style="font-size:var(--font-size-sm);color:var(--text-secondary);margin-bottom:var(--spacing-md)">
+        Vous payez, et un proche resté au pays recevra un <strong>code</strong> à saisir pour débloquer le livre.
+      </p>
+      <div class="form-group">
+        <label class="form-label" for="gift-contact">Contact du destinataire <span style="color:var(--text-light)">(facultatif)</span></label>
+        <input class="form-input" id="gift-contact" type="text" placeholder="Nom, téléphone ou email" maxlength="120" />
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="gift-message">Petit mot <span style="color:var(--text-light)">(facultatif)</span></label>
+        <textarea class="form-textarea" id="gift-message" placeholder="Bonne lecture !" maxlength="500" style="min-height:70px"></textarea>
+      </div>
+    </div>`;
+}
+
+function afficherCodeCadeau() {
+  const code = localStorage.getItem('kalamundi_gift_pending');
+  const zone = document.getElementById('gift-code-zone');
+  if (!code || !zone) return;
+  localStorage.removeItem('kalamundi_gift_pending');
+
+  const joli = (code.match(/.{1,4}/g) || [code]).join('-');
+  const partage = `J'ai un cadeau pour toi sur Kalamundi 🎁 Voici ton code : ${joli}\nÀ saisir sur ${location.origin}/pages/reclamer.html`;
+
+  document.querySelector('#zone-succes h2').textContent = 'Cadeau prêt à offrir !';
+  zone.innerHTML = `
+    <div class="instruction-box" style="text-align:center;margin-bottom:var(--spacing-lg)">
+      <h3>Code cadeau</h3>
+      <div class="numero" id="gift-code-value" style="cursor:pointer" title="Copier">${joli}</div>
+      <p style="font-size:var(--font-size-sm);color:var(--text-secondary)">
+        Partagez ce code avec le destinataire. Il le saisira sur la
+        <a href="/pages/reclamer.html">page de réclamation</a> pour recevoir le livre.
+      </p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:var(--spacing-md);flex-wrap:wrap">
+        <button class="btn btn--outline btn--sm" id="gift-copy">📋 Copier le code</button>
+        <a class="btn btn--outline btn--sm" target="_blank" rel="noopener"
+           href="https://wa.me/?text=${encodeURIComponent(partage)}">📲 Partager sur WhatsApp</a>
+      </div>
+    </div>`;
+
+  const copier = () => navigator.clipboard?.writeText(joli).then(() => {
+    document.getElementById('gift-copy').textContent = '✅ Copié';
+  }).catch(() => {});
+  document.getElementById('gift-copy')?.addEventListener('click', copier);
+  document.getElementById('gift-code-value')?.addEventListener('click', copier);
 }
 
 function chargerPanier() {
@@ -182,6 +255,7 @@ async function _fapshiHandler() {
   btn.textContent = 'Initialisation…';
 
   try {
+    const estCadeau = PARAMS.cadeau === true;
     const res = await fetch(CONFIG.fapshi.workerUrl, {
       method: 'POST',
       headers: {
@@ -191,17 +265,21 @@ async function _fapshiHandler() {
       body: JSON.stringify({
         montant:     PARAMS.montant,
         devise:      PARAMS.devise || 'XAF',
-        description: PARAMS.titre || 'Kalamundi — Paiement',
+        description: (estCadeau ? '🎁 Cadeau — ' : '') + (PARAMS.titre || 'Kalamundi — Paiement'),
         userId:      SESSION.user.id,
         oeuvreId:    PARAMS.oeuvreId || null,
-        plan:        PARAMS.type || null,
-        items:       PARAMS.items || null,
+        plan:        estCadeau ? null : (PARAMS.type || null),
+        items:       estCadeau ? null : (PARAMS.items || null),
+        cadeau:      estCadeau,
+        beneficiaireContact: estCadeau ? (document.getElementById('gift-contact')?.value || null) : null,
+        message:     estCadeau ? (document.getElementById('gift-message')?.value || null) : null,
         redirectUrl: window.location.origin + '/pages/payment.html?fapshi=success',
       }),
     });
 
     if (!res.ok) throw new Error('Erreur initialisation Fapshi');
-    const { link } = await res.json();
+    const { link, code } = await res.json();
+    if (estCadeau && code) localStorage.setItem('kalamundi_gift_pending', code);
     if (PARAMS.items?.length) localStorage.setItem('kalamundi_cart_pending', '1');
     window.location.href = link;
 

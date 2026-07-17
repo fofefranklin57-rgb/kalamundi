@@ -127,7 +127,8 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 13. 🟡 **Diaspora (D11)** — paiement international (cartes/PayPal) + multi-devises + **gifting**. `⟶ 12`
     - ✅ **Multi-devises** (16/07) : `scripts/lib/devises.mjs` — XAF/EUR/USD, parité fixe EUR 655,957, USD flottant via `TAUX_USD_XAF`, devise inconnue refusée. A corrigé 2 bugs graves (cf. ERROR_LOG). Contrôle `check-devises`.
     - ✅ **Gifting — serveur** (16/07) : migration `V011` + RPC `reclamer_cadeau` + codes `scripts/lib/cadeaux.mjs` + **flux paiement branché** (`fapshi-pay` crée le cadeau, `fapshi-webhook` le confirme et crédite l'auteur sans donner l'accès à l'acheteur). Contrôles `check-cadeaux` + `check-gift-flow`. ⚠️ **V011 reste à appliquer sur Supabase.**
-    - ⬜ **Reste** : (a) **UI** — bouton « offrir », écran d'achat cadeau, page de réclamation du code ; (b) **connecteur paiement international** (cartes/PayPal) — 🔴 **bloqué : compte marchand + secrets requis (action Franklin)**. Le gifting fonctionne déjà via Fapshi/Mobile Money en attendant.
+    - ✅ **UI cadeau** (16/07) : bouton « Offrir » sur la fiche (`work.js`), mode cadeau dans `payment.html`/`payment.js` (champs + affichage/partage du code), page de réclamation `pages/reclamer.html` + `reclamer.js` (RPC `reclamer_cadeau`). SW `kala-v29`. ⚠️ À tester en vrai après déploiement + `V011`.
+    - ⬜ **Reste #13** : **connecteur paiement international** (cartes/PayPal) — 🔴 **bloqué : compte marchand + secrets requis (action Franklin)**. Le gifting fonctionne déjà via Fapshi/Mobile Money en attendant.
 
 ### 🟦 P4 — Espaces avancés (chacun livré seul, dans l'ordre)
 14. **Vendre / occasion** (Phase 3) — listing ISBN, escrow, payout, logistique pilote. *(le plus dur)*

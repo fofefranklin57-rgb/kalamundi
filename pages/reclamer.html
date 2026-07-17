@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Réclamer un cadeau — Kalamundi</title>
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <style>
+    .claim-wrapper { max-width: 480px; margin: var(--spacing-2xl) auto; padding: 0 var(--spacing-lg); }
+    .claim-card { background: var(--bg-card); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-md); overflow: hidden; }
+    .claim-header { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: white; padding: var(--spacing-xl); text-align: center; }
+    .claim-header .gift { font-size: 52px; margin-bottom: var(--spacing-sm); }
+    .claim-header h1 { font-size: var(--font-size-2xl); }
+    .claim-body { padding: var(--spacing-xl); }
+    .code-input { text-transform: uppercase; letter-spacing: 3px; text-align: center; font-size: 1.4rem; font-weight: 700; font-family: var(--font-mono); }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo"><img src="/assets/img/logo-mark-km.png" alt="" aria-hidden="true"><span>Kalamundi</span></a>
+    </div>
+  </header>
+
+  <div class="page-wrapper">
+    <main class="main-content">
+      <div class="claim-wrapper">
+
+        <div id="zone-auth"></div>
+
+        <div class="claim-card" id="claim-card">
+          <div class="claim-header">
+            <div class="gift">🎁</div>
+            <h1>Réclamer un cadeau</h1>
+          </div>
+          <div class="claim-body">
+            <p style="color:var(--text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--spacing-lg)">
+              Un proche vous a offert un livre ? Saisissez le code qu'il vous a envoyé pour l'ajouter à votre bibliothèque.
+            </p>
+            <div class="form-group">
+              <label class="form-label" for="code">Votre code cadeau</label>
+              <input class="form-input code-input" id="code" type="text" placeholder="ABCD-EFGH-JKMN"
+                     autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" />
+              <p class="form-hint">Les tirets et espaces sont ignorés.</p>
+            </div>
+            <button class="btn btn--primary btn--full btn--lg" id="btn-reclamer">Débloquer mon livre</button>
+            <div id="claim-message" style="margin-top:var(--spacing-md)"></div>
+          </div>
+        </div>
+
+        <div id="zone-succes" style="display:none;text-align:center;padding:var(--spacing-2xl)">
+          <div style="font-size:64px;margin-bottom:var(--spacing-lg)">🎉</div>
+          <h2 style="color:var(--color-primary);margin-bottom:var(--spacing-md)">Cadeau débloqué !</h2>
+          <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg)" id="succes-message">
+            Le livre est maintenant dans votre bibliothèque.
+          </p>
+          <a href="#" class="btn btn--accent btn--lg" id="succes-lire">📖 Lire maintenant</a>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script type="module" src="/assets/js/reclamer.js"></script>
+  <script type="module" src="/assets/js/theme-init.js"></script>
+  <script type="module" src="/assets/js/i18n-boot.js"></script>
+</body>
+</html>
