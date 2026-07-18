@@ -1,0 +1,71 @@
+/* Contrôle de l'économie (frais Fapshi + répartition) — D10/D15/D16.
+   Verrouille : les frais ne sont jamais oubliés, et la somme des parts
+   plus les frais égale toujours le brut (aucun franc ne se perd). */
+
+import {
+  FAPSHI_COLLECTE_PCT,
+  FAPSHI_PAYOUT_PCT,
+  fraisFapshiCollecte,
+  repartirVenteLivre,
+  repartirVenteOccasion,
+  repartirVentePromo,
+  prixPromo,
+} from './lib/economie.mjs';
+
+const erreurs = [];
+const verifier = (c, m) => { if (!c) erreurs.push(m); };
+
+/* Frais Fapshi documentés */
+verifier(FAPSHI_COLLECTE_PCT === 3, `L'encaissement Fapshi est à 3 %.`);
+verifier(FAPSHI_PAYOUT_PCT === 0, `Le payout Fapshi est gratuit (0 %).`);
+verifier(fraisFapshiCollecte(1000) === 30, `3 % de 1000 = 30 (obtenu ${fraisFapshiCollecte(1000)}).`);
+
+/* Vente livre 50/50, frais déduits du brut (défaut) */
+const l = repartirVenteLivre(1000);
+verifier(l.frais_fapshi_xaf === 30, `Frais Fapshi sur 1000 = 30.`);
+verifier(l.net_xaf === 970, `Net après Fapshi = 970.`);
+verifier(l.part_auteur_xaf === 485 && l.part_plateforme_xaf === 485, `50/50 sur le net = 485 / 485 (obtenu ${l.part_auteur_xaf}/${l.part_plateforme_xaf}).`);
+verifier(l.part_auteur_xaf + l.part_plateforme_xaf + l.frais_fapshi_xaf === l.montant_brut_xaf, `Auteur + plateforme + frais = brut (aucun franc perdu).`);
+
+/* Vente livre, frais à la charge de la plateforme */
+const lp = repartirVenteLivre(1000, { fraisALaCharge: 'plateforme' });
+verifier(lp.part_auteur_xaf === 500, `Si la plateforme absorbe les frais, l'auteur touche 500 pleins.`);
+verifier(lp.part_plateforme_xaf === 470, `La plateforme touche 470 (500 − 30 de frais).`);
+verifier(lp.part_auteur_xaf + lp.part_plateforme_xaf + lp.frais_fapshi_xaf === 1000, `La somme reste égale au brut.`);
+
+/* Occasion 15 %, aucun revenu auteur, payout gratuit */
+const o = repartirVenteOccasion(2000);
+verifier(o.frais_fapshi_xaf === 60, `Frais Fapshi sur 2000 = 60.`);
+verifier(o.commission_xaf === 300, `Commission 15 % de 2000 = 300.`);
+verifier(o.part_vendeur_xaf === 1700, `Le vendeur reçoit 1700 (prix 2000 − commission 300), payout gratuit.`);
+verifier(o.part_plateforme_xaf === 240, `La plateforme garde 240 (commission 300 − frais Fapshi 60).`);
+verifier(o.part_vendeur_xaf + o.part_plateforme_xaf + o.frais_fapshi_xaf === o.montant_brut_xaf, `Vendeur + plateforme + frais = brut.`);
+verifier(!('part_auteur_xaf' in o), `Aucune part auteur sur l'occasion.`);
+
+/* Promo : remise sur le prix + part plateforme majorée possible */
+verifier(prixPromo(1000, 30) === 700, `Un livre à 1000 en promo -30 % se vend 700.`);
+const p = repartirVentePromo(1000, { remisePct: 30, partPlateformePct: 60 });
+verifier(p.prix_vente_xaf === 700, `Le prix de vente promo doit être 700.`);
+verifier(p.type === 'promo' && p.remise_pct === 30, `La répartition promo doit tracer la remise.`);
+verifier(p.part_plateforme_xaf > p.part_auteur_xaf, `Avec une part plateforme majorée (60 %), la plateforme touche plus que l'auteur.`);
+verifier(p.part_auteur_xaf + p.part_plateforme_xaf + p.frais_fapshi_xaf === p.prix_vente_xaf, `Sur la promo aussi, aucun franc ne se perd.`);
+
+/* Remise promo aberrante refusée */
+let leve = false;
+try { prixPromo(1000, 95); } catch { leve = true; }
+verifier(leve, `Une remise > 90 % doit être refusée.`);
+
+/* Montants invalides refusés partout */
+for (const f of [repartirVenteLivre, repartirVenteOccasion]) {
+  for (const mauvais of [-1, 'x', NaN]) {
+    let l2 = false;
+    try { f(mauvais); } catch { l2 = true; }
+    verifier(l2, `${f.name} doit refuser un montant invalide (${mauvais}).`);
+  }
+}
+
+if (erreurs.length) {
+  console.error(erreurs.map(e => `- ${e}`).join('\n'));
+  process.exit(1);
+}
+console.log('Économie (frais Fapshi + répartition livre/occasion/promo) OK.');
