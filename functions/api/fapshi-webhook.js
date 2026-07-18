@@ -35,7 +35,10 @@ export async function onRequestPost({ request, env }) {
 
     const paiements = await getPaiements(env, transId);
     const cadeaux = await getCadeaux(env, transId);
-    if (!paiements.length && !cadeaux.length) return json({ error: 'Paiement introuvable.' }, 404);
+    const commandesOccasion = await getCommandesOccasion(env, transId);
+    if (!paiements.length && !cadeaux.length && !commandesOccasion.length) {
+      return json({ error: 'Paiement introuvable.' }, 404);
+    }
 
     for (const paiement of paiements) {
       if (paiement.statut !== 'confirme') {
@@ -58,7 +61,20 @@ export async function onRequestPost({ request, env }) {
       cadeauxConfirmes++;
     }
 
-    return json({ success: true, count: paiements.length, cadeaux: cadeauxConfirmes });
+    /* Occasion : le paiement confirmé gèle l'argent → la commande passe en
+       « paye_sequestre ». On NE verse RIEN au vendeur ici : le versement
+       n'aura lieu qu'à la confirmation de réception par l'acheteur (V012). */
+    let occasionConfirmees = 0;
+    for (const cmd of commandesOccasion) {
+      if (cmd.statut !== 'en_attente_paiement') continue; // idempotent
+      await updateCommandeOccasion(env, cmd.id, {
+        statut: 'paye_sequestre',
+        paye_at: new Date().toISOString(),
+      });
+      occasionConfirmees++;
+    }
+
+    return json({ success: true, count: paiements.length, cadeaux: cadeauxConfirmes, occasion: occasionConfirmees });
   } catch (err) {
     return json({ error: err.message || 'Erreur webhook Fapshi.' }, 500);
   }
@@ -133,6 +149,19 @@ async function getCadeaux(env, reference) {
 
 async function updateCadeau(env, id, champs) {
   await supabaseFetch(env, `${SUPABASE_URL}/rest/v1/cadeaux?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify(champs),
+  });
+}
+
+async function getCommandesOccasion(env, reference) {
+  const url = `${SUPABASE_URL}/rest/v1/commandes_occasion?paiement_id=eq.${encodeURIComponent(reference)}&select=id,statut`;
+  return await supabaseFetch(env, url) || [];
+}
+
+async function updateCommandeOccasion(env, id, champs) {
+  await supabaseFetch(env, `${SUPABASE_URL}/rest/v1/commandes_occasion?id=eq.${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { Prefer: 'return=minimal' },
     body: JSON.stringify(champs),

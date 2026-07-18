@@ -35,6 +35,8 @@ export async function onRequestPost({ request, env }) {
 
   const { montant, devise, description, userId, oeuvreId, plan, redirectUrl } = body;
   const estCadeau = body.cadeau === true;
+  const commandeOccasionId = body.commandeOccasionId || null;
+  const estOccasion = !!commandeOccasionId;
   const items = estCadeau ? [] : Array.isArray(body.items)
     ? body.items
         .filter(item => item?.oeuvreId && Number(item.prix || 0) > 0)
@@ -55,11 +57,29 @@ export async function onRequestPost({ request, env }) {
      La conversion passe par scripts/lib/devises.mjs : une devise inconnue est
      refusée, jamais traitée comme des XAF (10 EUR ne doivent pas devenir
      10 FCFA), et le dollar n'utilise plus la parité fixe de l'euro. */
+  /* Occasion : le montant N'EST PAS pris du client mais relu depuis la commande
+     (on ne fait jamais confiance à un prix envoyé par le navigateur pour de
+     l'argent entre inconnus). On vérifie aussi que l'acheteur est bien le sien. */
+  let commandeOcc = null;
   let montantXAF;
-  try {
-    montantXAF = convertirVersXaf(montant, devise || DEVISE_BASE, { tauxUsdXaf: tauxUsdDepuisEnv(env) });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders });
+  if (estOccasion) {
+    commandeOcc = await getCommandeOccasion(env, commandeOccasionId).catch(() => null);
+    if (!commandeOcc) {
+      return new Response(JSON.stringify({ error: 'Commande introuvable.' }), { status: 404, headers: corsHeaders });
+    }
+    if (commandeOcc.acheteur_id !== userId) {
+      return new Response(JSON.stringify({ error: 'Cette commande ne vous appartient pas.' }), { status: 403, headers: corsHeaders });
+    }
+    if (commandeOcc.statut !== 'en_attente_paiement') {
+      return new Response(JSON.stringify({ error: 'Commande déjà payée ou clôturée.' }), { status: 409, headers: corsHeaders });
+    }
+    montantXAF = Number(commandeOcc.montant_xaf);
+  } else {
+    try {
+      montantXAF = convertirVersXaf(montant, devise || DEVISE_BASE, { tauxUsdXaf: tauxUsdDepuisEnv(env) });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders });
+    }
   }
 
   if (!montantXAF || montantXAF < 100) {
@@ -90,7 +110,8 @@ export async function onRequestPost({ request, env }) {
         message:     description || (items.length ? `Kalamundi — ${items.length} livre(s)` : 'Kalamundi'),
         redirect_url: redirectUrl || 'https://kalamundi.com/pages/payment.html?fapshi=success',
         userId:      userId,
-        externalId:  estCadeau ? `gift-${userId}-${Date.now()}`
+        externalId:  estOccasion ? `occ-${commandeOccasionId}`
+                   : estCadeau ? `gift-${userId}-${Date.now()}`
                    : items.length ? `cart-${userId}-${Date.now()}`
                    : (oeuvreId || plan || userId),
       }),
@@ -105,6 +126,16 @@ export async function onRequestPost({ request, env }) {
   }
 
   const data = await fapshiRes.json();
+
+  if (estOccasion) {
+    /* On relie la commande au paiement (paiement_id = transId) ; le webhook
+       la fera passer en « paye_sequestre » (l'argent est alors gelé). */
+    await marquerPaiementCommandeOccasion(env, commandeOccasionId, data.transId).catch(() => {});
+    return new Response(JSON.stringify({ link: data.link, transId: data.transId, commandeId: commandeOccasionId }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
 
   if (estCadeau) {
     /* Un cadeau ne donne PAS d'accès à l'acheteur : on crée une ligne cadeaux
@@ -144,6 +175,31 @@ export async function onRequestPost({ request, env }) {
   return new Response(JSON.stringify({ link: data.link, transId: data.transId }), {
     status: 200,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
+  });
+}
+
+async function getCommandeOccasion(env, id) {
+  if (!env.SUPABASE_SERVICE_KEY || !id) return null;
+  const url = `${SUPABASE_URL}/rest/v1/commandes_occasion?id=eq.${encodeURIComponent(id)}&select=id,acheteur_id,statut,montant_xaf&limit=1`;
+  const res = await fetch(url, {
+    headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` },
+  });
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length ? rows[0] : null;
+}
+
+async function marquerPaiementCommandeOccasion(env, id, transId) {
+  if (!env.SUPABASE_SERVICE_KEY || !id || !transId) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/commandes_occasion?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({ paiement_id: transId }),
   });
 }
 
