@@ -129,15 +129,15 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 12. 🟡 Entité produit/offres → **panier** → **checkout Fapshi** → store à rails → historique de commandes. `⟶ 5` *(panier, checkout multi-livres et historique achats livrés 17/07 ; reste store avancé/promos)*
 13. 🟡 **Diaspora (D11)** — paiement international (cartes/PayPal) + multi-devises + **gifting**. `⟶ 12`
     - ✅ **Multi-devises** (16/07) : `scripts/lib/devises.mjs` — XAF/EUR/USD, parité fixe EUR 655,957, USD flottant via `TAUX_USD_XAF`, devise inconnue refusée. A corrigé 2 bugs graves (cf. ERROR_LOG). Contrôle `check-devises`.
-    - ✅ **Gifting — serveur** (16/07) : migration `V011` + RPC `reclamer_cadeau` + codes `scripts/lib/cadeaux.mjs` + **flux paiement branché** (`fapshi-pay` crée le cadeau, `fapshi-webhook` le confirme et crédite l'auteur sans donner l'accès à l'acheteur). Contrôles `check-cadeaux` + `check-gift-flow`. ⚠️ **V011 reste à appliquer sur Supabase.**
+    - ✅ **Gifting — serveur** (16/07) : migration `V011` + RPC `reclamer_cadeau` + codes `scripts/lib/cadeaux.mjs` + **flux paiement branché** (`fapshi-pay` crée le cadeau, `fapshi-webhook` le confirme et crédite l'auteur sans donner l'accès à l'acheteur). Contrôles `check-cadeaux` + `check-gift-flow`. ✅ **V011 appliquée sur Supabase (16/07).**
     - ✅ **UI cadeau** (16/07) : bouton « Offrir » sur la fiche (`work.js`), mode cadeau dans `payment.html`/`payment.js` (champs + affichage/partage du code), page de réclamation `pages/reclamer.html` + `reclamer.js` (RPC `reclamer_cadeau`). SW `kala-v29`. ⚠️ À tester en vrai après déploiement + `V011`.
     - ⬜ **Reste #13** : **connecteur paiement international** (cartes/PayPal) — 🔴 **bloqué : compte marchand + secrets requis (action Franklin)**. Le gifting fonctionne déjà via Fapshi/Mobile Money en attendant.
 
 ### 🟦 P4 — Espaces avancés (chacun livré seul, dans l'ordre)
 14. 🟡 **Vendre / occasion** (Phase 3) — listing ISBN, escrow, payout, logistique pilote. *(le plus dur)*
-    - ✅ **Socle séquestre** (16/07) : machine à états `scripts/lib/occasion-etats.mjs` + migration `V012` (commandes_occasion, vendeur_evaluations, 5 RPC SECURITY DEFINER) + `check-occasion`. Commission 15 % (**D15**), aucun revenu auteur sur l'occasion. ⚠️ **V012 à appliquer sur Supabase.**
+    - ✅ **Socle séquestre** (16/07) : machine à états `scripts/lib/occasion-etats.mjs` + migration `V012` (commandes_occasion, vendeur_evaluations, 5 RPC SECURITY DEFINER) + `check-occasion`. Commission 15 % (**D15**), aucun revenu auteur sur l'occasion. ✅ **V012 appliquée sur Supabase (16/07).**
     - ✅ **Payout confirmé + client codé** (16/07) : `scripts/lib/fapshi-payout.js` (POST /payout), `check-payout`. Reste à demander l'activation live à Fapshi (démarche Franklin).
-    - ✅ **Formulaire de mise en vente** (16/07) : `V013` (RPC `creer_annonce_occasion`) + `pages/vendre.html` / `vendre.js` (répartition en direct) + entrée menu profil. Contrôle `check-vendre`. ⚠️ **V013 à appliquer sur Supabase.**
+    - ✅ **Formulaire de mise en vente** (16/07) : `V013` (RPC `creer_annonce_occasion`) + `pages/vendre.html` / `vendre.js` (répartition en direct) + entrée menu profil. Contrôle `check-vendre`. ✅ **V013 appliquée sur Supabase (16/07).**
     - ⬜ **Reste** : Function serveur d'orchestration du payout (admin/cron : commande `clos` → `POST /payout` → `payout_statut='verse'`, idempotent), page **commande** (confirmer remise/réception, litige, notes), **découverte** des annonces (marketplace), branchement webhook Fapshi → `paye_sequestre`, arbitrage litige (admin).
 15. **Emprunter** (Phase 4) — Readium **LCP** (accès temporel + files d'attente), fonds maison.
 
