@@ -61,11 +61,11 @@ verifier(!transitionAutorisee(ETATS.EN_ATTENTE_PAIEMENT, ETATS.REMIS, 'vendeur')
 
 /* Répartition : commission + AUCUN revenu auteur */
 const r = repartirOccasion(2000);
-verifier(r.commission_xaf === 300, `Commission 15% de 2000 = 300 (obtenu ${r.commission_xaf}).`);
-verifier(r.montant_vendeur_xaf === 1700, `Le vendeur touche 1700 (obtenu ${r.montant_vendeur_xaf}).`);
+verifier(r.commission_xaf === 400, `Commission 20% de 2000 = 400 (obtenu ${r.commission_xaf}).`);
+verifier(r.montant_vendeur_xaf === 1600, `Le vendeur touche 1600 (obtenu ${r.montant_vendeur_xaf}).`);
 verifier(r.commission_xaf + r.montant_vendeur_xaf === r.montant_xaf, `Commission + part vendeur = montant.`);
 verifier(!('montant_auteur_xaf' in r), `Aucune part auteur sur l'occasion.`);
-verifier(COMMISSION_OCCASION_PCT === 15, `Commission occasion par défaut = 15 % (D15).`);
+verifier(COMMISSION_OCCASION_PCT === 20, `Commission occasion = 20 % (D15).`);
 verifier(AUTO_LIBERATION_JOURS >= 1, `Un délai d'auto-libération doit être défini.`);
 
 for (const mauvais of [-1, 'x', NaN, Infinity]) {
@@ -100,7 +100,7 @@ if (!fs.existsSync(sqlPath)) {
   verifier(/propre annonce/i.test(sql), `On ne doit pas acheter sa propre annonce.`);
   verifier(/Seul le vendeur peut confirmer la remise/i.test(sql), `Seul le vendeur confirme la remise.`);
   verifier(/payout_statut = 'a_verser'/i.test(sql), `La clôture doit marquer le versement vendeur à effectuer.`);
-  verifier(/\* 15 \/ 100/i.test(sql), `La commission SQL doit être 15 %.`);
+  verifier(/\* 20 \/ 100/i.test(sql), `La commission SQL doit être 20 %.`);
 }
 
 if (erreurs.length) {

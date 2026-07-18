@@ -147,8 +147,9 @@ BEGIN
     RAISE EXCEPTION 'Prix invalide.';
   END IF;
 
-  -- Commission plateforme 15 % ; le reste au vendeur ; l'auteur ne touche rien.
-  v_commission := round(v_montant * 15 / 100.0)::INT;
+  -- Commission plateforme 20 % ; le reste au vendeur ; l'auteur ne touche rien.
+  -- La plateforme porte les frais Fapshi (D16) : le vendeur reçoit prix - commission.
+  v_commission := round(v_montant * 20 / 100.0)::INT;
 
   INSERT INTO commandes_occasion (
     offre_id, livre_id, acheteur_id, vendeur_id,

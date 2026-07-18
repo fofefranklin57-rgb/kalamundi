@@ -70,7 +70,7 @@ export function repartirVenteLivre(montantBrut, { partAuteurPct = 50, fraisALaCh
    Aucun revenu auteur (doctrine de la première vente).
    Le vendeur reçoit sa part par payout (0 % de frais Fapshi).
    ============================================================ */
-export function repartirVenteOccasion(montantBrut, { commissionPct = 15 } = {}) {
+export function repartirVenteOccasion(montantBrut, { commissionPct = 20 } = {}) {
   const brut = entier(montantBrut, 'Montant');
   if (commissionPct < 0 || commissionPct > 100) throw new Error(`Commission invalide : « ${commissionPct} ».`);
 
@@ -90,6 +90,19 @@ export function repartirVenteOccasion(montantBrut, { commissionPct = 15 } = {}) 
     commission_xaf: commission,
     part_vendeur_xaf: vendeur,               // versé par payout (gratuit)
     part_plateforme_xaf: commission - frais, // commission nette des frais Fapshi
+  };
+}
+
+/* Aperçu clair destiné au VENDEUR d'occasion : ce qu'il fixe, ce qui est
+   prélevé, ce qu'il reçoit. À afficher au moment de poster une annonce. */
+export function apercuVendeurOccasion(prix, { commissionPct = 20 } = {}) {
+  const r = repartirVenteOccasion(prix, { commissionPct });
+  return {
+    prix_vente_xaf: r.montant_brut_xaf,
+    commission_pct: commissionPct,
+    commission_kalamundi_xaf: r.commission_xaf,
+    frais_paiement_pris_en_charge: true, // Kalamundi absorbe les frais Fapshi (D16)
+    vous_recevez_xaf: r.part_vendeur_xaf, // versé par Mobile Money, payout gratuit
   };
 }
 

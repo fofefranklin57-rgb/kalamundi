@@ -9,6 +9,7 @@ import {
   repartirVenteLivre,
   repartirVenteOccasion,
   repartirVentePromo,
+  apercuVendeurOccasion,
   prixPromo,
 } from './lib/economie.mjs';
 
@@ -35,14 +36,22 @@ const lb = repartirVenteLivre(1000, { fraisALaCharge: 'brut' });
 verifier(lb.part_auteur_xaf === 485 && lb.part_plateforme_xaf === 485, `En mode 'brut', frais partagés → 485 / 485.`);
 verifier(lb.part_auteur_xaf + lb.part_plateforme_xaf + lb.frais_fapshi_xaf === 1000, `En mode 'brut' aussi, la somme égale le brut.`);
 
-/* Occasion 15 %, aucun revenu auteur, payout gratuit */
+/* Occasion 20 % (D15), aucun revenu auteur, payout gratuit, plateforme porte les frais */
 const o = repartirVenteOccasion(2000);
 verifier(o.frais_fapshi_xaf === 60, `Frais Fapshi sur 2000 = 60.`);
-verifier(o.commission_xaf === 300, `Commission 15 % de 2000 = 300.`);
-verifier(o.part_vendeur_xaf === 1700, `Le vendeur reçoit 1700 (prix 2000 − commission 300), payout gratuit.`);
-verifier(o.part_plateforme_xaf === 240, `La plateforme garde 240 (commission 300 − frais Fapshi 60).`);
+verifier(o.commission_xaf === 400, `Commission 20 % de 2000 = 400.`);
+verifier(o.part_vendeur_xaf === 1600, `Le vendeur reçoit 1600 (prix 2000 − commission 400), payout gratuit.`);
+verifier(o.part_plateforme_xaf === 340, `La plateforme garde 340 (commission 400 − frais Fapshi 60).`);
 verifier(o.part_vendeur_xaf + o.part_plateforme_xaf + o.frais_fapshi_xaf === o.montant_brut_xaf, `Vendeur + plateforme + frais = brut.`);
 verifier(!('part_auteur_xaf' in o), `Aucune part auteur sur l'occasion.`);
+
+/* Aperçu vendeur : ce qu'il voit clairement en postant son annonce */
+const av = apercuVendeurOccasion(2000);
+verifier(av.commission_pct === 20, `L'aperçu vendeur doit annoncer 20 % de commission.`);
+verifier(av.commission_kalamundi_xaf === 400, `L'aperçu doit montrer 400 de commission.`);
+verifier(av.vous_recevez_xaf === 1600, `L'aperçu doit dire au vendeur qu'il reçoit 1600.`);
+verifier(av.frais_paiement_pris_en_charge === true, `L'aperçu doit indiquer que Kalamundi porte les frais de paiement.`);
+verifier(av.commission_kalamundi_xaf + av.vous_recevez_xaf === av.prix_vente_xaf, `Commission + part vendeur = prix affiché (aucun coût caché pour le vendeur).`);
 
 /* Promo : remise sur le prix + part plateforme majorée possible */
 verifier(prixPromo(1000, 30) === 700, `Un livre à 1000 en promo -30 % se vend 700.`);

@@ -98,9 +98,9 @@ export function acheteurRembourse(etat) {
    Répartition de la recette (occasion)
    ============================================================ */
 
-/* Commission plateforme par défaut sur l'occasion (D15, à valider).
-   Repère marché : PangoBooks ~20 %. On démarre à 15 %. */
-export const COMMISSION_OCCASION_PCT = 15;
+/* Commission plateforme sur l'occasion (D15, validée Franklin 16/07 : 20 %,
+   niveau PangoBooks). La plateforme porte les frais Fapshi (D16). */
+export const COMMISSION_OCCASION_PCT = 20;
 
 /* Délai d'auto-libération : sans réponse de l'acheteur après remise, on
    considère la réception acquise et on libère le vendeur (protège le vendeur). */
