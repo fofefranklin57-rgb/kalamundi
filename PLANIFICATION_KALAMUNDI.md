@@ -131,7 +131,9 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
     - ⬜ **Reste #13** : **connecteur paiement international** (cartes/PayPal) — 🔴 **bloqué : compte marchand + secrets requis (action Franklin)**. Le gifting fonctionne déjà via Fapshi/Mobile Money en attendant.
 
 ### 🟦 P4 — Espaces avancés (chacun livré seul, dans l'ordre)
-14. **Vendre / occasion** (Phase 3) — listing ISBN, escrow, payout, logistique pilote. *(le plus dur)*
+14. 🟡 **Vendre / occasion** (Phase 3) — listing ISBN, escrow, payout, logistique pilote. *(le plus dur)*
+    - ✅ **Socle séquestre** (16/07) : machine à états `scripts/lib/occasion-etats.mjs` + migration `V012` (commandes_occasion, vendeur_evaluations, 5 RPC SECURITY DEFINER) + `check-occasion`. Commission 15 % (**D15**), aucun revenu auteur sur l'occasion. ⚠️ **V012 à appliquer sur Supabase.**
+    - ⬜ **Reste** : versement vendeur (payout — **bloqué** sur capacité Fapshi payout, cf. backlog), UI (poster une annonce, page commande avec confirmer remise/réception, notes vendeur), branchement webhook Fapshi → `paye_sequestre`, arbitrage litige (admin).
 15. **Emprunter** (Phase 4) — Readium **LCP** (accès temporel + files d'attente), fonds maison.
 
 ### 🟪 P5 — Piliers partenariats (en parallèle, au rythme des accords — PAS bloquants)
