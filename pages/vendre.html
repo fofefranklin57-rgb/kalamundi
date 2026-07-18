@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vendre un livre d'occasion — Kalamundi</title>
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <style>
+    .vendre-wrapper { max-width: 560px; margin: var(--spacing-xl) auto; padding: 0 var(--spacing-lg); }
+    .vendre-card { background: var(--bg-card); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-md); overflow: hidden; }
+    .vendre-header { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: #fff; padding: var(--spacing-lg) var(--spacing-xl); }
+    .vendre-header h1 { font-size: var(--font-size-xl); }
+    .vendre-body { padding: var(--spacing-xl); }
+    .repartition { background: var(--bg-secondary); border-radius: var(--border-radius-md); padding: var(--spacing-lg); margin: var(--spacing-lg) 0; }
+    .repartition__ligne { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; font-size: var(--font-size-sm); }
+    .repartition__vendeur { border-top: 1px solid var(--border-color); margin-top: 6px; padding-top: 10px; font-size: var(--font-size-md); }
+    .repartition__vendeur strong { color: var(--color-primary); font-size: 1.5rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo"><img src="/assets/img/logo-mark-km.png" alt="" aria-hidden="true"><span>Kalamundi</span></a>
+    </div>
+  </header>
+
+  <div class="page-wrapper">
+    <main class="main-content">
+      <div class="vendre-wrapper">
+
+        <div id="zone-auth"></div>
+
+        <div class="vendre-card" id="vendre-card">
+          <div class="vendre-header">
+            <h1>📚 Vendre un livre d'occasion</h1>
+            <p style="opacity:.85;font-size:var(--font-size-sm);margin-top:4px">Votre exemplaire papier trouve un nouveau lecteur.</p>
+          </div>
+          <div class="vendre-body">
+
+            <div class="form-group">
+              <label class="form-label form-label--required" for="titre">Titre du livre</label>
+              <input class="form-input" id="titre" type="text" maxlength="200" placeholder="Ex. Une si longue lettre" />
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="auteur">Auteur</label>
+                <input class="form-input" id="auteur" type="text" maxlength="120" placeholder="Ex. Mariama Bâ" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="isbn">ISBN <span style="color:var(--text-light)">(si présent)</span></label>
+                <input class="form-input" id="isbn" type="text" maxlength="20" placeholder="978…" />
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label form-label--required" for="etat">État</label>
+                <select class="form-select" id="etat">
+                  <option value="neuf">Neuf</option>
+                  <option value="comme_neuf">Comme neuf</option>
+                  <option value="bon" selected>Bon état</option>
+                  <option value="correct">Correct</option>
+                  <option value="use">Usé</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label form-label--required" for="prix">Prix (FCFA)</label>
+                <input class="form-input" id="prix" type="number" min="100" step="50" placeholder="2000" inputmode="numeric" />
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="ville">Ville</label>
+                <input class="form-input" id="ville" type="text" maxlength="80" placeholder="Ex. Yaoundé" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="mode">Remise</label>
+                <select class="form-select" id="mode">
+                  <option value="main_propre" selected>Main propre</option>
+                  <option value="point_relais">Point relais</option>
+                  <option value="livraison">Livraison</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Répartition claire, mise à jour en direct -->
+            <div class="repartition" id="repartition">
+              <div style="font-weight:500;color:var(--color-primary);margin-bottom:6px">Ce que vous recevez</div>
+              <div class="repartition__ligne"><span>Prix de vente</span><span id="r-prix">—</span></div>
+              <div class="repartition__ligne"><span>Commission Kalamundi (20%)</span><span id="r-commission">—</span></div>
+              <div class="repartition__ligne" style="color:var(--text-secondary)"><span>Frais de paiement</span><span>Pris en charge par Kalamundi ✓</span></div>
+              <div class="repartition__ligne repartition__vendeur"><span>Vous recevez</span><strong id="r-vendeur">—</strong></div>
+              <p style="font-size:var(--font-size-xs);color:var(--text-light);margin-top:8px">Versé sur votre Mobile Money après confirmation de réception par l'acheteur. Aucun coût caché.</p>
+            </div>
+
+            <button class="btn btn--primary btn--full btn--lg" id="btn-publier">Publier l'annonce</button>
+            <div id="vendre-message" style="margin-top:var(--spacing-md)"></div>
+          </div>
+        </div>
+
+        <div id="zone-succes" style="display:none;text-align:center;padding:var(--spacing-2xl)">
+          <div style="font-size:64px;margin-bottom:var(--spacing-lg)">✅</div>
+          <h2 style="color:var(--color-primary);margin-bottom:var(--spacing-md)">Annonce publiée !</h2>
+          <p style="color:var(--text-secondary);margin-bottom:var(--spacing-xl)">Votre livre est en vente. Vous serez notifié dès qu'un acheteur le réserve.</p>
+          <a href="/pages/library.html" class="btn btn--primary">Retour au catalogue</a>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script type="module" src="/assets/js/vendre.js"></script>
+  <script type="module" src="/assets/js/theme-init.js"></script>
+  <script type="module" src="/assets/js/i18n-boot.js"></script>
+</body>
+</html>
