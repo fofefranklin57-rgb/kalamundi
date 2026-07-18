@@ -174,11 +174,12 @@ function rendreReportingKdp(reporting = {}) {
   setText('kdp-ventes', formatNombre(reporting.ventes || 0));
   setText('kdp-pages', formatNombre(reporting.pagesSuivies || 0));
   setText('kdp-royalties', reporting.selectActif ? '70%' : '50%');
-  setText('kdp-royalties-detail', reporting.selectActif
+  setText('kdp-royalties-detail', (reporting.selectActif
     ? 'Kalamundi Select actif'
     : reporting.selectEligible
       ? 'Select possible plus tard, non activé'
-      : 'Standard auteur indépendant');
+      : 'Standard auteur indépendant')
+    + ' · part pleine, frais de paiement pris en charge par Kalamundi');
 
   const attente = Number(reporting.revenusAttente || 0);
   const seuil = Number(reporting.seuilPayout || 5000);

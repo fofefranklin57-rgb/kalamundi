@@ -20,18 +20,20 @@ verifier(FAPSHI_COLLECTE_PCT === 3, `L'encaissement Fapshi est à 3 %.`);
 verifier(FAPSHI_PAYOUT_PCT === 0, `Le payout Fapshi est gratuit (0 %).`);
 verifier(fraisFapshiCollecte(1000) === 30, `3 % de 1000 = 30 (obtenu ${fraisFapshiCollecte(1000)}).`);
 
-/* Vente livre 50/50, frais déduits du brut (défaut) */
+/* Vente livre 50/50 — défaut D16 : la plateforme absorbe les frais Fapshi,
+   donc l'auteur touche sa part PLEINE. */
 const l = repartirVenteLivre(1000);
+verifier(l.frais_a_la_charge === 'plateforme', `Défaut D16 : la plateforme absorbe les frais.`);
 verifier(l.frais_fapshi_xaf === 30, `Frais Fapshi sur 1000 = 30.`);
 verifier(l.net_xaf === 970, `Net après Fapshi = 970.`);
-verifier(l.part_auteur_xaf === 485 && l.part_plateforme_xaf === 485, `50/50 sur le net = 485 / 485 (obtenu ${l.part_auteur_xaf}/${l.part_plateforme_xaf}).`);
+verifier(l.part_auteur_xaf === 500, `L'auteur touche sa part pleine (500), la plateforme absorbe les frais.`);
+verifier(l.part_plateforme_xaf === 470, `La plateforme touche 470 (500 − 30 de frais).`);
 verifier(l.part_auteur_xaf + l.part_plateforme_xaf + l.frais_fapshi_xaf === l.montant_brut_xaf, `Auteur + plateforme + frais = brut (aucun franc perdu).`);
 
-/* Vente livre, frais à la charge de la plateforme */
-const lp = repartirVenteLivre(1000, { fraisALaCharge: 'plateforme' });
-verifier(lp.part_auteur_xaf === 500, `Si la plateforme absorbe les frais, l'auteur touche 500 pleins.`);
-verifier(lp.part_plateforme_xaf === 470, `La plateforme touche 470 (500 − 30 de frais).`);
-verifier(lp.part_auteur_xaf + lp.part_plateforme_xaf + lp.frais_fapshi_xaf === 1000, `La somme reste égale au brut.`);
+/* Politique alternative 'brut' (frais partagés) reste disponible et exacte */
+const lb = repartirVenteLivre(1000, { fraisALaCharge: 'brut' });
+verifier(lb.part_auteur_xaf === 485 && lb.part_plateforme_xaf === 485, `En mode 'brut', frais partagés → 485 / 485.`);
+verifier(lb.part_auteur_xaf + lb.part_plateforme_xaf + lb.frais_fapshi_xaf === 1000, `En mode 'brut' aussi, la somme égale le brut.`);
 
 /* Occasion 15 %, aucun revenu auteur, payout gratuit */
 const o = repartirVenteOccasion(2000);

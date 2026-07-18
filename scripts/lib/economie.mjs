@@ -14,12 +14,13 @@
 export const FAPSHI_COLLECTE_PCT = 3;   // % prélevé à l'encaissement
 export const FAPSHI_PAYOUT_PCT = 0;     // % prélevé au reversement (gratuit)
 
-/* Politique de prise en charge des frais Fapshi (D16, à valider) :
-   'brut'      → frais déduits du prix, PUIS partage (auteur et plateforme
-                 partagent le coût au prorata de leur part). ← recommandé
-   'plateforme'→ la plateforme absorbe seule les frais (l'auteur touche sa
-                 part pleine sur le brut). */
-export const FRAIS_A_LA_CHARGE = 'brut';
+/* Politique de prise en charge des frais Fapshi.
+   ✅ D16 tranchée (Franklin, 16/07) : 'plateforme' — Kalamundi absorbe seule
+   les frais de paiement, l'auteur touche sa part PLEINE sur le prix. C'est un
+   argument de confiance, à afficher clairement aux auteurs (publish, contrat,
+   dashboard).
+   'brut' reste disponible (frais partagés au prorata) mais n'est pas le défaut. */
+export const FRAIS_A_LA_CHARGE = 'plateforme';
 
 function entier(v, nom) {
   const n = Number(v);
