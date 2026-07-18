@@ -90,7 +90,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 ## C. Backlog transverse (à faire tôt)
 - [ ] Confiance : avis, garantie acheteur, badge vendeur vérifié
 - [ ] Optimisation offline pour catalogues lourds
-- [ ] Vérifier capacités **payout Fapshi** (bloquant Phase 3)
+- [x] Vérifier capacités **payout Fapshi** — ✅ **confirmé (16/07)** : Fapshi expose `POST /payout` (MTN/Orange/compte Fapshi, min 100 XAF, en-têtes apiuser/apikey), + bulk. Client codé (`scripts/lib/fapshi-payout.js`, `check-payout`). ⚠️ **payout désactivé par défaut en live → activation à demander au support Fapshi + float requis sur le compte.**
 - [ ] Cadre juridique droits/prêt (étendre `contrat-auteur.html`)
 
 ---
@@ -133,7 +133,8 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 ### 🟦 P4 — Espaces avancés (chacun livré seul, dans l'ordre)
 14. 🟡 **Vendre / occasion** (Phase 3) — listing ISBN, escrow, payout, logistique pilote. *(le plus dur)*
     - ✅ **Socle séquestre** (16/07) : machine à états `scripts/lib/occasion-etats.mjs` + migration `V012` (commandes_occasion, vendeur_evaluations, 5 RPC SECURITY DEFINER) + `check-occasion`. Commission 15 % (**D15**), aucun revenu auteur sur l'occasion. ⚠️ **V012 à appliquer sur Supabase.**
-    - ⬜ **Reste** : versement vendeur (payout — **bloqué** sur capacité Fapshi payout, cf. backlog), UI (poster une annonce, page commande avec confirmer remise/réception, notes vendeur), branchement webhook Fapshi → `paye_sequestre`, arbitrage litige (admin).
+    - ✅ **Payout confirmé + client codé** (16/07) : `scripts/lib/fapshi-payout.js` (POST /payout), `check-payout`. Reste à demander l'activation live à Fapshi (démarche Franklin).
+    - ⬜ **Reste** : Function serveur d'orchestration du payout (admin/cron : commande `clos` → `POST /payout` → `payout_statut='verse'`, idempotent), UI (poster une annonce, page commande confirmer remise/réception, notes vendeur), branchement webhook Fapshi → `paye_sequestre`, arbitrage litige (admin).
 15. **Emprunter** (Phase 4) — Readium **LCP** (accès temporel + files d'attente), fonds maison.
 
 ### 🟪 P5 — Piliers partenariats (en parallèle, au rythme des accords — PAS bloquants)
