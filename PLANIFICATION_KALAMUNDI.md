@@ -141,7 +141,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
     - ✅ **Paiement occasion branché** (16/07) : `fapshi-pay` relit le montant serveur + relie paiement↔commande ; `fapshi-webhook` gèle en `paye_sequestre` sans payer le vendeur. Contrôle `check-occasion-flow`.
     - ✅ **Cycle complet bouclé** (16/07) : page `commande.html` (timeline + actions par rôle réel : payer/remettre/recevoir=libère les fonds/litige/évaluer) + découverte sur la fiche œuvre (`work.js` : annonces réelles + réservation en un clic) + `payment.js` branché. Contrôle `check-commande-occasion`. **Découvrir → réserver → payer → séquestre → remettre → recevoir → fonds libérés → évaluer.**
     - ⬜ **Reste** : Function serveur d'orchestration du **payout** (admin/cron : commande `clos` → `POST /payout` → `payout_statut='verse'`, idempotent — bloqué sur activation Fapshi), **arbitrage litige** côté admin, page de **liste des annonces** (parcourir tout le catalogue occasion, pas juste celles d'un livre).
-15. ✅ **Emprunter** (Phase 4) — accès temporel + file d'attente sur le fonds maison. *(livré 19/07, migration `V014__pret_numerique.sql`, contrôle `check-emprunt` ; reste à appliquer sur Supabase et tester en vrai)*
+15. ✅ **Emprunter** (Phase 4) — accès temporel + file d'attente sur le fonds maison. *(livré 19/07, migration `V014__pret_numerique.sql` appliquée sur Supabase, contrôle `check-emprunt` ; reste à créer une offre `pret_numerique` de test et exercer le flux en vrai)*
 
 ### 🟪 P5 — Piliers partenariats (en parallèle, au rythme des accords — PAS bloquants)
 16. **Canal éditeurs** (D13) — comptes catalogue, ONIX/EPUB, revenus négociés.
