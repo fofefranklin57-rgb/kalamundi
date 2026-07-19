@@ -225,6 +225,16 @@ body.reader-body {
   flex-direction: column;
 }
 
+/* min-height seul n'est qu'un plancher : sans hauteur RÉELLEMENT bornée
+   quelque part dans la chaîne, aucun overflow:auto descendant ne peut
+   jamais déclencher de scroll interne (tout grandit à l'infini à la place).
+   dvh plutôt que vh : tient compte de la barre d'adresse mobile qui
+   apparaît/disparaît (Safari/Chrome mobile). */
+.reader-page.is-scroll-mode {
+  height: 100vh;
+  height: 100dvh;
+}
+
 /* ============================================================
    TOPBAR
    ============================================================ */
@@ -745,6 +755,43 @@ body.reader-body {
   padding: var(--spacing-xl) var(--spacing-md);
   /* Pas de débordement vertical : chaque page tient dans l'écran */
   overflow: hidden;
+}
+
+/* Mode défilement — un seul bloc continu, on laisse le navigateur scroller.
+   #reader-main est normalement display:flex avec align-items:stretch (pensé
+   pour centrer LA page-livre à taille fixe) : ce comportement fige la
+   hauteur de #reader-content à celle du conteneur quel que soit son
+   contenu, et l'overflow visuel ne compte jamais dans le scrollHeight d'un
+   ancêtre. Le plus sûr est de sortir complètement du flex en défilement :
+   #reader-main redevient un bloc simple qui scrolle, #reader-content un
+   bloc normal dont la hauteur suit son texte. */
+.reader-main.is-scroll-mode {
+  display: block;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* #reader-main est flex:1 (item du conteneur colonne .reader-page) : sans
+     min-height:0, un flex-item garde min-height:auto par défaut et grandit
+     pour englober tout son contenu au lieu de respecter sa part d'espace
+     allouée — exactement le bug qui empêchait tout scroll interne. */
+  min-height: 0;
+}
+
+.reader-main.is-scroll-mode .reader-book-page {
+  animation: none; /* pas de transition "tourner la page" en défilement continu */
+  /* La mise en page "livre" clippe chaque page à max-height:100%/overflow:hidden
+     (pensé pour une page qui tient exactement à l'écran) — invisible mais
+     tronque tout le texte au-delà. En défilement il ne doit y avoir aucune
+     limite : le bloc suit son contenu du début à la fin. */
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+.reader-main.is-scroll-mode #reader-content,
+.reader-main.is-scroll-mode #reader-epub {
+  height: auto !important;
+  max-height: none;
+  margin-inline: auto;
 }
 
 .reader-content {

@@ -83,6 +83,7 @@ const etat = {
   epubRendition:  null,
   epubSourceUrl:  null,
   ttsActif:       false,
+  modeAffichage:  lsGet('reader_mode_affichage') || 'pagination', // 'pagination' | 'scroll'
 };
 
 /* ============================================================
@@ -1417,6 +1418,30 @@ document.querySelectorAll('.line-height-btn').forEach(btn => {
   });
 });
 
+// Mise en page — pagination (tourner les pages) ou défilement continu
+document.querySelectorAll('.layout-mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (etat.modeAffichage === btn.dataset.mode) return;
+    document.querySelectorAll('.layout-mode-btn').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    etat.modeAffichage = btn.dataset.mode;
+    lsSet('reader_mode_affichage', etat.modeAffichage);
+    _appliquerClasseScrollMode();
+    if (etat.modeEpub) { toast('Le mode défilement ne s\'applique pas au lecteur EPUB.', 'info'); return; }
+    repaginerSiLectureOuverte();
+  });
+});
+
+/* .reader-page (colonne flex englobante) a besoin d'une hauteur RÉELLEMENT
+   bornée (pas juste min-height:100vh, qui n'est qu'un plancher) pour que
+   #reader-main puisse scroller en interne au lieu de tout faire grandir
+   à l'infini — cf. commentaire CSS `.reader-page.is-scroll-mode`. */
+function _appliquerClasseScrollMode() {
+  const actif = etat.modeAffichage === 'scroll';
+  document.getElementById('reader-main')?.classList.toggle('is-scroll-mode', actif);
+  document.querySelector('.reader-page')?.classList.toggle('is-scroll-mode', actif);
+}
+
 // Espacement des lettres
 document.querySelectorAll('.letter-spacing-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1531,6 +1556,12 @@ document.addEventListener('click', (e) => {
 function appliquerPreferences() {
   // Thème
   appliquerThemeLecteur(etat.theme);
+
+  // Mise en page
+  document.querySelectorAll('.layout-mode-btn').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.mode === etat.modeAffichage);
+  });
+  _appliquerClasseScrollMode();
 
   // Largeur
   document.getElementById('reader-content').style.maxWidth = 'none';
@@ -1718,9 +1749,14 @@ document.addEventListener('keydown', (e) => {
    de portée simple de speechSynthesis + extraction de texte page courante).
    ============================================================ */
 
+/* Couvre toutes les langues de lecture proposées par l'app (LANGUES_LECTURE,
+   translate.js) + les langues d'origine possibles pour une œuvre (LANGUES_NOMS
+   ci-dessus). BCP-47 le plus courant par langue — la voix réellement utilisée
+   dépend ensuite des voix installées sur l'appareil du lecteur (cf. _voixPour). */
 const LANGUES_TTS = {
   fr: 'fr-FR', en: 'en-US', es: 'es-ES', pt: 'pt-BR', de: 'de-DE',
   ar: 'ar-SA', sw: 'sw-KE', ha: 'ha-NG', yo: 'yo-NG',
+  hi: 'hi-IN', ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN',
 };
 
 document.getElementById('btn-tts')?.addEventListener('click', () => {
@@ -1733,16 +1769,67 @@ function _texteDePageCourante() {
   return Array.from(pages).map(p => p.textContent.trim()).filter(Boolean).join('\n\n');
 }
 
-function _ttsDemarrer() {
+/* La langue à lire est celle réellement AFFICHÉE (traduction en cours si
+   applicable), pas systématiquement la langue d'origine de l'œuvre — sinon
+   un livre traduit en japonais serait lu avec une voix française. */
+function _langueTTSCourante() {
+  const code = etat.langueAffichee && etat.langueAffichee !== 'original'
+    ? etat.langueAffichee
+    : etat.oeuvre?.langue_originale;
+  return LANGUES_TTS[code] || 'fr-FR';
+}
+
+/* Cherche la meilleure voix disponible : correspondance exacte de la balise
+   BCP-47, puis repli sur la même langue (2 premières lettres) si l'appareil
+   n'a qu'une variante régionale différente (ex. sw-TZ au lieu de sw-KE). */
+function _voixPour(lang) {
+  const voix = window.speechSynthesis.getVoices();
+  return voix.find(v => v.lang === lang)
+      || voix.find(v => v.lang?.toLowerCase().startsWith(lang.slice(0, 2).toLowerCase()))
+      || null;
+}
+
+/* Les voix se chargent de façon asynchrone (événement `voiceschanged`) —
+   sur certains navigateurs, getVoices() renvoie [] au tout premier appel
+   même quand des voix existent. On attend qu'elles soient prêtes avant de
+   décider qu'aucune voix n'est disponible pour une langue. */
+function _attendreVoix() {
+  return new Promise(resolve => {
+    const deja = window.speechSynthesis.getVoices();
+    if (deja.length) { resolve(deja); return; }
+    const onReady = () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', onReady);
+      resolve(window.speechSynthesis.getVoices());
+    };
+    window.speechSynthesis.addEventListener('voiceschanged', onReady);
+    window.setTimeout(() => { onReady(); }, 500); // filet de sécurité
+  });
+}
+
+let _ttsGeneration = 0;
+
+async function _ttsDemarrer() {
   if (!('speechSynthesis' in window)) { toast('Voix de synthèse non disponible sur cet appareil.', 'error'); return; }
   const texte = _texteDePageCourante();
   if (!texte) { toast('Rien à lire sur cette page.', 'info'); return; }
 
+  const generation = ++_ttsGeneration;
+  await _attendreVoix();
+  if (generation !== _ttsGeneration) return; // arrêté pendant l'attente des voix
+
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(texte);
-  utterance.lang = LANGUES_TTS[etat.oeuvre?.langue_originale] || 'fr-FR';
-  const voix = window.speechSynthesis.getVoices().find(v => v.lang === utterance.lang);
-  if (voix) utterance.voice = voix;
+  utterance.lang = _langueTTSCourante();
+  const voix = _voixPour(utterance.lang);
+  if (voix) {
+    utterance.voice = voix;
+  } else {
+    // Aucune voix installée pour cette langue sur cet appareil : le
+    // navigateur lira quand même avec la voix par défaut, mais la
+    // prononciation sera dégradée — on prévient plutôt que de laisser
+    // croire que « ça marche » silencieusement.
+    toast(`Aucune voix ${utterance.lang} installée sur cet appareil — lecture avec la voix par défaut.`, 'info');
+  }
 
   utterance.onend = () => {
     if (!etat.ttsActif) return; // arrêté manuellement pendant la lecture
@@ -1763,6 +1850,7 @@ function _ttsDemarrer() {
 }
 
 function _ttsArreter() {
+  _ttsGeneration++; // invalide un _ttsDemarrer() en attente des voix
   window.speechSynthesis?.cancel();
   etat.ttsActif = false;
   const btn = document.getElementById('btn-tts');
@@ -1774,6 +1862,23 @@ function _ttsArreter() {
 function _arreterTTSSiActif() {
   if (etat.ttsActif) _ttsArreter();
 }
+
+/* ============================================================
+   PROGRESSION EN MODE DÉFILEMENT — la page ne "tourne" jamais
+   (etat.pages reste à 1), donc _mettreAJourPositionPage() seule ne peut
+   pas refléter l'avancement : on complète avec la position de scroll.
+   ============================================================ */
+
+document.getElementById('reader-main')?.addEventListener('scroll', () => {
+  if (etat.modeAffichage !== 'scroll' || etat.modeEpub || etat.couvertureVisible) return;
+  const main = document.getElementById('reader-main');
+  const restant = main.scrollHeight - main.clientHeight;
+  const fractionChapitre = restant > 0 ? Math.min(1, Math.max(0, main.scrollTop / restant)) : 1;
+  const nbChapitres = etat.chapitres.length || 1;
+  const pct = Math.round(((etat.chapitreNum - 1 + fractionChapitre) / nbChapitres) * 100);
+  const fill = document.getElementById('progress-fill');
+  if (fill) fill.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+}, { passive: true });
 
 /* ============================================================
    PAGINATION — découpage en pages hauteur-écran
@@ -1791,6 +1896,28 @@ let _visiteurModeStrict = false; // true après "Continuer comme visiteur"
 function _paginerContenu(contentEl) {
   const elements = Array.from(contentEl.children);
   if (!elements.length) { etat.pages = 1; etat.pageCourante = 1; return; }
+
+  // Mode défilement (façon Thorium) : pas de découpage par hauteur d'écran —
+  // tout le chapitre tient dans une seule "page" scrollable ; la 4e de
+  // couverture est fusionnée à la suite plutôt que sur une page séparée.
+  if (etat.modeAffichage === 'scroll') {
+    contentEl.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'reader-book-page';
+    div.dataset.page = '1';
+    elements.forEach(el => { if (el.dataset.forced !== 'true') div.appendChild(el); });
+    if (etat.chapitreNum >= etat.chapitres.length) {
+      const backCover = _creerQuatriemeCouverturePage(2);
+      backCover.hidden = false;
+      div.appendChild(backCover);
+    }
+    contentEl.appendChild(div);
+    etat.pages = 1;
+    etat.pageCourante = 1;
+    contentEl.dataset.currentPage = '1';
+    contentEl.classList.remove('is-left-page', 'has-spread');
+    return;
+  }
 
   // Hauteur disponible pour le texte
   const header   = document.querySelector('header');
