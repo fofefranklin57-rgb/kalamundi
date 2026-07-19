@@ -276,6 +276,44 @@ export const api = {
     return data;
   },
 
+  /* Annonces d'occasion pour un livre (P4 #14). Les annonces sont rattachées
+     à `livres.id`, pas à `oeuvre_id` directement : on retrouve la fiche livre
+     de l'œuvre (créée par l'auteur, cf. synchroniserLivrePublication), puis
+     on liste ses offres de type occasion. */
+  async getOffresOccasion(oeuvreId) {
+    if (!oeuvreId) return [];
+
+    const { data: livre } = await supabase
+      .from('livres')
+      .select('id')
+      .eq('oeuvre_id', oeuvreId)
+      .maybeSingle();
+    if (!livre?.id) return [];
+
+    const { data, error } = await supabase
+      .from('livre_offres')
+      .select('id, prix, devise, vendeur_id, conditions, created_at')
+      .eq('livre_id', livre.id)
+      .eq('type', 'occasion')
+      .eq('statut', 'active')
+      .order('prix', { ascending: true });
+
+    if (error) { console.warn('Offres occasion indisponibles :', error); return []; }
+    return data || [];
+  },
+
+  /* Réserve une annonce d'occasion : crée la commande sous séquestre
+     (RPC SECURITY DEFINER, V012) et renvoie son id. */
+  async reserverOccasion(offreId, { modeRemise = 'main_propre', remiseInfos = {} } = {}) {
+    const { data, error } = await supabase.rpc('creer_commande_occasion', {
+      p_offre_id: offreId,
+      p_mode_remise: modeRemise,
+      p_remise_infos: remiseInfos,
+    });
+    if (error) throw new Error(error.message || 'Réservation impossible.');
+    return data;
+  },
+
   async getRailsMarchands({ limit = 10 } = {}) {
     const [populaires, nouveautes, gratuits, premium] = await Promise.all([
       this.getOeuvres({ limit, tri: 'lectures', exclureSysteme: true }).catch(() => ({ data: [] })),

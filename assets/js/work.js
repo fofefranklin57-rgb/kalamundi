@@ -282,6 +282,7 @@ async function rendreActions(oeuvre) {
 
   if (offresEl) {
     offresEl.innerHTML = renderOffresLivre(oeuvre, offres, { deja, acces, prix });
+    chargerOffresOccasion(oeuvre);
   }
 
   document.querySelectorAll('.js-buy').forEach(btn => btn.addEventListener('click', () => {
@@ -418,13 +419,60 @@ function renderOffresLivre(oeuvre, offres, { deja, acces, prix }) {
         <p class="offer-card__text">Accès temporel et files d’attente à venir pour le fonds maison.</p>
         <button class="btn btn--outline btn--sm" disabled>Bientôt</button>
       </article>
-      <article class="offer-card offer-card--future">
+      <article class="offer-card" id="offer-occasion">
         <div class="offer-card__kicker">Occasion</div>
         <h3 class="offer-card__title">Exemplaires papier</h3>
-        <p class="offer-card__text">Revente entre lecteurs prévue après le panier et le checkout multi-articles.</p>
-        <button class="btn btn--outline btn--sm" disabled>Bientôt</button>
+        <div id="offer-occasion-body"><p class="offer-card__text">Chargement des annonces…</p></div>
       </article>
     </div>`;
+}
+
+/* Annonces d'occasion pour ce livre — chargées à part car elles dépendent
+   de livre_id (V007), pas de oeuvre_id. */
+async function chargerOffresOccasion(oeuvre) {
+  const zone = document.getElementById('offer-occasion-body');
+  if (!zone) return;
+
+  try {
+    const annonces = await api.getOffresOccasion(oeuvre.id);
+    if (!annonces?.length) {
+      zone.innerHTML = `<p class="offer-card__text">Aucun exemplaire d'occasion en vente pour le moment. <a href="/pages/vendre.html">Vendez le vôtre</a>.</p>`;
+      return;
+    }
+
+    zone.innerHTML = `
+      <p class="offer-card__text">${annonces.length} exemplaire${annonces.length > 1 ? 's' : ''} disponible${annonces.length > 1 ? 's' : ''}.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin:8px 0">
+        ${annonces.slice(0, 3).map(a => `
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:var(--font-size-sm)">
+            <span>${escapeHtmlOccasion(a.conditions?.etat || 'bon')}${a.conditions?.ville ? ' · ' + escapeHtmlOccasion(a.conditions.ville) : ''}</span>
+            <strong>${formatPrixXaf(a.prix)}</strong>
+          </div>`).join('')}
+      </div>
+      <button class="btn btn--accent btn--sm js-occasion" data-offre="${annonces[0].id}">
+        Acheter à ${formatPrixXaf(annonces[0].prix)}
+      </button>`;
+
+    zone.querySelector('.js-occasion')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Réservation…';
+      try {
+        const commandeId = await api.reserverOccasion(btn.dataset.offre);
+        window.location.href = `/pages/commande.html?id=${commandeId}`;
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = `Acheter à ${formatPrixXaf(annonces[0].prix)}`;
+        toast(err.message || 'Réservation impossible.', 'error');
+      }
+    });
+  } catch {
+    zone.innerHTML = `<p class="offer-card__text">Annonces indisponibles pour le moment.</p>`;
+  }
+}
+
+function escapeHtmlOccasion(t) {
+  return String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 async function chargerCoucheSociale(oeuvre) {

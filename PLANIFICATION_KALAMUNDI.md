@@ -139,7 +139,8 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
     - ✅ **Payout confirmé + client codé** (16/07) : `scripts/lib/fapshi-payout.js` (POST /payout), `check-payout`. Reste à demander l'activation live à Fapshi (démarche Franklin).
     - ✅ **Formulaire de mise en vente** (16/07) : `V013` (RPC `creer_annonce_occasion`) + `pages/vendre.html` / `vendre.js` (répartition en direct) + entrée menu profil. Contrôle `check-vendre`. ✅ **V013 appliquée sur Supabase (16/07).**
     - ✅ **Paiement occasion branché** (16/07) : `fapshi-pay` relit le montant serveur + relie paiement↔commande ; `fapshi-webhook` gèle en `paye_sequestre` sans payer le vendeur. Contrôle `check-occasion-flow`.
-    - ⬜ **Reste** : Function serveur d'orchestration du payout (admin/cron : commande `clos` → `POST /payout` → `payout_statut='verse'`, idempotent), page **commande** (confirmer remise/réception, litige, notes), **découverte** des annonces (marketplace), arbitrage litige (admin).
+    - ✅ **Cycle complet bouclé** (16/07) : page `commande.html` (timeline + actions par rôle réel : payer/remettre/recevoir=libère les fonds/litige/évaluer) + découverte sur la fiche œuvre (`work.js` : annonces réelles + réservation en un clic) + `payment.js` branché. Contrôle `check-commande-occasion`. **Découvrir → réserver → payer → séquestre → remettre → recevoir → fonds libérés → évaluer.**
+    - ⬜ **Reste** : Function serveur d'orchestration du **payout** (admin/cron : commande `clos` → `POST /payout` → `payout_statut='verse'`, idempotent — bloqué sur activation Fapshi), **arbitrage litige** côté admin, page de **liste des annonces** (parcourir tout le catalogue occasion, pas juste celles d'un livre).
 15. **Emprunter** (Phase 4) — Readium **LCP** (accès temporel + files d'attente), fonds maison.
 
 ### 🟪 P5 — Piliers partenariats (en parallèle, au rythme des accords — PAS bloquants)

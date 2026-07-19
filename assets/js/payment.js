@@ -33,6 +33,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const qs = new URLSearchParams(window.location.search);
   if (qs.get('fapshi') === 'success') {
+    if (qs.get('occasion') === '1' && qs.get('commande')) {
+      /* Le paiement occasion se suit sur sa propre page (timeline du séquestre). */
+      window.location.href = `/pages/commande.html?id=${encodeURIComponent(qs.get('commande'))}`;
+      return;
+    }
     if (localStorage.getItem('kalamundi_cart_pending') === '1') {
       clearCart();
       localStorage.removeItem('kalamundi_cart_pending');
@@ -61,12 +66,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     oeuvreId:  qs.get('oeuvre'),   /* achat œuvre */
     cart:      qs.get('cart') === '1',
     cadeau:    qs.get('cadeau') === '1', /* offrir à un proche (diaspora) */
+    occasion:  qs.get('occasion') === '1', /* livre d'occasion (séquestre) */
+    commandeOccasionId: qs.get('commande') || null,
     montant:   parseFloat(qs.get('montant')) || 0,
     titre:     qs.get('titre') || '',
   };
 
   /* Déterminer le type de transaction */
-  if (PARAMS.cadeau && PARAMS.oeuvreId) {
+  if (PARAMS.occasion && PARAMS.commandeOccasionId) {
+    afficherHeader('📚 Achat occasion', PARAMS.titre || 'Livre Kalamundi', PARAMS.montant, 'XAF');
+  } else if (PARAMS.cadeau && PARAMS.oeuvreId) {
     await chargerInfoCadeau();
   } else if (PARAMS.cart) {
     chargerPanier();
@@ -256,6 +265,7 @@ async function _fapshiHandler() {
 
   try {
     const estCadeau = PARAMS.cadeau === true;
+    const estOccasion = PARAMS.occasion === true;
     const res = await fetch(CONFIG.fapshi.workerUrl, {
       method: 'POST',
       headers: {
@@ -265,15 +275,17 @@ async function _fapshiHandler() {
       body: JSON.stringify({
         montant:     PARAMS.montant,
         devise:      PARAMS.devise || 'XAF',
-        description: (estCadeau ? '🎁 Cadeau — ' : '') + (PARAMS.titre || 'Kalamundi — Paiement'),
+        description: (estCadeau ? '🎁 Cadeau — ' : estOccasion ? '📚 Occasion — ' : '') + (PARAMS.titre || 'Kalamundi — Paiement'),
         userId:      SESSION.user.id,
         oeuvreId:    PARAMS.oeuvreId || null,
-        plan:        estCadeau ? null : (PARAMS.type || null),
-        items:       estCadeau ? null : (PARAMS.items || null),
+        plan:        (estCadeau || estOccasion) ? null : (PARAMS.type || null),
+        items:       (estCadeau || estOccasion) ? null : (PARAMS.items || null),
         cadeau:      estCadeau,
+        commandeOccasionId: estOccasion ? PARAMS.commandeOccasionId : null,
         beneficiaireContact: estCadeau ? (document.getElementById('gift-contact')?.value || null) : null,
         message:     estCadeau ? (document.getElementById('gift-message')?.value || null) : null,
-        redirectUrl: window.location.origin + '/pages/payment.html?fapshi=success',
+        redirectUrl: window.location.origin + '/pages/payment.html?fapshi=success'
+          + (estOccasion ? `&occasion=1&commande=${encodeURIComponent(PARAMS.commandeOccasionId)}` : ''),
       }),
     });
 

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ma commande — Kalamundi</title>
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <style>
+    .cmd-wrapper { max-width: 560px; margin: var(--spacing-xl) auto; padding: 0 var(--spacing-lg); }
+    .cmd-card { background: var(--bg-card); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-md); overflow: hidden; }
+    .cmd-header { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: #fff; padding: var(--spacing-lg) var(--spacing-xl); }
+    .cmd-header h1 { font-size: var(--font-size-lg); margin-bottom: 2px; }
+    .cmd-body { padding: var(--spacing-xl); }
+    .cmd-montant { font-size: 1.8rem; font-weight: 700; color: var(--color-accent-light); }
+
+    /* Timeline du séquestre */
+    .timeline { display: flex; flex-direction: column; gap: 0; margin: var(--spacing-lg) 0; }
+    .timeline__etape { display: flex; gap: 12px; position: relative; padding-bottom: var(--spacing-lg); }
+    .timeline__etape:last-child { padding-bottom: 0; }
+    .timeline__etape::before {
+      content:''; position:absolute; left:11px; top:26px; bottom:0; width:2px; background: var(--border-color);
+    }
+    .timeline__etape:last-child::before { display:none; }
+    .timeline__puce { width:24px; height:24px; border-radius:50%; background: var(--bg-secondary); border:2px solid var(--border-color);
+      display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; z-index:1; }
+    .timeline__etape--fait .timeline__puce { background: var(--color-primary); border-color: var(--color-primary); color:#fff; }
+    .timeline__etape--fait::before { background: var(--color-primary); }
+    .timeline__etape--actif .timeline__puce { border-color: var(--color-accent); background:#fff; }
+    .timeline__label { font-weight: 500; font-size: var(--font-size-sm); }
+    .timeline__detail { font-size: var(--font-size-xs); color: var(--text-secondary); margin-top:2px; }
+
+    .cmd-alert { border-radius: var(--border-radius-md); padding: var(--spacing-md); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md); }
+    .cmd-alert--litige { background:#FCEBEB; color:#791F1F; }
+    .cmd-alert--clos { background:#EAF3DE; color:#27500A; }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo"><img src="/assets/img/logo-mark-km.png" alt="" aria-hidden="true"><span>Kalamundi</span></a>
+    </div>
+  </header>
+
+  <div class="page-wrapper">
+    <main class="main-content">
+      <div class="cmd-wrapper">
+
+        <div id="zone-auth"></div>
+
+        <div class="cmd-card" id="cmd-card" style="display:none">
+          <div class="cmd-header">
+            <div style="font-size:var(--font-size-xs);opacity:.8" id="cmd-role">Commande</div>
+            <h1 id="cmd-titre">Chargement…</h1>
+            <div class="cmd-montant" id="cmd-montant"></div>
+          </div>
+          <div class="cmd-body">
+            <div id="cmd-alerte"></div>
+            <div class="timeline" id="cmd-timeline"></div>
+            <div id="cmd-actions"></div>
+            <div id="cmd-message" style="margin-top:var(--spacing-md)"></div>
+          </div>
+        </div>
+
+        <div id="cmd-erreur" style="display:none;text-align:center;padding:var(--spacing-2xl)">
+          <div style="font-size:56px;margin-bottom:var(--spacing-md)">🔍</div>
+          <p class="empty-state__title">Commande introuvable</p>
+          <a href="/pages/library.html" class="btn btn--primary" style="margin-top:12px">Retour au catalogue</a>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script type="module" src="/assets/js/commande.js"></script>
+  <script type="module" src="/assets/js/theme-init.js"></script>
+  <script type="module" src="/assets/js/i18n-boot.js"></script>
+</body>
+</html>
