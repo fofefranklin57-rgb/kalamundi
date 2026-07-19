@@ -65,6 +65,8 @@ const etat = {
   fontSize:       parseInt(lsGet('reader_fontsize') || '18'),
   fontFamily:     lsGet('reader_font_family') || 'serif',
   lineHeight:     parseFloat(lsGet('reader_lh') || '1.9'),
+  letterSpacing:  parseFloat(lsGet('reader_ls') || '0'),
+  wordSpacing:    parseFloat(lsGet('reader_wsp') || '0'),
   maxWidth:       largeurLectureInitiale(),
   theme:          lsGet('reader_theme') || 'light',
   chapitres:      [],
@@ -80,6 +82,7 @@ const etat = {
   epub:           null,
   epubRendition:  null,
   epubSourceUrl:  null,
+  ttsActif:       false,
 };
 
 /* ============================================================
@@ -388,6 +391,7 @@ function appliquerThemeEpub() {
 function policeEpub() {
   if (etat.fontFamily === 'sans') return 'Inter, Arial, sans-serif';
   if (etat.fontFamily === 'display') return 'Fraunces, Georgia, serif';
+  if (etat.fontFamily === 'lisible') return 'Verdana, Tahoma, "Segoe UI", sans-serif';
   return 'Georgia, "Times New Roman", serif';
 }
 
@@ -1287,10 +1291,10 @@ function mettreAJourNavigation() {
   document.getElementById('btn-next').disabled = (dernierePage || bloque || premiumBloque);
 }
 
-document.getElementById('btn-prev')?.addEventListener('click', _pagePrev);
-document.getElementById('btn-next')?.addEventListener('click', _pageNext);
-document.getElementById('reader-page-prev-zone')?.addEventListener('click', _pagePrev);
-document.getElementById('reader-page-next-zone')?.addEventListener('click', _pageNext);
+document.getElementById('btn-prev')?.addEventListener('click', () => { _arreterTTSSiActif(); _pagePrev(); });
+document.getElementById('btn-next')?.addEventListener('click', () => { _arreterTTSSiActif(); _pageNext(); });
+document.getElementById('reader-page-prev-zone')?.addEventListener('click', () => { _arreterTTSSiActif(); _pagePrev(); });
+document.getElementById('reader-page-next-zone')?.addEventListener('click', () => { _arreterTTSSiActif(); _pageNext(); });
 
 /* ============================================================
    PROGRESSION — scroll dans le chapitre (plus précis que X/Y)
@@ -1413,6 +1417,32 @@ document.querySelectorAll('.line-height-btn').forEach(btn => {
   });
 });
 
+// Espacement des lettres
+document.querySelectorAll('.letter-spacing-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.letter-spacing-btn').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    etat.letterSpacing = parseFloat(btn.dataset.ls);
+    document.getElementById('reader-content').style.letterSpacing = `${etat.letterSpacing}em`;
+    lsSet('reader_ls', etat.letterSpacing);
+    if (etat.modeEpub) return; // epub.js ne gère pas letter-spacing par thème
+    repaginerSiLectureOuverte();
+  });
+});
+
+// Espacement des mots
+document.querySelectorAll('.word-spacing-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.word-spacing-btn').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    etat.wordSpacing = parseFloat(btn.dataset.wsp);
+    document.getElementById('reader-content').style.wordSpacing = `${etat.wordSpacing}em`;
+    lsSet('reader_wsp', etat.wordSpacing);
+    if (etat.modeEpub) return;
+    repaginerSiLectureOuverte();
+  });
+});
+
 // Largeur du texte
 document.querySelectorAll('.width-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1525,6 +1555,16 @@ function appliquerPreferences() {
     btn.classList.toggle('is-active', parseFloat(btn.dataset.lh) === etat.lineHeight);
   });
 
+  // Espacement lettres / mots
+  document.getElementById('reader-content').style.letterSpacing = `${etat.letterSpacing}em`;
+  document.querySelectorAll('.letter-spacing-btn').forEach(btn => {
+    btn.classList.toggle('is-active', parseFloat(btn.dataset.ls) === etat.letterSpacing);
+  });
+  document.getElementById('reader-content').style.wordSpacing = `${etat.wordSpacing}em`;
+  document.querySelectorAll('.word-spacing-btn').forEach(btn => {
+    btn.classList.toggle('is-active', parseFloat(btn.dataset.wsp) === etat.wordSpacing);
+  });
+
   // Langue
   if (etat.langueAffichee !== 'original') {
     document.getElementById('translation-notice').style.display = 'block';
@@ -1619,9 +1659,11 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+    _arreterTTSSiActif();
     _pageNext();
   }
   if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+    _arreterTTSSiActif();
     _pagePrev();
   }
   if (e.key === 'Escape') {
@@ -1665,9 +1707,73 @@ document.addEventListener('keydown', (e) => {
       if (dx < 0) entrerDansLecteur(); // swipe gauche = tourner la couverture, entrer dans le livre
       return;
     }
+    _arreterTTSSiActif();
     if (dx < 0) _pageNext(); else _pagePrev();
   }, { passive: true });
 })();
+
+/* ============================================================
+   LECTURE À VOIX HAUTE — voix de synthèse (Web Speech API), mode chapitres
+   natif uniquement (le contenu EPUB est rendu dans un iframe séparé, hors
+   de portée simple de speechSynthesis + extraction de texte page courante).
+   ============================================================ */
+
+const LANGUES_TTS = {
+  fr: 'fr-FR', en: 'en-US', es: 'es-ES', pt: 'pt-BR', de: 'de-DE',
+  ar: 'ar-SA', sw: 'sw-KE', ha: 'ha-NG', yo: 'yo-NG',
+};
+
+document.getElementById('btn-tts')?.addEventListener('click', () => {
+  if (etat.modeEpub) { toast('Lecture à voix haute indisponible en mode EPUB.', 'info'); return; }
+  if (etat.ttsActif) _ttsArreter(); else _ttsDemarrer();
+});
+
+function _texteDePageCourante() {
+  const pages = document.querySelectorAll('.reader-book-page:not([hidden])');
+  return Array.from(pages).map(p => p.textContent.trim()).filter(Boolean).join('\n\n');
+}
+
+function _ttsDemarrer() {
+  if (!('speechSynthesis' in window)) { toast('Voix de synthèse non disponible sur cet appareil.', 'error'); return; }
+  const texte = _texteDePageCourante();
+  if (!texte) { toast('Rien à lire sur cette page.', 'info'); return; }
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(texte);
+  utterance.lang = LANGUES_TTS[etat.oeuvre?.langue_originale] || 'fr-FR';
+  const voix = window.speechSynthesis.getVoices().find(v => v.lang === utterance.lang);
+  if (voix) utterance.voice = voix;
+
+  utterance.onend = () => {
+    if (!etat.ttsActif) return; // arrêté manuellement pendant la lecture
+    const dernierePageVisible = estModeDoublePage() ? Math.min(etat.pageCourante + 1, etat.pages) : etat.pageCourante;
+    const finDuLivre = dernierePageVisible >= etat.pages && etat.chapitreNum >= etat.chapitres.length;
+    if (finDuLivre) { _ttsArreter(); return; }
+    _pageNext();
+    window.setTimeout(() => { if (etat.ttsActif) _ttsDemarrer(); }, 300);
+  };
+  utterance.onerror = () => _ttsArreter();
+
+  window.speechSynthesis.speak(utterance);
+  etat.ttsActif = true;
+  const btn = document.getElementById('btn-tts');
+  btn?.classList.add('is-active');
+  btn?.setAttribute('aria-pressed', 'true');
+  if (btn) btn.title = 'Arrêter la lecture à voix haute';
+}
+
+function _ttsArreter() {
+  window.speechSynthesis?.cancel();
+  etat.ttsActif = false;
+  const btn = document.getElementById('btn-tts');
+  btn?.classList.remove('is-active');
+  btn?.setAttribute('aria-pressed', 'false');
+  if (btn) btn.title = 'Écouter cette page (voix de synthèse)';
+}
+
+function _arreterTTSSiActif() {
+  if (etat.ttsActif) _ttsArreter();
+}
 
 /* ============================================================
    PAGINATION — découpage en pages hauteur-écran

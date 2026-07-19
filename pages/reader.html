@@ -93,6 +93,7 @@
         <button class="reader-action-btn" id="btn-annotations" title="Mes annotations">📋</button>
         <button class="reader-action-btn" id="btn-lang"        title="Langue de lecture">🌐 <span id="lang-label">FR</span></button>
         <button class="reader-action-btn" id="btn-partager"    title="Partager">🔗</button>
+        <button class="reader-action-btn" id="btn-tts" title="Écouter cette page (voix de synthèse)" aria-pressed="false">🔊</button>
         <button class="reader-action-btn" id="btn-settings"    title="Paramètres Aa">Aa</button>
       </div>
     </div>
@@ -131,6 +132,7 @@
         <button class="reader-choice-btn font-family-btn is-active" data-font="serif">Livre</button>
         <button class="reader-choice-btn font-family-btn" data-font="display">Classique</button>
         <button class="reader-choice-btn font-family-btn" data-font="sans">Net</button>
+        <button class="reader-choice-btn font-family-btn" data-font="lisible" title="Police et espacement pensés pour le confort de lecture (dyslexie)">Lisible</button>
       </div>
     </div>
 
@@ -140,6 +142,24 @@
         <button class="line-height-btn" data-lh="1.6">Compact</button>
         <button class="line-height-btn is-active" data-lh="1.9">Normal</button>
         <button class="line-height-btn" data-lh="2.4">Aéré</button>
+      </div>
+    </div>
+
+    <div class="reader-settings__group">
+      <div class="reader-settings__label">Espacement des lettres</div>
+      <div class="reader-choice-options">
+        <button class="letter-spacing-btn is-active" data-ls="0">Normal</button>
+        <button class="letter-spacing-btn" data-ls="0.03">Large</button>
+        <button class="letter-spacing-btn" data-ls="0.06">Très large</button>
+      </div>
+    </div>
+
+    <div class="reader-settings__group">
+      <div class="reader-settings__label">Espacement des mots</div>
+      <div class="reader-choice-options">
+        <button class="word-spacing-btn is-active" data-wsp="0">Normal</button>
+        <button class="word-spacing-btn" data-wsp="0.2">Large</button>
+        <button class="word-spacing-btn" data-wsp="0.4">Très large</button>
       </div>
     </div>
 

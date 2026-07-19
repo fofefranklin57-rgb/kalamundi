@@ -2356,6 +2356,18 @@ body.reader-body {
   letter-spacing: 0;
 }
 
+/* Police "Lisible" — confort de lecture / dyslexie : Verdana/Tahoma (formes de
+   lettres distinctes, largement disponibles) + espacement large par défaut,
+   plutôt qu'une police dédiée non hébergée dans ce dépôt. */
+.reader-content[data-font="lisible"] {
+  --reader-font-family: Verdana, Tahoma, 'Segoe UI', sans-serif;
+}
+
+.reader-content[data-font="lisible"] p {
+  letter-spacing: 0.02em;
+  word-spacing: 0.15em;
+}
+
 .reader-bottombar {
   background: rgba(255,255,255,0.90);
   backdrop-filter: blur(12px);
