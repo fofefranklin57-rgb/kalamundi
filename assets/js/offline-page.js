@@ -11,6 +11,7 @@ import { formatDateCourt, toast, toastErreur } from './utils.js';
 
 const listeEl = document.getElementById('offline-books');
 const achatsEl = document.getElementById('purchased-books');
+const empruntsEl = document.getElementById('loaned-books');
 const countEl = document.getElementById('offline-count');
 const sizeEl = document.getElementById('offline-size');
 const stateEl = document.getElementById('offline-network-state');
@@ -24,6 +25,7 @@ async function init() {
   await Promise.all([
     rendreBibliothequeLocale(),
     rendreAchats(),
+    rendreEmprunts(),
   ]);
 }
 
@@ -97,6 +99,90 @@ async function rendreAchats() {
   } catch (err) {
     console.error(err);
     achatsEl.innerHTML = '<div class="alert alert--error">Impossible de charger vos achats.</div>';
+  }
+}
+
+async function rendreEmprunts() {
+  if (!empruntsEl) return;
+  const session = await getSession().catch(() => null);
+  if (!session?.user) {
+    empruntsEl.innerHTML = `
+      <div class="empty-state offline-empty">
+        <div class="empty-state__icon">🔐</div>
+        <p class="empty-state__title">Connectez-vous pour voir vos emprunts</p>
+        <a href="/pages/login.html?redirect=/offline.html" class="btn btn--primary">Se connecter</a>
+      </div>`;
+    return;
+  }
+
+  try {
+    const emprunts = await api.getMesEmprunts(session.user.id);
+    if (!emprunts.length) {
+      empruntsEl.innerHTML = `
+        <div class="empty-state offline-empty">
+          <div class="empty-state__icon">⏳</div>
+          <p class="empty-state__title">Aucun emprunt en cours</p>
+          <p class="empty-state__text">Empruntez un livre du fonds maison depuis sa fiche.</p>
+          <a href="/pages/library.html" class="btn btn--primary">Explorer la bibliothèque</a>
+        </div>`;
+      return;
+    }
+    empruntsEl.innerHTML = emprunts.map(carteLivreEmprunte).join('');
+    empruntsEl.querySelectorAll('[data-rendre-emprunt]').forEach(btn => {
+      btn.addEventListener('click', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        await rendreEmprunt(btn.dataset.rendreEmprunt);
+      });
+    });
+  } catch (err) {
+    console.error(err);
+    empruntsEl.innerHTML = '<div class="alert alert--error">Impossible de charger vos emprunts.</div>';
+  }
+}
+
+function carteLivreEmprunte(emprunt) {
+  const oeuvre = emprunt.oeuvres || {};
+  const coverUrl = normaliserUrlImage(oeuvre.couverture_url);
+  const auteur = oeuvre.profiles?.nom || 'Auteur inconnu';
+  const fallback = genererCouverture(oeuvre.titre, auteur, oeuvre.genre, 220, 330);
+  const cover = coverUrl || fallback;
+  return `
+    <article class="offline-book">
+      <a class="offline-book__cover" href="/pages/reader.html?id=${encodeURIComponent(oeuvre.id)}">
+        <img src="${echapperAttr(cover)}" alt="Couverture ${echapperAttr(oeuvre.titre || 'Livre emprunté')}"
+          onerror="this.onerror=null;this.src='${echapperAttr(fallback)}'" />
+      </a>
+      <div class="offline-book__body">
+        <div class="offline-book__meta">
+          <span>Prêt fonds maison</span>
+          <span>Jusqu'au ${formatDateCourt(emprunt.expire_le)}</span>
+        </div>
+        <h2 class="offline-book__title">
+          <a href="/pages/reader.html?id=${encodeURIComponent(oeuvre.id)}">${echapper(oeuvre.titre || 'Livre emprunté')}</a>
+        </h2>
+        <p class="offline-book__author">${echapper(auteur)}</p>
+        <div class="offline-book__footer">
+          <span>Emprunté le ${formatDateCourt(emprunt.emprunte_le)}</span>
+          <div style="display:flex;gap:8px">
+            <a class="btn btn--ghost btn--sm" href="/pages/reader.html?id=${encodeURIComponent(oeuvre.id)}">Lire</a>
+            <button class="btn btn--outline btn--sm" data-rendre-emprunt="${echapperAttr(emprunt.id)}">Rendre</button>
+          </div>
+        </div>
+      </div>
+    </article>`;
+}
+
+async function rendreEmprunt(empruntId) {
+  if (!empruntId) return;
+  if (!confirm('Rendre ce livre emprunté maintenant ?')) return;
+  try {
+    await api.rendreLivre(empruntId);
+    toast('Livre rendu, merci !', 'success');
+    await rendreEmprunts();
+  } catch (err) {
+    console.error(err);
+    toastErreur(err.message || 'Impossible de rendre ce livre.');
   }
 }
 

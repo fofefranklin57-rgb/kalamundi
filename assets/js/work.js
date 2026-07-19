@@ -283,6 +283,7 @@ async function rendreActions(oeuvre) {
   if (offresEl) {
     offresEl.innerHTML = renderOffresLivre(oeuvre, offres, { deja, acces, prix });
     chargerOffresOccasion(oeuvre);
+    chargerOffreEmprunt(oeuvre, offres, acces);
   }
 
   document.querySelectorAll('.js-buy').forEach(btn => btn.addEventListener('click', () => {
@@ -413,11 +414,10 @@ function renderOffresLivre(oeuvre, offres, { deja, acces, prix }) {
           ${deja ? 'Retirer' : 'Activer'}
         </button>
       </article>
-      <article class="offer-card offer-card--future">
+      <article class="offer-card" id="offer-emprunt">
         <div class="offer-card__kicker">Emprunt</div>
         <h3 class="offer-card__title">Prêt numérique</h3>
-        <p class="offer-card__text">Accès temporel et files d’attente à venir pour le fonds maison.</p>
-        <button class="btn btn--outline btn--sm" disabled>Bientôt</button>
+        <div id="offer-emprunt-body"><p class="offer-card__text">Vérification du fonds maison…</p></div>
       </article>
       <article class="offer-card" id="offer-occasion">
         <div class="offer-card__kicker">Occasion</div>
@@ -473,6 +473,106 @@ async function chargerOffresOccasion(oeuvre) {
 
 function escapeHtmlOccasion(t) {
   return String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* Prêt numérique — fonds maison, accès temporel + file d'attente (P4 #15).
+   La disponibilité n'est pas affichée en amont (RLS masque les emprunts des
+   autres) : on tente l'emprunt, le serveur tranche et fait rejoindre la file
+   d'attente automatiquement si le fonds est complet. */
+async function chargerOffreEmprunt(oeuvre, offres, aDejaAcces) {
+  const zone = document.getElementById('offer-emprunt-body');
+  if (!zone) return;
+
+  const offre = offres.find(o => o.type === 'pret_numerique');
+  if (!offre) {
+    zone.innerHTML = `<p class="offer-card__text">Pas encore proposé au prêt pour ce livre.</p>`;
+    return;
+  }
+
+  const duree = Number(offre.duree_acces_jours || 14);
+
+  if (!utilisateur) {
+    zone.innerHTML = `
+      <p class="offer-card__text">Prêt de ${duree} jours depuis le fonds maison Kalamundi.</p>
+      <a href="/pages/login.html?redirect=/pages/work.html?id=${oeuvre.id}" class="btn btn--outline btn--sm">Se connecter pour emprunter</a>`;
+    return;
+  }
+
+  if (aDejaAcces) {
+    zone.innerHTML = `<p class="offer-card__text">Vous avez déjà accès à ce livre (achat ou emprunt en cours).</p>`;
+    const { emprunt } = await api.getStatutEmpruntOffre(offre.id, utilisateur.id).catch(() => ({ emprunt: null }));
+    if (emprunt) {
+      zone.innerHTML = `
+        <p class="offer-card__text">Emprunté jusqu'au ${formatDate(emprunt.expire_le)}.</p>
+        <button class="btn btn--outline btn--sm js-rendre" data-emprunt="${emprunt.id}">Rendre le livre</button>`;
+      zone.querySelector('.js-rendre')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        btn.textContent = 'Retour…';
+        try {
+          await api.rendreLivre(btn.dataset.emprunt);
+          toast('Livre rendu, merci !', 'success');
+          rendreActions(oeuvre);
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = 'Rendre le livre';
+          toast(err.message || 'Retour impossible.', 'error');
+        }
+      });
+    }
+    return;
+  }
+
+  const { position } = await api.getStatutEmpruntOffre(offre.id, utilisateur.id).catch(() => ({ position: null }));
+  if (position) {
+    zone.innerHTML = `
+      <p class="offer-card__text">Fonds maison complet — vous êtes en position ${position} dans la file d'attente.</p>
+      <button class="btn btn--outline btn--sm js-quitter-file">Quitter la file</button>`;
+    zone.querySelector('.js-quitter-file')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      try {
+        await api.quitterFileAttente(offre.id);
+        toast('Vous avez quitté la file d\'attente.', 'info');
+        chargerOffreEmprunt(oeuvre, offres, aDejaAcces);
+      } catch (err) {
+        btn.disabled = false;
+        toast(err.message || 'Action impossible.', 'error');
+      }
+    });
+    return;
+  }
+
+  zone.innerHTML = `
+    <p class="offer-card__text">Prêt de ${duree} jours depuis le fonds maison, sans frais.</p>
+    <button class="btn btn--accent btn--sm js-emprunter" data-offre="${offre.id}">Emprunter</button>`;
+
+  zone.querySelector('.js-emprunter')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.textContent = 'Emprunt…';
+    try {
+      await api.emprunterLivre(btn.dataset.offre);
+      toast(`Livre emprunté pour ${duree} jours !`, 'success');
+      rendreActions(oeuvre);
+    } catch (err) {
+      if (err.message === 'file_attente') {
+        try {
+          const pos = await api.rejoindreFileAttente(btn.dataset.offre);
+          toast(`Fonds maison complet. Vous êtes en position ${pos} dans la file d'attente.`, 'info');
+          chargerOffreEmprunt(oeuvre, offres, aDejaAcces);
+        } catch (err2) {
+          btn.disabled = false;
+          btn.textContent = 'Emprunter';
+          toast(err2.message || 'Impossible de rejoindre la file d\'attente.', 'error');
+        }
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Emprunter';
+        toast(err.message || 'Emprunt impossible.', 'error');
+      }
+    }
+  });
 }
 
 async function chargerCoucheSociale(oeuvre) {

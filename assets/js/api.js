@@ -255,7 +255,7 @@ export const api = {
       .from('livre_offres')
       .select(`
         id, livre_id, edition_id, source_oeuvre_id, vendeur_id, type, statut,
-        prix, devise, fapshi_enabled, chapitres_gratuits,
+        prix, devise, fapshi_enabled, chapitres_gratuits, stock, duree_acces_jours,
         royalties_auteur_pct, royalties_plateforme_pct, ordre, metadata,
         livre_editions(id, format, statut, fichier_url, epub_url, nb_chapitres),
         livres(id, oeuvre_id, titre, couverture_url, langue_originale, statut)
@@ -274,6 +274,77 @@ export const api = {
     }
 
     return data;
+  },
+
+  /* ---- Emprunter / prêt numérique (P4 #15) --------------- */
+
+  /* Statut du prêt pour l'utilisateur courant sur une offre donnée :
+     emprunt actif (avec échéance), position en file d'attente, ou rien. */
+  async getStatutEmpruntOffre(offreId, userId) {
+    if (!offreId || !userId) return { emprunt: null, position: null };
+
+    const { data: emprunt } = await supabase
+      .from('emprunts')
+      .select('id, expire_le, emprunte_le')
+      .eq('offre_id', offreId)
+      .eq('emprunteur_id', userId)
+      .eq('statut', 'actif')
+      .maybeSingle();
+    if (emprunt) return { emprunt, position: null };
+
+    const { data: file } = await supabase
+      .from('emprunts_file_attente')
+      .select('id, created_at')
+      .eq('offre_id', offreId)
+      .eq('utilisateur_id', userId)
+      .eq('statut', 'attente')
+      .maybeSingle();
+    if (!file) return { emprunt: null, position: null };
+
+    const { count } = await supabase
+      .from('emprunts_file_attente')
+      .select('id', { count: 'exact', head: true })
+      .eq('offre_id', offreId)
+      .eq('statut', 'attente')
+      .lte('created_at', file.created_at);
+
+    return { emprunt: null, position: count || 1 };
+  },
+
+  async emprunterLivre(offreId) {
+    const { data, error } = await supabase.rpc('emprunter_livre', { p_offre_id: offreId });
+    if (error) throw new Error(error.message || 'Emprunt impossible.');
+    return data;
+  },
+
+  async rendreLivre(empruntId) {
+    const { error } = await supabase.rpc('rendre_livre', { p_emprunt_id: empruntId });
+    if (error) throw new Error(error.message || 'Retour impossible.');
+  },
+
+  async rejoindreFileAttente(offreId) {
+    const { data, error } = await supabase.rpc('rejoindre_file_attente', { p_offre_id: offreId });
+    if (error) throw new Error(error.message || 'Impossible de rejoindre la file d\'attente.');
+    return data;
+  },
+
+  async quitterFileAttente(offreId) {
+    const { error } = await supabase.rpc('quitter_file_attente', { p_offre_id: offreId });
+    if (error) throw new Error(error.message || 'Impossible de quitter la file d\'attente.');
+  },
+
+  async getMesEmprunts(userId) {
+    const { data, error } = await supabase
+      .from('emprunts')
+      .select(`
+        id, expire_le, emprunte_le, statut,
+        oeuvres(id, titre, couverture_url, resume, profiles(nom))
+      `)
+      .eq('emprunteur_id', userId)
+      .eq('statut', 'actif')
+      .order('expire_le', { ascending: true });
+    if (error) throw error;
+    return data || [];
   },
 
   /* Annonces d'occasion pour un livre (P4 #14). Les annonces sont rattachées
@@ -1283,11 +1354,15 @@ export const api = {
   async verifierAccesPremium(userId, oeuvreId) {
     const { data } = await supabase
       .from('acces_premium')
-      .select('id')
+      .select('id, expire_le')
       .eq('user_id', userId)
       .eq('oeuvre_id', oeuvreId)
-      .single();
-    return !!data;
+      .maybeSingle();
+    if (!data) return false;
+    // Un prêt (emprunt_id renseigné) a un expire_le : accès révoqué une fois passé.
+    // Un achat n'a pas d'expire_le → accès permanent.
+    if (data.expire_le && new Date(data.expire_le) <= new Date()) return false;
+    return true;
   },
 
   async adminGetPaiements() {
