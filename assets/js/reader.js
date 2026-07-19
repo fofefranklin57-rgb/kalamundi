@@ -204,11 +204,15 @@ function afficherCouverture() {
 document.getElementById('btn-start-reading')?.addEventListener('click', entrerDansLecteur);
 
 /* Bouton 📚 dans la topbar (retour couverture) */
-document.getElementById('btn-show-cover')?.addEventListener('click', () => {
+document.getElementById('btn-show-cover')?.addEventListener('click', _revenirALaCouverture);
+
+/* Revenir à la couverture — première "page" du livre, comme un vrai feuilletage
+   (appelé par le bouton 📚, la touche C, et en remontant depuis la page 1 du chapitre 1). */
+function _revenirALaCouverture() {
   document.getElementById('reader-cover').style.display = 'flex';
   document.getElementById('reader-page').style.display  = 'none';
   etat.couvertureVisible = true;
-});
+}
 
 async function entrerDansLecteur() {
   document.getElementById('reader-cover').style.display = 'none';
@@ -899,6 +903,13 @@ document.getElementById('btn-toc')?.addEventListener('click', () => {
   document.getElementById('reader-toc').classList.toggle('is-open');
 });
 
+/* La frise de progression sert aussi de raccourci vers la table des matières
+   (façon Thorium) — pas de saut direct à une page arbitraire du livre car les
+   chapitres ne sont paginés qu'à la demande, donc pas de position globale connue à l'avance. */
+document.getElementById('reader-progress-bar')?.addEventListener('click', () => {
+  document.getElementById('reader-toc').classList.add('is-open');
+});
+
 document.getElementById('close-toc')?.addEventListener('click', fermerTOC);
 document.getElementById('toc-overlay')?.addEventListener('click', fermerTOC);
 
@@ -1269,10 +1280,10 @@ function mettreAJourNavigation() {
   const bloque       = _visiteurBloque();
   const dernierePageVisible = estModeDoublePage() ? Math.min(etat.pageCourante + 1, etat.pages) : etat.pageCourante;
   const premiumBloque = chapitrePremiumBloqueSync(etat.chapitreNum + (dernierePageVisible >= etat.pages ? 1 : 0));
-  const premierePage = etat.pageCourante <= 1 && etat.chapitreNum <= 1;
   const dernierePage = dernierePageVisible >= etat.pages && etat.chapitreNum >= etat.chapitres.length;
 
-  document.getElementById('btn-prev').disabled = premierePage;
+  // "Précédent" ne se désactive jamais en tout début de livre : il ramène à la couverture (page 0).
+  document.getElementById('btn-prev').disabled = false;
   document.getElementById('btn-next').disabled = (dernierePage || bloque || premiumBloque);
 }
 
@@ -1604,7 +1615,7 @@ document.getElementById('btn-partager')?.addEventListener('click', async () => {
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (etat.couvertureVisible) {
-    if (e.key === 'Enter' || e.key === ' ') entrerDansLecteur();
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') entrerDansLecteur();
     return;
   }
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
@@ -1623,6 +1634,40 @@ document.addEventListener('keydown', (e) => {
     document.getElementById('btn-show-cover')?.click();
   }
 });
+
+/* ============================================================
+   GESTES TACTILES — feuilleter à la Thorium (couverture ↔ pages ↔ 4e de couverture)
+   ============================================================ */
+
+(() => {
+  const SEUIL_SWIPE_X = 55;   // px minimum pour compter comme un swipe
+  const RATIO_HORIZONTAL = 1.6; // le geste doit être nettement plus horizontal que vertical
+  let depart = null;
+
+  const enGesteIgnore = (cible) =>
+    cible.closest('#reader-toc, #reader-settings, #reader-lang-panel, #reader-nav-panel, input, textarea, button, a, select');
+
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { depart = null; return; }
+    if (enGesteIgnore(e.target)) { depart = null; return; }
+    depart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    if (!depart) return;
+    const arrivee = e.changedTouches[0];
+    const dx = arrivee.clientX - depart.x;
+    const dy = arrivee.clientY - depart.y;
+    depart = null;
+    if (Math.abs(dx) < SEUIL_SWIPE_X || Math.abs(dx) < Math.abs(dy) * RATIO_HORIZONTAL) return;
+
+    if (etat.couvertureVisible) {
+      if (dx < 0) entrerDansLecteur(); // swipe gauche = tourner la couverture, entrer dans le livre
+      return;
+    }
+    if (dx < 0) _pageNext(); else _pagePrev();
+  }, { passive: true });
+})();
 
 /* ============================================================
    PAGINATION — découpage en pages hauteur-écran
@@ -1842,6 +1887,9 @@ function _pagePrev() {
     _allerPage(Math.max(1, etat.pageCourante - (estModeDoublePage() ? 2 : 1)));
   } else if (etat.chapitreNum > 1) {
     chargerChapitre(etat.chapitreNum - 1);
+  } else {
+    // Première page du premier chapitre : remonter à la couverture (page 0 du livre).
+    _revenirALaCouverture();
   }
 }
 
@@ -1867,10 +1915,14 @@ function _mettreAJourPositionPage() {
   } else {
     el.innerHTML = `Ch. <strong>${etat.chapitreNum}</strong> / ${etat.chapitres.length}`;
   }
-  // Barre de progression = avancement dans la page courante par rapport au livre total
+  // Barre de progression = avancement dans le LIVRE entier (couverture → 4e de couverture),
+  // pas seulement dans le chapitre courant. On ne prépagine pas tous les chapitres à l'avance
+  // (coût réseau), donc on approxime chaque chapitre comme une part égale du livre.
   const totalPages = etat.pages || 1;
-  const pct = Math.round((etat.pageCourante / totalPages) * 100);
-  document.getElementById('progress-fill').style.width = `${pct}%`;
+  const nbChapitres = etat.chapitres.length || 1;
+  const avancementChapitre = etat.pageCourante / totalPages;
+  const pct = Math.round(((etat.chapitreNum - 1 + avancementChapitre) / nbChapitres) * 100);
+  document.getElementById('progress-fill').style.width = `${Math.min(100, Math.max(0, pct))}%`;
 }
 
 /* Anciennes fonctions scroll visiteur — supprimées, remplacées par la pagination par pages */
