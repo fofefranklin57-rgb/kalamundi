@@ -39,6 +39,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   chargerFinance();
   chargerPub();
   chargerConfig();
+  chargerLitiges();
+  chargerPromotions();
 });
 
 /* ============================================================
@@ -470,6 +472,101 @@ window.traiterSignalement = async function (id, statut) {
     chargerSignalements();
     chargerStats();
   } catch { toast('Erreur.', 'error'); }
+};
+
+/* ============================================================
+   Litiges occasion (reste P4 #14)
+   ============================================================ */
+
+window.chargerLitiges = async function () {
+  const el = document.getElementById('table-litiges');
+  el.innerHTML = loading();
+  try {
+    const data = await api.adminGetLitiges();
+    const badge = document.getElementById('badge-litiges');
+    if (badge) {
+      badge.style.display = data.length ? '' : 'none';
+      badge.textContent = data.length;
+    }
+    if (!data?.length) { el.innerHTML = vide('Aucun litige ouvert.'); return; }
+
+    el.innerHTML = `
+      <table class="admin-table">
+        <thead><tr>
+          <th>Livre</th><th>Acheteur</th><th>Vendeur</th><th>Montant</th>
+          <th>Motif</th><th>Date</th><th>Actions</th>
+        </tr></thead>
+        <tbody>${data.map(c => `
+          <tr>
+            <td>${c.livres?.titre || '—'}</td>
+            <td>${c.acheteur?.nom || '—'}${c.acheteur?.telephone ? ' · ' + c.acheteur.telephone : ''}</td>
+            <td>${c.vendeur?.nom || '—'}${c.vendeur?.telephone ? ' · ' + c.vendeur.telephone : ''}</td>
+            <td>${Number(c.montant_xaf || 0).toLocaleString('fr-FR')} FCFA</td>
+            <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.litige_motif || '—'}</td>
+            <td style="color:var(--text-light);font-size:11px">${new Date(c.created_at).toLocaleDateString('fr-FR')}</td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn-xs btn-success" onclick="resoudreLitige('${c.id}','clos')">Vendeur a raison</button>
+              <button class="btn-xs btn-muted"   onclick="resoudreLitige('${c.id}','rembourse')">Rembourser acheteur</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) { el.innerHTML = vide('Erreur de chargement.'); }
+};
+
+window.resoudreLitige = async function (commandeId, decision) {
+  const label = decision === 'clos' ? 'trancher en faveur du vendeur' : 'trancher en faveur de l\'acheteur (remboursement)';
+  if (!confirm(`Confirmer : ${label} ?`)) return;
+  try {
+    await api.adminResoudreLitige(commandeId, decision);
+    toast('Litige tranché.', 'success');
+    chargerLitiges();
+  } catch (e) { toast(e.message || 'Erreur.', 'error'); }
+};
+
+/* ============================================================
+   Promotions — prix barré (reste P3 #12, D17)
+   ============================================================ */
+
+window.chargerPromotions = async function () {
+  const el = document.getElementById('table-promotions');
+  el.innerHTML = loading();
+  try {
+    const data = await api.adminGetPromotions();
+    if (!data?.length) { el.innerHTML = vide('Aucune offre d\'achat numérique active.'); return; }
+
+    el.innerHTML = `
+      <table class="admin-table">
+        <thead><tr>
+          <th>Livre</th><th>Prix actuel</th><th>Prix avant (barré)</th><th>Actions</th>
+        </tr></thead>
+        <tbody>${data.map(o => `
+          <tr>
+            <td>${o.livres?.titre || '—'}</td>
+            <td>${Number(o.prix || 0).toLocaleString('fr-FR')} ${o.devise || 'XAF'}</td>
+            <td>
+              <input type="number" min="0" step="1" id="promo-${o.id}"
+                value="${o.prix_barre != null ? o.prix_barre : ''}"
+                placeholder="ex. ${Math.round(Number(o.prix || 0) * 1.4)}"
+                style="width:110px;padding:4px 8px;border:1px solid var(--border-color);border-radius:6px" />
+            </td>
+            <td>
+              <button class="btn-xs btn-success" onclick="sauvegarderPromo('${o.id}')">Enregistrer</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) { el.innerHTML = vide('Erreur de chargement.'); }
+};
+
+window.sauvegarderPromo = async function (offreId) {
+  const input = document.getElementById(`promo-${offreId}`);
+  const valeur = input?.value?.trim();
+  const prixBarre = valeur === '' ? null : Number(valeur);
+  try {
+    await api.adminDefinirPromo(offreId, prixBarre);
+    toast(prixBarre ? 'Promo enregistrée.' : 'Promo retirée.', 'success');
+  } catch (e) { toast(e.message || 'Erreur.', 'error'); }
 };
 
 /* ============================================================

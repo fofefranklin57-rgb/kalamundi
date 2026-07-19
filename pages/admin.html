@@ -158,12 +158,19 @@
           🚨 Signalements
           <span class="badge-count" id="badge-signalements" style="display:none">0</span>
         </button>
+        <button class="sidebar__btn" data-section="promotions" onclick="showSection('promotions',this)">
+          🏷️ Promotions
+        </button>
       </div>
       <div class="sidebar__section">
         <div class="sidebar__label">Finances</div>
         <button class="sidebar__btn" data-section="paiements" onclick="showSection('paiements',this)">
           💳 Paiements
           <span class="badge-count" id="badge-paiements" style="display:none">0</span>
+        </button>
+        <button class="sidebar__btn" data-section="litiges" onclick="showSection('litiges',this)">
+          ⚖️ Litiges occasion
+          <span class="badge-count" id="badge-litiges" style="display:none">0</span>
         </button>
       </div>
       <div class="sidebar__section">
@@ -265,6 +272,30 @@
           <button class="btn btn--ghost btn--sm" onclick="chargerSignalements()">↻ Actualiser</button>
         </div>
         <div id="table-signalements"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
+      </section>
+
+      <!-- PROMOTIONS -->
+      <section class="admin-section" id="section-promotions">
+        <div class="section-header">
+          <h2>Promotions — prix barré</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerPromotions()">↻ Actualiser</button>
+        </div>
+        <p style="color:var(--text-light);margin-bottom:var(--spacing-md)">
+          Renseignez un « prix avant » supérieur au prix de vente pour afficher un badge de réduction sur la fiche du livre. Laissez vide pour retirer la promo.
+        </p>
+        <div id="table-promotions"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
+      </section>
+
+      <!-- LITIGES OCCASION -->
+      <section class="admin-section" id="section-litiges">
+        <div class="section-header">
+          <h2>Litiges occasion</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerLitiges()">↻ Actualiser</button>
+        </div>
+        <p style="color:var(--text-light);margin-bottom:var(--spacing-md)">
+          « Clore en faveur du vendeur » verse les fonds au vendeur (comme une réception normale). « Rembourser l'acheteur » gèle le versement vendeur ; le remboursement effectif reste une action manuelle via Fapshi (aucun compte de remboursement n'est capturé à la commande).
+        </p>
+        <div id="table-litiges"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
       </section>
 
       <!-- PAIEMENTS -->

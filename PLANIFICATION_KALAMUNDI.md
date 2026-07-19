@@ -126,7 +126,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 11. ✅ **Royalties 50/50 + reporting auteur niveau KDP + option Kalamundi Select.** `⟶ 5` *(livré 17/07 : reporting KDP dashboard, 50/50 visible, Select préparé mais non activé)*
 
 ### 🟩 P3 — Espace Acheter (Phase 2, numérique, sans logistique)
-12. 🟡 Entité produit/offres → **panier** → **checkout Fapshi** → store à rails → historique de commandes. `⟶ 5` *(panier, checkout multi-livres et historique achats livrés 17/07 ; reste store avancé/promos)*
+12. 🟡 Entité produit/offres → **panier** → **checkout Fapshi** → store à rails → historique de commandes. `⟶ 5` *(panier, checkout multi-livres et historique achats livrés 17/07 ; prix barré/promo livré 19/07 — `V016__promo_prix_barre.sql`, section admin Promotions, badge sur la fiche œuvre uniquement pour l'instant ; reste : étendre l'affichage promo aux rails d'accueil et au catalogue, catégories avancées)*
 13. 🟡 **Diaspora (D11)** — paiement international (cartes/PayPal) + multi-devises + **gifting**. `⟶ 12`
     - ✅ **Multi-devises** (16/07) : `scripts/lib/devises.mjs` — XAF/EUR/USD, parité fixe EUR 655,957, USD flottant via `TAUX_USD_XAF`, devise inconnue refusée. A corrigé 2 bugs graves (cf. ERROR_LOG). Contrôle `check-devises`.
     - ✅ **Gifting — serveur** (16/07) : migration `V011` + RPC `reclamer_cadeau` + codes `scripts/lib/cadeaux.mjs` + **flux paiement branché** (`fapshi-pay` crée le cadeau, `fapshi-webhook` le confirme et crédite l'auteur sans donner l'accès à l'acheteur). Contrôles `check-cadeaux` + `check-gift-flow`. ✅ **V011 appliquée sur Supabase (16/07).**
@@ -134,13 +134,13 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
     - ⬜ **Reste #13** : **connecteur paiement international** (cartes/PayPal) — 🔴 **bloqué : compte marchand + secrets requis (action Franklin)**. Le gifting fonctionne déjà via Fapshi/Mobile Money en attendant.
 
 ### 🟦 P4 — Espaces avancés (chacun livré seul, dans l'ordre)
-14. 🟡 **Vendre / occasion** (Phase 3) — listing ISBN, escrow, payout, logistique pilote. *(le plus dur)*
+14. ✅ **Vendre / occasion** (Phase 3) — listing ISBN, escrow, payout, arbitrage litige, liste des annonces. *(le plus dur — entièrement livré 19/07, reste seulement l'activation du payout live par Fapshi, démarche Franklin)*
     - ✅ **Socle séquestre** (16/07) : machine à états `scripts/lib/occasion-etats.mjs` + migration `V012` (commandes_occasion, vendeur_evaluations, 5 RPC SECURITY DEFINER) + `check-occasion`. Commission 15 % (**D15**), aucun revenu auteur sur l'occasion. ✅ **V012 appliquée sur Supabase (16/07).**
     - ✅ **Payout confirmé + client codé** (16/07) : `scripts/lib/fapshi-payout.js` (POST /payout), `check-payout`. Reste à demander l'activation live à Fapshi (démarche Franklin).
     - ✅ **Formulaire de mise en vente** (16/07) : `V013` (RPC `creer_annonce_occasion`) + `pages/vendre.html` / `vendre.js` (répartition en direct) + entrée menu profil. Contrôle `check-vendre`. ✅ **V013 appliquée sur Supabase (16/07).**
     - ✅ **Paiement occasion branché** (16/07) : `fapshi-pay` relit le montant serveur + relie paiement↔commande ; `fapshi-webhook` gèle en `paye_sequestre` sans payer le vendeur. Contrôle `check-occasion-flow`.
     - ✅ **Cycle complet bouclé** (16/07) : page `commande.html` (timeline + actions par rôle réel : payer/remettre/recevoir=libère les fonds/litige/évaluer) + découverte sur la fiche œuvre (`work.js` : annonces réelles + réservation en un clic) + `payment.js` branché. Contrôle `check-commande-occasion`. **Découvrir → réserver → payer → séquestre → remettre → recevoir → fonds libérés → évaluer.**
-    - ⬜ **Reste** : Function serveur d'orchestration du **payout** (admin/cron : commande `clos` → `POST /payout` → `payout_statut='verse'`, idempotent — bloqué sur activation Fapshi), **arbitrage litige** côté admin, page de **liste des annonces** (parcourir tout le catalogue occasion, pas juste celles d'un livre).
+    - ✅ **Reste livré (19/07)** : Function serveur d'orchestration du **payout** (`functions/api/payout-occasion.js`, branchée sur le cron horaire, idempotente — **inerte tant que Fapshi n'a pas activé le payout live et que `PAYOUT_TASK_SECRET` n'est pas configuré**), **arbitrage litige** admin (`V015__arbitrage_litige.sql`, RPC `resoudre_litige`, section admin dédiée), page de **liste des annonces** (`pages/occasion.html`). Contrôle `check-litige-promo-payout`. P4 #14 est donc désormais **entièrement livré** (reste seulement l'activation Fapshi côté Franklin).
 15. ✅ **Emprunter** (Phase 4) — accès temporel + file d'attente sur le fonds maison. *(livré 19/07, migration `V014__pret_numerique.sql` appliquée sur Supabase, contrôle `check-emprunt` ; reste à créer une offre `pret_numerique` de test et exercer le flux en vrai)*
 
 ### 🟪 P5 — Piliers partenariats (en parallèle, au rythme des accords — PAS bloquants)

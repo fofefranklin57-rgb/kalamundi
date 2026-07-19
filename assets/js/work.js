@@ -400,7 +400,13 @@ function renderOffresLivre(oeuvre, offres, { deja, acces, prix }) {
       </article>
       <article class="offer-card ${premium && !acces ? 'offer-card--active' : ''}">
         <div class="offer-card__kicker">Achat numérique</div>
-        <h3 class="offer-card__title">${premium ? formatPrixXaf(prix || offreAchat?.prix || 300) : 'Inclus gratuitement'}</h3>
+        <h3 class="offer-card__title">
+          ${premium ? formatPrixXaf(prix || offreAchat?.prix || 300) : 'Inclus gratuitement'}
+          ${premium && offreAchat?.prix_barre && Number(offreAchat.prix_barre) > Number(offreAchat.prix || prix || 0)
+            ? `<span style="text-decoration:line-through;opacity:.55;font-size:var(--font-size-sm);margin-left:6px">${formatPrixXaf(offreAchat.prix_barre)}</span>
+               <span class="offer-card__badge" style="margin-left:6px">-${Math.round((1 - Number(offreAchat.prix) / Number(offreAchat.prix_barre)) * 100)}%</span>`
+            : ''}
+        </h3>
         <p class="offer-card__text">${premium ? 'Paiement Fapshi, accès complet et part auteur visible.' : 'Ce livre est déjà en accès libre.'}</p>
         ${premium && !acces
           ? `<div class="offer-card__actions"><button class="btn btn--accent btn--sm js-buy">Payer avec Fapshi</button><button class="btn btn--outline btn--sm js-cart">Panier</button></div>`

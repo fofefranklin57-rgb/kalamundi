@@ -255,7 +255,7 @@ export const api = {
       .from('livre_offres')
       .select(`
         id, livre_id, edition_id, source_oeuvre_id, vendeur_id, type, statut,
-        prix, devise, fapshi_enabled, chapitres_gratuits, stock, duree_acces_jours,
+        prix, prix_barre, devise, fapshi_enabled, chapitres_gratuits, stock, duree_acces_jours,
         royalties_auteur_pct, royalties_plateforme_pct, ordre, metadata,
         livre_editions(id, format, statut, fichier_url, epub_url, nb_chapitres),
         livres(id, oeuvre_id, titre, couverture_url, langue_originale, statut)
@@ -383,6 +383,20 @@ export const api = {
     });
     if (error) throw new Error(error.message || 'Réservation impossible.');
     return data;
+  },
+
+  /* Toutes les annonces d'occasion actives, tous livres confondus (reste P4 #14 :
+     jusqu'ici on ne pouvait voir que les annonces liées à une fiche œuvre précise). */
+  async getToutesAnnoncesOccasion({ limit = 40, offset = 0 } = {}) {
+    const { data, error } = await supabase
+      .from('livre_offres')
+      .select('id, prix, devise, conditions, created_at, livres(id, titre, couverture_url, oeuvre_id)')
+      .eq('type', 'occasion')
+      .eq('statut', 'active')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (error) throw error;
+    return data || [];
   },
 
   async getRailsMarchands({ limit = 10 } = {}) {
@@ -1476,6 +1490,56 @@ export const api = {
     const { error } = await supabase
       .from('signalements').update({ statut }).eq('id', id);
     if (error) throw error;
+  },
+
+  /* ---- Arbitrage litiges occasion (reste P4 #14) --------- */
+
+  async adminGetLitiges() {
+    const { data: commandes, error } = await supabase
+      .from('commandes_occasion')
+      .select(`id, livre_id, acheteur_id, vendeur_id, montant_xaf, commission_xaf,
+               montant_vendeur_xaf, litige_motif, statut, created_at, livres(titre)`)
+      .eq('statut', 'litige')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    if (!commandes?.length) return [];
+
+    const ids = [...new Set(commandes.flatMap(c => [c.acheteur_id, c.vendeur_id]))];
+    const { data: profils } = await supabase.from('profiles').select('id, nom, telephone').in('id', ids);
+    const parId = Object.fromEntries((profils || []).map(p => [p.id, p]));
+
+    return commandes.map(c => ({
+      ...c,
+      acheteur: parId[c.acheteur_id] || null,
+      vendeur: parId[c.vendeur_id] || null,
+    }));
+  },
+
+  async adminResoudreLitige(commandeId, decision) {
+    const { error } = await supabase.rpc('resoudre_litige', { p_commande_id: commandeId, p_decision: decision });
+    if (error) throw new Error(error.message || 'Arbitrage impossible.');
+  },
+
+  /* ---- Promotions / prix barré (reste P3 #12, D17) -------- */
+
+  async adminGetPromotions() {
+    const { data, error } = await supabase
+      .from('livre_offres')
+      .select('id, prix, prix_barre, devise, livres(id, titre)')
+      .eq('type', 'achat_numerique')
+      .eq('statut', 'active')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return data || [];
+  },
+
+  async adminDefinirPromo(offreId, prixBarre) {
+    const { error } = await supabase
+      .from('livre_offres')
+      .update({ prix_barre: prixBarre })
+      .eq('id', offreId);
+    if (error) throw new Error(error.message || 'Mise à jour impossible.');
   },
 
   async adminGetInstitutions() {
