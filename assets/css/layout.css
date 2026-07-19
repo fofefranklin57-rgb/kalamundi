@@ -397,6 +397,19 @@
     line-height: 1;
   }
 
+  /* Apprendre = la douve Kalamundi (annales/examens/répétiteur) : icône
+     toujours teintée accent pour ne pas se perdre parmi 5 onglets neutres. */
+  .mobile-tabbar__item[data-tab="learn"] .mobile-tabbar__icon {
+    color: var(--color-accent-dark);
+  }
+  .mobile-tabbar__item[data-tab="learn"].is-active {
+    color: var(--color-accent-dark);
+    background-color: rgba(212, 160, 23, 0.12);
+  }
+  .mobile-tabbar__item[data-tab="learn"].is-active .mobile-tabbar__icon {
+    color: var(--color-accent-dark);
+  }
+
   .mobile-tabbar__label {
     max-width: 100%;
     overflow: hidden;

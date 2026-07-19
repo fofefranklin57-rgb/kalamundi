@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initNavbar(),
     chargerVedettes(),
   ]);
+  if (session?.user) chargerReprendre(session.user.id).catch(() => {});
 
   /* Lazy load sections sous le fold via IntersectionObserver */
   const lazyLoad = (elementId, fn) => {
@@ -276,6 +277,40 @@ async function chargerNouveautes() {
     grid.innerHTML = videState('Impossible de charger les nouveautés.');
     console.error(err);
   }
+}
+
+/* ============================================================
+   Reprendre la lecture — corrige le défaut n°1 relevé sur Kindle
+   (accueil tourné vers l'achat plutôt que "continuer ma lecture").
+   Source : `lectures`, triée par updated_at desc (déjà l'historique
+   de lecture le plus récent, pas besoin d'une nouvelle requête).
+   ============================================================ */
+
+async function chargerReprendre(userId) {
+  const section = document.getElementById('section-reprendre');
+  const wrap = document.getElementById('home-reprendre');
+  if (!section || !wrap) return;
+  try {
+    const historique = (await api.getBibliotheque(userId)).slice(0, 4);
+    if (!historique.length) return;
+
+    wrap.innerHTML = historique.map(renderReprendreCard).join('');
+    gererErreurImages(wrap);
+    section.style.display = '';
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderReprendreCard(item) {
+  const oeuvre = item.oeuvres || {};
+  const chapitre = item.chapitre_courant || 1;
+  const html = renderBookMini(oeuvre);
+  // Lien vers le chapitre exact repris, pas le début du livre.
+  return html.replace(
+    `/pages/work.html?id=${oeuvre.id}`,
+    `/pages/reader.html?id=${oeuvre.id}&ch=${chapitre}`
+  );
 }
 
 /* ============================================================

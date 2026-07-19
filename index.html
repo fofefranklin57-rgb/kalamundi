@@ -62,9 +62,20 @@
         <p class="hero__subtitle" data-i18n="home.hero.sous_titre">
           Découvrez des œuvres d'auteurs du monde entier. Publiez vos textes, protégés par horodatage blockchain. Lisez dans votre langue.
         </p>
+        <form class="hero__search" id="hero-search" role="search" action="/pages/library.html" method="get">
+          <input type="search" name="recherche" class="hero__search-input" placeholder="Titre, auteur, mot-clé…" aria-label="Rechercher un livre" />
+          <button type="submit" class="hero__search-btn" aria-label="Rechercher">⌕</button>
+        </form>
         <div class="hero__actions" id="hero-actions"></div>
         <div class="hero__stats" id="hero-stats"></div>
       </div>
+    </section>
+
+    <section class="section container" id="section-reprendre" style="display:none">
+      <div class="section__header">
+        <h2 class="section__title">Reprendre la lecture</h2>
+      </div>
+      <div class="commerce-rail__books" id="home-reprendre"></div>
     </section>
 
     <main class="main-content">

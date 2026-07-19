@@ -78,11 +78,13 @@
   --dark-border:  #2E4D35;
   --dark-text:    #E8F5E9;
   --dark-text-secondary: #A8C9AE;
+  --dark-text-tertiary: #7FA080;
 
   /* Thème sépia */
   --sepia-bg:      #F4ECD8;
   --sepia-surface: #EDE0C4;
   --sepia-text:    #3B2A1A;
+  --sepia-text-tertiary: #6B5638;
   --sepia-border:  #C9B08A;
 
   /* Bordures */
@@ -269,6 +271,7 @@ body.theme-dark {
   --border-color: var(--dark-border);
   --text-primary: var(--dark-text);
   --text-secondary: var(--dark-text-secondary);
+  --text-light: var(--dark-text-tertiary);
 }
 
 /* Thème sépia */
@@ -280,6 +283,7 @@ body.theme-sepia {
   --bg-card:      var(--sepia-surface);
   --border-color: var(--sepia-border);
   --text-primary: var(--sepia-text);
+  --text-light: var(--sepia-text-tertiary);
 }
 
 /* ============================================================
