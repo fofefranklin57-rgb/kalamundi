@@ -1378,12 +1378,35 @@ export const api = {
       if (data.expire_le && new Date(data.expire_le) <= new Date()) return false;
       return true;
     }
-    // Pas d'achat/prêt individuel : un abonné Reader+ ou Auteur Pro (qui inclut
-    // Reader+) a un accès illimité aux œuvres premium — c'est la promesse vendue
-    // sur /pages/abonnements.html, elle doit être honorée ici, pas seulement
-    // affichée. Sans ce test, un abonné payant devait quand même acheter chaque
-    // œuvre séparément (cf. ERROR_LOG).
-    return this.aAbonnementActif(userId, ['reader_plus', 'auteur_pro']);
+    // Pas d'achat/prêt individuel : un abonné Reader+/Auteur Pro n'a accès QUE
+    // si l'auteur a explicitement choisi « Kalamundi Select » (exclusivité, 70 %
+    // au lieu de 50 %, cf. ADAPTATION_STANDARDS_KDP.md §5.3). Sans cette
+    // restriction, un abonné lisait n'importe quelle œuvre premium gratuitement
+    // et l'auteur touchait 0 FCFA pour cette lecture — le fonds mensuel qui doit
+    // le rémunérer (§5.2, à la page lue) n'existe pas encore. Tant qu'aucun
+    // auteur n'a opté pour Select, l'accès abonnement reste donc fermé partout
+    // (cf. ERROR_LOG 2026-07-20).
+    const abonne = await this.aAbonnementActif(userId, ['reader_plus', 'auteur_pro']);
+    if (!abonne) return false;
+    return this.oeuvreEstEnAbonnement(oeuvreId);
+  },
+
+  async oeuvreEstEnAbonnement(oeuvreId) {
+    const { data: livre } = await supabase
+      .from('livres')
+      .select('id')
+      .eq('oeuvre_id', oeuvreId)
+      .maybeSingle();
+    if (!livre) return false; // pas encore de fiche livre (V007) → pas de Select possible
+
+    const { data: offre } = await supabase
+      .from('livre_offres')
+      .select('id')
+      .eq('livre_id', livre.id)
+      .eq('type', 'lecture_abonnement')
+      .eq('statut', 'active')
+      .maybeSingle();
+    return !!offre;
   },
 
   async aAbonnementActif(userId, plansValides) {
