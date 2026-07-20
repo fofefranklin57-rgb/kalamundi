@@ -14,6 +14,13 @@ Format par entrée :
 - **Leçon** : la règle à retenir pour ne pas recommencer
 ```
 
+### [2026-07-20] Le plan Institution (10 000 FCFA/mois) ne livre aucune de ses promesses — pas un bug, une fonctionnalité non construite
+- **Symptôme** : audit du plan Institution après correction de Reader+/Auteur Pro. Ses 4 avantages techniques annoncés (équipe, tableau de bord, stats collectives, badge vérifié) ne sont livrés par aucun code.
+- **Cause** : `assets/js/institution.js` (inscription libre d'établissement, table `institutions`) et le paiement `profiles.abonnement='institution'` sont **deux systèmes déconnectés** qui partagent juste un nom. `institution.js` ne lit `profiles.abonnement` nulle part. Plus grave : la table `institutions` n'a qu'un `user_id` — **aucun modèle de données pour une équipe/plusieurs membres** n'existe. Ce n'est donc pas un simple câblage à corriger (contrairement à Reader+/Auteur Pro) : la fonctionnalité « accès équipe » n'a jamais été construite.
+- **Correctif** : **aucun appliqué.** Un correctif superficiel serait trompeur ici. Décision reportée à Franklin : construire l'équipe/dashboard (chantier réel), réduire les promesses de la page à ce qui est livrable aujourd'hui, ou suspendre la vente du plan en attendant.
+- **Fichier(s)** : `assets/js/institution.js`, `pages/abonnements.html`, table `institutions`.
+- **Leçon** : après avoir corrigé un bug de câblage, vérifier si les plans voisins ont le **même symptôme** avant de considérer le sujet clos — ici le symptôme était le même mais la cause profonde très différente (fonctionnalité manquante, pas signal mal branché).
+
 ### [2026-07-20] Abonné Reader+/Auteur Pro devait quand même racheter chaque œuvre premium
 - **Symptôme** : un lecteur payant 1000 FCFA/mois pour « accès illimité aux œuvres premium » (promesse affichée sur `/pages/abonnements.html`) devait en réalité payer chaque œuvre premium séparément — l'abonnement n'ouvrait rien.
 - **Cause** : `api.verifierAccesPremium()` ne vérifiait que la table `acces_premium` (achats/prêts individuels par œuvre) et ne consultait jamais `profiles.abonnement`. La promesse marketing n'avait aucune contrepartie côté accès.

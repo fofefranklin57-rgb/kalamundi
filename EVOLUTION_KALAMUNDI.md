@@ -11,6 +11,8 @@ Types : `feat` (fonctionnalité) · `decision` (choix produit) · `fix` (correct
 
 ## 2026-07
 
+- **2026-07-20 — audit** : plan **Institution (10 000 FCFA/mois) audité — aucune promesse livrée**. Contrairement à Reader+/Auteur Pro (bugs de câblage, corrigés), `institution.js` (inscription libre d'établissement) et le paiement `profiles.abonnement='institution'` sont deux systèmes totalement déconnectés ; la table `institutions` n'a même pas de modèle de données pour plusieurs membres. **Décision requise de Franklin** : construire la vraie fonctionnalité équipe, réduire les promesses affichées, ou suspendre la vente du plan. Aucun code changé — un correctif superficiel serait trompeur. Détails `ERROR_LOG.md`.
+
 - **2026-07-20 — fix** : **les avantages Reader+/Auteur Pro sont désormais réellement honorés**, pas juste vendus. Audit du code (pas de la page marketing) déclenché par une question de Franklin sur la valeur d'un abonnement — a révélé que « accès illimité aux œuvres premium » et « aucune publicité » étaient tous deux non fonctionnels (le premier jamais implémenté, le second cassé par une divergence de champ entre le paiement et le gating). Nouveau `api.aAbonnementActif(userId, plans)` en source de vérité unique, consommé par `verifierAccesPremium()` (accès premium) et `app.js` (gating pub). Contrôle `check-abonnement-perks`. Détails dans `ERROR_LOG.md`. **Auteur Pro et Institution restent à auditer.**
 - **2026-07-20 — docs** : maquette accueil corrigée avec des chiffres vérifiés en base (288 œuvres, 3 originales, 2 offres de prêt test, 0 annonce d'occasion active) au lieu de valeurs inventées — le rail occasion affiche un vrai état vide plutôt que des annonces fictives.
 
