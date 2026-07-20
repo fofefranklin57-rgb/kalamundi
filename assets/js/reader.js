@@ -1749,14 +1749,14 @@ document.addEventListener('keydown', (e) => {
    de portée simple de speechSynthesis + extraction de texte page courante).
    ============================================================ */
 
-/* Couvre toutes les langues de lecture proposées par l'app (LANGUES_LECTURE,
-   translate.js) + les langues d'origine possibles pour une œuvre (LANGUES_NOMS
-   ci-dessus). BCP-47 le plus courant par langue — la voix réellement utilisée
-   dépend ensuite des voix installées sur l'appareil du lecteur (cf. _voixPour). */
+/* Limité aux langues officielles (français/anglais) : ce sont les seules
+   voix quasi garanties nativement sur tout appareil. Pour les autres langues,
+   sans voix installée le navigateur bascule silencieusement sur une voix par
+   défaut (souvent anglaise) et lit le texte avec la mauvaise prononciation —
+   pire qu'une indisponibilité claire. À réélargir seulement si on vérifie la
+   dispo réelle de voix de qualité pour chaque langue ajoutée. */
 const LANGUES_TTS = {
-  fr: 'fr-FR', en: 'en-US', es: 'es-ES', pt: 'pt-BR', de: 'de-DE',
-  ar: 'ar-SA', sw: 'sw-KE', ha: 'ha-NG', yo: 'yo-NG',
-  hi: 'hi-IN', ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN',
+  fr: 'fr-FR', en: 'en-US',
 };
 
 document.getElementById('btn-tts')?.addEventListener('click', () => {
@@ -1772,11 +1772,14 @@ function _texteDePageCourante() {
 /* La langue à lire est celle réellement AFFICHÉE (traduction en cours si
    applicable), pas systématiquement la langue d'origine de l'œuvre — sinon
    un livre traduit en japonais serait lu avec une voix française. */
-function _langueTTSCourante() {
-  const code = etat.langueAffichee && etat.langueAffichee !== 'original'
+function _codeLangueCourante() {
+  return etat.langueAffichee && etat.langueAffichee !== 'original'
     ? etat.langueAffichee
     : etat.oeuvre?.langue_originale;
-  return LANGUES_TTS[code] || 'fr-FR';
+}
+
+function _langueTTSCourante() {
+  return LANGUES_TTS[_codeLangueCourante()] || null;
 }
 
 /* Cherche la meilleure voix disponible : correspondance exacte de la balise
@@ -1810,6 +1813,11 @@ let _ttsGeneration = 0;
 
 async function _ttsDemarrer() {
   if (!('speechSynthesis' in window)) { toast('Voix de synthèse non disponible sur cet appareil.', 'error'); return; }
+  const langTTS = _langueTTSCourante();
+  if (!langTTS) {
+    toast('Lecture audio disponible uniquement en français et en anglais pour l\'instant.', 'info');
+    return;
+  }
   const texte = _texteDePageCourante();
   if (!texte) { toast('Rien à lire sur cette page.', 'info'); return; }
 
@@ -1819,7 +1827,7 @@ async function _ttsDemarrer() {
 
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(texte);
-  utterance.lang = _langueTTSCourante();
+  utterance.lang = langTTS;
   const voix = _voixPour(utterance.lang);
   if (voix) {
     utterance.voice = voix;
