@@ -77,6 +77,7 @@ Principe d'unité : l'utilisateur ne « change pas d'espace », il **agit sur un
 - **Lecture actuelle** : `pdfjs-dist` présent → contenu servi en **PDF** + contenu sérialisé en base. ⚠️ *Le PDF est mal adapté au mobile — voir décision format §8.*
 - **IA** : `ANTHROPIC_API_KEY` configurée (corrigés IA, génération couverture) → base pour un « libraire IA ».
 - **Deploy** : Cloudflare Pages, auto sur push GitHub `fofefranklin57-rgb/kalamundi`.
+- **Domaine personnalisé** : `https://kalamundi.afrisaas.com` (sous-domaine acheté par Franklin, ajouté le 20/07/2026, vérifié actif avec SSL) — s'ajoute à l'URL Pages `.pages.dev`.
 - **i18n** : FR / EN.
 
 **Credentials & secrets** : NE JAMAIS écrire les clés dans ce dépôt. Elles vivent dans les **secrets Cloudflare Pages** et `.env.example` (gabarit). Voir la mémoire projet locale pour la liste. *(Sécurité : ce fichier peut finir sur GitHub public.)*
