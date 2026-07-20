@@ -63,9 +63,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   lazyLoad('section-nouveaux-talents', () => chargerNouveauxTalents());
 
   initHamburger();
-  /* Pubs Monetag — chargées après le contenu, respecte les abonnés */
+  /* Pubs Monetag — chargées après le contenu, respecte les abonnés.
+     Le paiement écrit profiles.abonnement (reader_plus/auteur_pro), jamais
+     user_metadata.plan='premium' — cette ancienne vérification ne matchait
+     donc jamais et un abonné payant voyait quand même de la publicité
+     (cf. ERROR_LOG). Auteur Pro inclut Reader+, donc les deux coupent la pub. */
   if (window.initAds) {
-    const abonne = session?.user?.user_metadata?.plan === 'premium';
+    const abonne = session?.user
+      ? await api.aAbonnementActif(session.user.id, ['reader_plus', 'auteur_pro'])
+      : false;
     window.initAds(abonne);
   }
 });

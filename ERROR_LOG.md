@@ -14,6 +14,20 @@ Format par entrée :
 - **Leçon** : la règle à retenir pour ne pas recommencer
 ```
 
+### [2026-07-20] Abonné Reader+/Auteur Pro devait quand même racheter chaque œuvre premium
+- **Symptôme** : un lecteur payant 1000 FCFA/mois pour « accès illimité aux œuvres premium » (promesse affichée sur `/pages/abonnements.html`) devait en réalité payer chaque œuvre premium séparément — l'abonnement n'ouvrait rien.
+- **Cause** : `api.verifierAccesPremium()` ne vérifiait que la table `acces_premium` (achats/prêts individuels par œuvre) et ne consultait jamais `profiles.abonnement`. La promesse marketing n'avait aucune contrepartie côté accès.
+- **Correctif** : `verifierAccesPremium()` retombe désormais sur un nouvel `aAbonnementActif(userId, ['reader_plus','auteur_pro'])` quand aucun accès individuel n'existe (Auteur Pro inclut Reader+, donc les deux couvrent l'accès premium).
+- **Fichier(s)** : `assets/js/api.js`.
+- **Leçon** : une page marketing qui promet un avantage n'est pas une preuve qu'il est implémenté — vérifier le code qui *accorde* l'avantage, pas seulement le texte qui le *vend*.
+
+### [2026-07-20] La pub s'affichait quand même aux abonnés Reader+
+- **Symptôme** : « Aucune publicité » annoncé pour Reader+, mais les pubs Monetag s'affichaient à tous les utilisateurs, abonnés ou non.
+- **Cause** : `app.js` vérifiait `session.user.user_metadata.plan === 'premium'` pour couper la pub, mais le webhook de paiement écrit `profiles.abonnement = 'reader_plus'` (une table différente, un champ différent, une valeur différente) — la condition ne pouvait jamais être vraie.
+- **Correctif** : `app.js` utilise désormais `api.aAbonnementActif(session.user.id, ['reader_plus','auteur_pro'])`, la même source de vérité que l'accès premium (un seul mécanisme d'abonnement, pas deux qui divergent).
+- **Fichier(s)** : `assets/js/app.js`, `assets/js/api.js`.
+- **Leçon** : quand deux features (accès premium, gating pub) doivent réagir au même abonnement, elles doivent lire la **même** source — sinon elles divergent silencieusement dès que l'une est corrigée sans l'autre.
+
 ---
 
 ### [2026-07-16] Un paiement en euros valait 655 fois trop peu

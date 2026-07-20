@@ -1372,10 +1372,28 @@ export const api = {
       .eq('user_id', userId)
       .eq('oeuvre_id', oeuvreId)
       .maybeSingle();
-    if (!data) return false;
-    // Un prêt (emprunt_id renseigné) a un expire_le : accès révoqué une fois passé.
-    // Un achat n'a pas d'expire_le → accès permanent.
-    if (data.expire_le && new Date(data.expire_le) <= new Date()) return false;
+    if (data) {
+      // Un prêt (emprunt_id renseigné) a un expire_le : accès révoqué une fois passé.
+      // Un achat n'a pas d'expire_le → accès permanent.
+      if (data.expire_le && new Date(data.expire_le) <= new Date()) return false;
+      return true;
+    }
+    // Pas d'achat/prêt individuel : un abonné Reader+ ou Auteur Pro (qui inclut
+    // Reader+) a un accès illimité aux œuvres premium — c'est la promesse vendue
+    // sur /pages/abonnements.html, elle doit être honorée ici, pas seulement
+    // affichée. Sans ce test, un abonné payant devait quand même acheter chaque
+    // œuvre séparément (cf. ERROR_LOG).
+    return this.aAbonnementActif(userId, ['reader_plus', 'auteur_pro']);
+  },
+
+  async aAbonnementActif(userId, plansValides) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('abonnement, abonnement_expire_at')
+      .eq('id', userId)
+      .maybeSingle();
+    if (!data?.abonnement || !plansValides.includes(data.abonnement)) return false;
+    if (data.abonnement_expire_at && new Date(data.abonnement_expire_at) <= new Date()) return false;
     return true;
   },
 
