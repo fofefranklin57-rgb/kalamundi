@@ -56,6 +56,13 @@
     .plan__features li { font-size: var(--font-size-sm); color: var(--text-secondary); display: flex; align-items: flex-start; gap: 8px; }
     .plan__features li::before { content: '✓'; color: var(--color-primary); font-weight: 700; flex-shrink: 0; }
     .plan__cta { margin-top: auto; }
+    .plan-card--bientot { opacity: 0.72; }
+    .plan-card--bientot .plan__price { color: var(--text-light); }
+    .plan-card--bientot .plan__features li::before { color: var(--text-light); }
+    .plan-badge--bientot {
+      display: inline-block; background: var(--bg-secondary); color: var(--text-secondary);
+      font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 99px; margin-bottom: 4px;
+    }
     .gratuit-badge { background: var(--bg-secondary); border-radius: 8px; padding: var(--spacing-lg); margin-bottom: var(--spacing-xl); text-align: center; }
     .plan-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--spacing-md); margin-bottom:var(--spacing-xl); }
     .plan-strip__item { border:1px solid var(--border-color); border-radius:8px; padding:var(--spacing-md); background:var(--bg-card); }
@@ -149,12 +156,15 @@
             </div>
           </div>
 
-          <!-- INSTITUTION -->
-          <div class="plan-card">
+          <!-- INSTITUTION — pas encore en vente : la fonctionnalité équipe/tableau
+               de bord n'est pas construite (cf. ERROR_LOG.md 2026-07-20). Le CTA
+               de paiement est retiré tant que ce n'est pas livré. -->
+          <div class="plan-card plan-card--bientot">
+            <span class="plan-badge--bientot">🚧 Bientôt disponible</span>
             <div class="plan__icon">🏛️</div>
             <div class="plan__name">Institution</div>
-            <div class="plan__price">10 000 FCFA <span>/ mois</span></div>
-            <div class="plan__desc">Pour les ONG, écoles et bibliothèques. Tarif solidaire disponible sur demande.</div>
+            <div class="plan__price">10 000 FCFA <span>/ mois (à venir)</span></div>
+            <div class="plan__desc">Pour les ONG, écoles et bibliothèques. Tarif solidaire prévu sur demande.</div>
             <ul class="plan__features">
               <li>Accès pour toute votre équipe</li>
               <li>Tableau de bord institution</li>
@@ -164,8 +174,8 @@
               <li>Tarif ONG gratuit sur dossier</li>
             </ul>
             <div class="plan__cta">
-              <a href="/pages/payment.html?plan=institution&montant=10000" class="btn btn--outline" style="width:100%;text-align:center">
-                Souscrire Institution
+              <a href="mailto:institutions@kalamundi.com?subject=Int%C3%A9r%C3%AAt%20plan%20Institution" class="btn btn--outline" style="width:100%;text-align:center">
+                Être prévenu au lancement
               </a>
             </div>
           </div>

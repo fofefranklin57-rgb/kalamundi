@@ -34,6 +34,15 @@ export async function onRequestPost({ request, env }) {
   }
 
   const { montant, devise, description, userId, oeuvreId, plan, redirectUrl } = body;
+
+  /* Vente suspendue (2026-07-20) : la fonctionnalité équipe/tableau de bord
+     n'est pas construite (cf. ERROR_LOG.md). Le blocage frontend seul n'est
+     pas suffisant — un appel direct à cet endpoint pourrait encaisser un
+     abonnement qui ne livre rien, donc le vrai verrou est ici. */
+  if (plan === 'abonnement_institution') {
+    return new Response(JSON.stringify({ error: "L'abonnement Institution n'est pas encore en vente." }), { status: 403, headers: corsHeaders });
+  }
+
   const estCadeau = body.cadeau === true;
   const commandeOccasionId = body.commandeOccasionId || null;
   const estOccasion = !!commandeOccasionId;

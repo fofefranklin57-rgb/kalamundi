@@ -15,11 +15,13 @@ const CONFIG = {
   fapshi: { workerUrl: '/api/fapshi-pay' },
 };
 
-/* Plans abonnement */
+/* Plans abonnement.
+   'institution' retiré volontairement (2026-07-20) : la vente est suspendue
+   tant que la fonctionnalité équipe/tableau de bord n'est pas construite
+   (cf. ERROR_LOG.md). Ne pas le remettre ici sans avoir livré ces avantages. */
 const PLANS = {
   reader_plus:  { label: 'Abonnement Reader+',     montant: 1000, devise: 'XAF', type: 'abonnement_reader' },
   auteur_pro:   { label: 'Abonnement Auteur Pro',  montant: 2500, devise: 'XAF', type: 'abonnement_auteur' },
-  institution:  { label: 'Abonnement Institution', montant: 10000, devise: 'XAF', type: 'abonnement_institution' },
 };
 
 /* ============================================================
@@ -81,6 +83,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     chargerPanier();
   } else if (PARAMS.oeuvreId) {
     await chargerInfoOeuvre();
+  } else if (PARAMS.plan === 'institution') {
+    afficherErreur("L'abonnement Institution n'est pas encore en vente. Écrivez-nous à institutions@kalamundi.com pour être prévenu au lancement.");
   } else if (PARAMS.plan && PLANS[PARAMS.plan]) {
     const plan = PLANS[PARAMS.plan];
     PARAMS.montant = plan.montant;
