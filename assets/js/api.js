@@ -142,6 +142,14 @@ export const api = {
 
   async getOeuvres({ page = 1, limit = 20, genre, langue, statut, recherche, tri = 'recent', exclureSysteme = false } = {}) {
     const orderCol = tri === 'lectures' ? 'nb_lectures' : 'created_at';
+    // exclureSysteme : le seul auteur système réellement marqué (id ...0001)
+    // ne couvre pas la plupart des imports en masse (domaine public, contes
+    // CC), qui ont chacun un auteur_id différent par lot d'import. Le vrai
+    // critère (mêmes noms/mentions que estOeuvreImportee) exige la ligne
+    // complète, donc pas de filtre .neq() fiable côté requête ; on sur-
+    // récupère puis on filtre en JS — le nombre d'œuvres originales reste
+    // petit (quelques dizaines), donc ça tient en une seule page.
+    const rangeMax = exclureSysteme ? 300 : limit;
     let query = supabase
       .from('oeuvres')
       .select(`
@@ -152,13 +160,12 @@ export const api = {
       `, { count: 'exact' })
       .eq('visible', true)
       .order(orderCol, { ascending: false })
-      .range((page - 1) * limit, page * limit - 1);
+      .range(exclureSysteme ? 0 : (page - 1) * limit, exclureSysteme ? rangeMax - 1 : page * limit - 1);
 
     if (genre)    query = query.eq('genre', genre);
     if (langue)   query = query.eq('langue_originale', langue);
     if (statut)   query = query.eq('statut', statut);
     if (recherche) query = query.ilike('titre', `%${recherche}%`);
-    if (exclureSysteme) query = query.neq('auteur_id', '00000000-0000-0000-0000-000000000001');
 
     let { data, error, count } = await query;
     if (error && colonneManquante(error, 'chapitres_gratuits')) {
@@ -172,18 +179,23 @@ export const api = {
         `, { count: 'exact' })
         .eq('visible', true)
         .order(orderCol, { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
+        .range(exclureSysteme ? 0 : (page - 1) * limit, exclureSysteme ? rangeMax - 1 : page * limit - 1);
       if (genre)    query = query.eq('genre', genre);
       if (langue)   query = query.eq('langue_originale', langue);
       if (statut)   query = query.eq('statut', statut);
       if (recherche) query = query.ilike('titre', `%${recherche}%`);
-      if (exclureSysteme) query = query.neq('auteur_id', '00000000-0000-0000-0000-000000000001');
       const retry = await query;
       data = (retry.data || []).map(o => ({ ...o, chapitres_gratuits: 0 }));
       error = retry.error;
       count = retry.count;
     }
     if (error) throw error;
+
+    if (exclureSysteme) {
+      const originaux = (data || []).filter(o => !estOeuvreImportee(o));
+      const debut = (page - 1) * limit;
+      return { data: originaux.slice(debut, debut + limit), total: originaux.length };
+    }
     return { data, total: count };
   },
 
@@ -397,22 +409,6 @@ export const api = {
       .range(offset, offset + limit - 1);
     if (error) throw error;
     return data || [];
-  },
-
-  async getRailsMarchands({ limit = 10 } = {}) {
-    const [populaires, nouveautes, gratuits, premium] = await Promise.all([
-      this.getOeuvres({ limit, tri: 'lectures', exclureSysteme: true }).catch(() => ({ data: [] })),
-      this.getOeuvres({ limit, tri: 'recent', exclureSysteme: true }).catch(() => ({ data: [] })),
-      this.getOeuvres({ limit, tri: 'recent', statut: 'gratuit', exclureSysteme: true }).catch(() => ({ data: [] })),
-      this.getOeuvres({ limit, tri: 'recent', statut: 'premium', exclureSysteme: true }).catch(() => ({ data: [] })),
-    ]);
-
-    return [
-      { id: 'populaires', titre: 'Les plus lus', sousTitre: 'Ce que les lecteurs ouvrent en premier', oeuvres: populaires.data || [] },
-      { id: 'nouveautes', titre: 'Nouveautés auteurs', sousTitre: 'Les publications récentes de la communauté', oeuvres: nouveautes.data || [] },
-      { id: 'gratuits', titre: 'À lire gratuitement', sousTitre: 'Commencer sans paiement, sauvegarder hors ligne ensuite', oeuvres: gratuits.data || [] },
-      { id: 'premium', titre: 'Premium avec extraits', sousTitre: 'Lire une partie, puis payer via Fapshi pour continuer', oeuvres: premium.data || [] },
-    ].filter(rail => rail.oeuvres.length);
   },
 
   async getOeuvresAuteur(auteurId) {
@@ -2081,54 +2077,9 @@ export const api = {
     return data;
   },
 
-  /* ---- Nouveaux auteurs (accueil) ----------------------- */
-
-  async getNouveauxAuteurs({ limit = 6 } = {}) {
-    // Auteurs ayant au moins 1 œuvre visible, triés par date d'inscription
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(`
-        id, nom, photo_url, pays, bio, niveau_auteur, badge_fondateur, created_at,
-        oeuvres!oeuvres_auteur_id_fkey(id, titre, genre, couverture_url, nb_lectures, created_at)
-      `)
-      .neq('id', '00000000-0000-0000-0000-000000000001')
-      .order('created_at', { ascending: false })
-      .limit(limit * 3); // surcharger pour filtrer ceux sans œuvre
-
-    if (error) throw error;
-
-    // Garder uniquement les auteurs avec au moins 1 œuvre visible
-    const avec_oeuvres = (data || [])
-      .filter(p => p.oeuvres?.length > 0)
-      .slice(0, limit)
-      .map(p => ({
-        ...p,
-        // Garder la dernière œuvre publiée
-        derniere_oeuvre: p.oeuvres.sort((a, b) =>
-          new Date(b.created_at) - new Date(a.created_at)
-        )[0],
-      }));
-
-    return avec_oeuvres;
-  },
-
-  async getOeuvresPremiersPas({ limit = 8 } = {}) {
-    // Œuvres récentes gratuites d'auteurs ayant peu de publications
-    const { data, error } = await supabase
-      .from('oeuvres')
-      .select(`
-        id, titre, genre, couverture_url, nb_lectures, created_at, langue_originale,
-        profiles!oeuvres_auteur_id_fkey(id, nom, photo_url, pays, niveau_auteur)
-      `)
-      .eq('visible', true)
-      .eq('statut', 'gratuit')
-      .neq('auteur_id', '00000000-0000-0000-0000-000000000001')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-    return data || [];
-  },
+  /* getNouveauxAuteurs / getOeuvresPremiersPas supprimées le 20/07 avec la
+     section « Nouveaux talents » de l'accueil (fusionnée dans « À découvrir
+     — nos auteurs », inutile de dupliquer avec seulement 3 auteurs réels). */
 
   /* ---- Stats dashboard auteur --------------------------- */
 

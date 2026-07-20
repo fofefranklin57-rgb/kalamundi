@@ -4,7 +4,7 @@
    ============================================================ */
 
 import { getSession, supabase } from './auth.js';
-import { api } from './api.js';
+import { api, estOeuvreImportee } from './api.js';
 import { injecterPub } from './pub.js';
 import { initNotificationsPush } from './notifications.js';
 import { echapperAttr, normaliserUrlImage } from './cover-utils.js';
@@ -42,25 +42,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   enregistrerSW();
   initNotificationsPush().catch(() => {});
 
-  /* Navbar + vedettes en parallèle — ne pas attendre l'auth pour afficher le contenu */
+  /* Navbar + auteurs en parallèle — ne pas attendre l'auth pour afficher le contenu.
+     Occasion/patrimoine chargés directement (pas de lazy IntersectionObserver) :
+     la page est courte depuis la simplification du 20/07, ces sections ne sont
+     plus loin sous le pli, et un chargement direct reste simple et fiable. */
   const [session] = await Promise.all([
     initNavbar(),
-    chargerVedettes(),
+    chargerAuteurs(),
+    chargerOccasion(),
+    chargerPatrimoine(),
   ]);
   if (session?.user) chargerReprendre(session.user.id).catch(() => {});
-
-  /* Lazy load sections sous le fold via IntersectionObserver */
-  const lazyLoad = (elementId, fn) => {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    const obs = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) { obs.disconnect(); fn(); }
-    }, { rootMargin: '200px' });
-    obs.observe(el);
-  };
-  lazyLoad('section-rails-commerce',   () => chargerRailsCommerce());
-  lazyLoad('section-nouveautes',       () => chargerNouveautes());
-  lazyLoad('section-nouveaux-talents', () => chargerNouveauxTalents());
 
   initHamburger();
   /* Pubs Monetag — chargées après le contenu, respecte les abonnés.
@@ -177,7 +169,7 @@ async function initNavbar() {
 
   connecterSelecteursLangue();
 
-  // chargerStats() supprimé — total récupéré dans chargerVedettes()
+  // chargerStats() supprimé — total récupéré dans chargerAuteurs()
   return session;
 }
 
@@ -231,31 +223,35 @@ async function chargerStats() {
 }
 
 /* ============================================================
-   Grille vedettes (les plus lues)
+   Grille auteurs — SEULEMENT les créations publiées sur Kalamundi
+   (exclureSysteme:true, corrigé le 20/07 — ne filtrait rien avant).
+   Le patrimoine (domaine public) a sa propre grille plus bas, jamais
+   mélangé ici. Toujours une tuile « Ta place est ici » à la fin : le
+   catalogue d'auteurs est petit aujourd'hui, autant en faire un appel
+   à publier plutôt que de le cacher.
    ============================================================ */
 
-async function chargerVedettes() {
-  const grid = document.getElementById('grid-vedettes');
+async function chargerAuteurs() {
+  const grid = document.getElementById('grid-auteurs');
+  if (!grid) return;
   try {
-    const [oeuvres, stats] = await Promise.all([
-      api.getOeuvres({ limit: 12, tri: 'lectures' }),
-      api.getStatsAccueil({ collection: 'originaux' }).catch(() => null),
+    const [{ data }, stats] = await Promise.all([
+      api.getOeuvres({ limit: 11, tri: 'recent', exclureSysteme: true }),
+      api.getStatsAccueil().catch(() => null), // collection par défaut = tout le catalogue
     ]);
-    const { data, total } = oeuvres;
 
     mettreAJourStatsHero({
-      oeuvres: total,
+      oeuvres: stats?.totalOeuvres,
       lectures: stats?.totalLectures ?? 0,
     });
 
-    if (!data?.length) {
-      grid.innerHTML = videState('Aucune œuvre disponible pour l\'instant.');
-      return;
-    }
-    const html = data.map(renderBookMini).join('');
-    // Dupliquer pour carrousel infini — lazy load sur la 2e copie
-    grid.innerHTML = html + data.map(o => renderBookMini(o, true)).join('');
-    grid.addEventListener('click', () => grid.classList.toggle('paused'));
+    const tuileCta = `
+      <a href="/pages/login.html?mode=inscription" class="book-mini book-mini--cta">
+        <div class="book-mini__cta-icon">✍️</div>
+        <div class="book-mini__cta-text">Ta place<br>est ici</div>
+      </a>`;
+
+    grid.innerHTML = (data?.length ? data.map(o => renderBookMini(o)).join('') : '') + tuileCta;
     gererErreurImages(grid);
   } catch (err) {
     grid.innerHTML = videState('Impossible de charger les œuvres.');
@@ -264,25 +260,84 @@ async function chargerVedettes() {
 }
 
 /* ============================================================
-   Grille nouveautés (les plus récentes, hors vedettes)
+   Grille patrimoine — domaine public, volontairement séparée et
+   discrète (cf. audit 20/07 : 285/288 œuvres du catalogue total).
    ============================================================ */
 
-async function chargerNouveautes() {
-  const grid = document.getElementById('grid-nouveautes');
+async function chargerPatrimoine() {
+  const grid = document.getElementById('grid-patrimoine');
+  const legende = document.getElementById('patrimoine-compte');
+  if (!grid) return;
   try {
-    const { data } = await api.getOeuvres({ limit: 12, tri: 'recent' });
-    if (!data?.length) {
-      grid.innerHTML = videState('Aucune nouveauté pour l\'instant.');
-      return;
+    const { data, total } = await api.getOeuvres({ limit: 30, tri: 'lectures' });
+    const patrimoine = (data || []).filter(estOeuvreImportee).slice(0, 10);
+
+    if (legende) {
+      const [statsToutes, statsOriginaux] = await Promise.all([
+        api.getStatsAccueil().catch(() => null),
+        api.getStatsAccueil({ collection: 'originaux' }).catch(() => null),
+      ]);
+      if (statsToutes && statsOriginaux) {
+        const nbPatrimoine = statsToutes.totalOeuvres - statsOriginaux.totalOeuvres;
+        legende.textContent = `${nbPatrimoine} classiques du domaine public — libres et gratuits.`;
+      }
     }
-    const html = data.map(renderBookMini).join('');
-    grid.innerHTML = html + data.map(o => renderBookMini(o, true)).join('');
-    grid.addEventListener('click', () => grid.classList.toggle('paused'));
+
+    grid.innerHTML = patrimoine.length ? patrimoine.map(o => renderBookMini(o)).join('') : videState('Aucun titre disponible.');
     gererErreurImages(grid);
   } catch (err) {
-    grid.innerHTML = videState('Impossible de charger les nouveautés.');
+    grid.innerHTML = videState('Impossible de charger le patrimoine.');
     console.error(err);
   }
+}
+
+/* ============================================================
+   Occasion — vrai état vide si aucune annonce, jamais d'annonce
+   inventée (cf. audit 20/07).
+   ============================================================ */
+
+async function chargerOccasion() {
+  const wrap = document.getElementById('home-occasion');
+  if (!wrap) return;
+  try {
+    const annonces = await api.getToutesAnnoncesOccasion({ limit: 4 });
+    if (!annonces.length) {
+      wrap.innerHTML = `
+        <div class="occasion-vide">
+          <p>Aucune annonce pour l'instant — soyez le premier vendeur.</p>
+          <a href="/pages/vendre.html" class="btn btn--outline btn--sm">Vendre un livre →</a>
+        </div>`;
+      return;
+    }
+    wrap.innerHTML = `<div class="books-carousel-wrap"><div class="books-carousel">${annonces.map(renderOccasionMini).join('')}</div></div>`;
+    gererErreurImages(wrap);
+  } catch (err) {
+    wrap.innerHTML = videState('Impossible de charger les annonces.');
+    console.error(err);
+  }
+}
+
+function renderOccasionMini(offre) {
+  const livre = offre.livres || {};
+  const titre = livre.titre || 'Livre Kalamundi';
+  const ville = offre.conditions?.ville;
+  const etat  = offre.conditions?.etat;
+  const coverUrl = normaliserUrlImage(livre.couverture_url);
+  const couleur = '#2D6A4F';
+  const initiale = titre.charAt(0).toUpperCase();
+  const cover = coverUrl
+    ? `<img src="${echapperAttr(coverUrl)}" alt="${echapperAttr(titre)}" loading="lazy" class="book-mini__img">`
+    : `<div class="book-mini__fallback" style="background:${couleur}"><span>${initiale}</span></div>`;
+
+  return `
+    <a href="/pages/work.html?id=${echapperAttr(livre.oeuvre_id || '')}" class="book-mini">
+      <div class="book-mini__cover">${cover}</div>
+      <div class="book-mini__body">
+        <div class="book-mini__title">${titre}</div>
+        <div class="book-mini__author">${[etat, ville].filter(Boolean).join(' · ')}</div>
+        <div class="book-mini__author" style="color:var(--color-primary);font-weight:600">${formatPrixCourt(offre.prix)}</div>
+      </div>
+    </a>`;
 }
 
 /* ============================================================
@@ -317,175 +372,6 @@ function renderReprendreCard(item) {
     `/pages/work.html?id=${oeuvre.id}`,
     `/pages/reader.html?id=${oeuvre.id}&ch=${chapitre}`
   );
-}
-
-/* ============================================================
-   Rails de merchandising livre
-   ============================================================ */
-
-async function chargerRailsCommerce() {
-  const wrap = document.getElementById('home-commerce-rails');
-  if (!wrap) return;
-  try {
-    const rails = await api.getRailsMarchands({ limit: 8 });
-    if (!rails.length) {
-      wrap.innerHTML = videState('Aucun rayon disponible pour le moment.');
-      return;
-    }
-    wrap.innerHTML = rails.map(renderCommerceRail).join('');
-    gererErreurImages(wrap);
-  } catch (err) {
-    console.error(err);
-    wrap.innerHTML = videState('Impossible de charger les rayons.');
-  }
-}
-
-function renderCommerceRail(rail) {
-  const items = rail.oeuvres.map(renderBookOfferMini).join('');
-  return `
-    <article class="commerce-rail commerce-rail--${echapperAttr(rail.id)}">
-      <div class="commerce-rail__head">
-        <div>
-          <h3 class="commerce-rail__title">${rail.titre}</h3>
-          <p class="commerce-rail__text">${rail.sousTitre}</p>
-        </div>
-        <a href="/pages/library.html" class="commerce-rail__link">Voir →</a>
-      </div>
-      <div class="commerce-rail__books">${items}</div>
-    </article>`;
-}
-
-function renderBookOfferMini(oeuvre) {
-  const html = renderBookMini(oeuvre);
-  const premium = oeuvre.statut === 'premium';
-  const label = premium
-    ? `${formatPrixCourt(oeuvre.prix)} · Fapshi`
-    : 'Gratuit · hors ligne';
-  return html.replace(
-    '<div class="book-mini__body">',
-    `<div class="book-mini__offer">${label}</div><div class="book-mini__body">`
-  );
-}
-
-/* ============================================================
-   Nouveaux talents — spotlight + premiers pas
-   ============================================================ */
-
-async function chargerNouveauxTalents() {
-  const [auteurs, oeuvres] = await Promise.all([
-    api.getNouveauxAuteurs({ limit: 6 }).catch(() => []),
-    api.getOeuvresPremiersPas({ limit: 12 }).catch(() => []),
-  ]);
-
-  renderSpotlight(auteurs);
-  renderPremiersPas(oeuvres);
-}
-
-/* ── Spotlight tournant (un auteur toutes les 5s) ───────── */
-function renderSpotlight(auteurs) {
-  const wrap = document.getElementById('spotlight-auteur');
-  if (!wrap) return;
-  if (!auteurs.length) {
-    wrap.innerHTML = `<p style="color:var(--text-light);font-size:var(--font-size-sm);text-align:center;padding:var(--spacing-lg)">
-      Aucun auteur trouvé. <a href="/pages/login.html?mode=inscription" class="lien-vert">Soyez le premier !</a>
-    </p>`;
-    return;
-  }
-
-  let idx = 0;
-
-  function afficher(i) {
-    const a = auteurs[i];
-    if (!a) return;
-    const oeuvre = a.derniere_oeuvre;
-    const couleurs = ['#1B4332','#2D6A4F','#A97C0E','#1a3a5c','#5c1a1a','#2c4a1a'];
-    const couleur  = couleurs[(a.nom || '').charCodeAt(0) % couleurs.length];
-    const initiale = (a.nom || '?').charAt(0).toUpperCase();
-
-    const avatarUrl = normaliserUrlImage(a.photo_url);
-    const avatar = avatarUrl
-      ? `<img src="${echapperAttr(avatarUrl)}" alt="${echapperAttr(a.nom)}" class="spotlight__avatar-img" />`
-      : `<div class="spotlight__avatar-fallback" style="background:${couleur}">${initiale}</div>`;
-
-    const coverUrl = normaliserUrlImage(oeuvre?.couverture_url);
-    const coverOeuvre = coverUrl
-      ? `<img src="${echapperAttr(coverUrl)}" alt="${echapperAttr(oeuvre.titre)}" class="spotlight__cover-img" onerror="this.outerHTML='<div class=&quot;spotlight__cover-fallback&quot; style=&quot;background:${couleur}&quot;><span>${(oeuvre?.titre || '?').charAt(0)}</span></div>'" />`
-      : `<div class="spotlight__cover-fallback" style="background:${couleur}"><span>${(oeuvre?.titre || '?').charAt(0)}</span></div>`;
-
-    const badges = [
-      a.badge_fondateur ? '<span class="badge badge--premium">🏅 Fondateur</span>' : '',
-      a.niveau_auteur   ? `<span class="badge badge--primary">${a.niveau_auteur}</span>` : '',
-      a.pays            ? `<span class="badge badge--muted">📍 ${a.pays}</span>` : '',
-    ].filter(Boolean).join('');
-
-    const dots = auteurs.map((_, j) =>
-      `<button class="spotlight__dot ${j === i ? 'is-active' : ''}" data-idx="${j}" aria-label="Auteur ${j + 1}"></button>`
-    ).join('');
-
-    wrap.innerHTML = `
-      <div class="spotlight-card">
-        <div class="spotlight__auteur">
-          <a href="/pages/author-profile.html?id=${a.id}" class="spotlight__avatar-link">
-            ${avatar}
-          </a>
-          <div class="spotlight__info">
-            <a href="/pages/author-profile.html?id=${a.id}" class="spotlight__nom">${a.nom || 'Auteur'}</a>
-            <div class="spotlight__badges">${badges}</div>
-            ${a.bio ? `<p class="spotlight__bio">${a.bio.slice(0, 140)}${a.bio.length > 140 ? '…' : ''}</p>` : ''}
-            <a href="/pages/author-profile.html?id=${a.id}" class="btn btn--outline btn--sm" style="margin-top:var(--spacing-sm)">
-              Voir le profil →
-            </a>
-          </div>
-        </div>
-        ${oeuvre ? `
-        <a href="/pages/work.html?id=${oeuvre.id}" class="spotlight__oeuvre">
-          <div class="spotlight__cover">${coverOeuvre}</div>
-          <div class="spotlight__oeuvre-info">
-            <div class="spotlight__oeuvre-label">Dernière œuvre</div>
-            <div class="spotlight__oeuvre-titre">${oeuvre.titre}</div>
-            <div class="spotlight__oeuvre-genre">${oeuvre.genre || ''}</div>
-          </div>
-        </a>` : ''}
-        <div class="spotlight__nav">
-          ${dots}
-        </div>
-      </div>`;
-
-    // Dots cliquables
-    wrap.querySelectorAll('.spotlight__dot').forEach(btn => {
-      btn.addEventListener('click', () => {
-        idx = parseInt(btn.dataset.idx);
-        afficher(idx);
-        resetTimer();
-      });
-    });
-  }
-
-  let timer;
-  function resetTimer() {
-    clearInterval(timer);
-    timer = setInterval(() => {
-      idx = (idx + 1) % auteurs.length;
-      afficher(idx);
-    }, 5000);
-  }
-
-  afficher(0);
-  if (auteurs.length > 1) resetTimer();
-}
-
-/* ── Grille "Premiers pas" ─────────────────────────────── */
-function renderPremiersPas(oeuvres) {
-  const grid = document.getElementById('grid-premiers-pas');
-  if (!grid) return;
-  if (!oeuvres.length) {
-    grid.innerHTML = videState('Aucune œuvre pour le moment.');
-    return;
-  }
-  const html = oeuvres.map(renderBookMini).join('');
-  grid.innerHTML = html + html;
-  grid.addEventListener('click', () => grid.classList.toggle('paused'));
-  gererErreurImages(grid);
 }
 
 function gererErreurImages(container) {

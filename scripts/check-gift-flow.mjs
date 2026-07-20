@@ -70,6 +70,7 @@ appels.length = 0;
 global.fetch = mockFetch([
   { method: 'GET',   match: '/rest/v1/paiements', json: [] },
   { method: 'GET',   match: '/rest/v1/cadeaux',   json: [{ id: 'cad-1', oeuvre_id: OEUVRE, montant_xaf: 6560, statut: 'en_attente' }] },
+  { method: 'GET',   match: '/rest/v1/commandes_occasion', json: [] },
   { method: 'PATCH', match: '/rest/v1/cadeaux',   status: 204, text: '' },
   { method: 'GET',   match: '/rest/v1/oeuvres',   json: [{ auteur_id: AUTEUR }] },
   { method: 'POST',  match: '/rest/v1/revenus',   status: 201, text: '' },
@@ -97,6 +98,7 @@ appels.length = 0;
 global.fetch = mockFetch([
   { method: 'GET', match: '/rest/v1/paiements', json: [] },
   { method: 'GET', match: '/rest/v1/cadeaux',   json: [{ id: 'cad-1', oeuvre_id: OEUVRE, montant_xaf: 6560, statut: 'paye' }] },
+  { method: 'GET', match: '/rest/v1/commandes_occasion', json: [] },
 ]);
 const repHook2 = await webhook({
   request: new Request('https://k.test/api/fapshi-webhook', {

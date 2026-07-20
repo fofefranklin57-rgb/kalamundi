@@ -14,6 +14,27 @@ Format par entrée :
 - **Leçon** : la règle à retenir pour ne pas recommencer
 ```
 
+### [2026-07-20] `exclureSysteme` ne filtrait rien — le patrimoine noyait les auteurs partout, pas seulement sur l'accueil
+- **Symptôme** : les rails « Rayons de lecture » (accueil) et l'onglet « Œuvres Kalamundi » du catalogue (`library.js?collection=originaux`) prétendaient filtrer les imports du domaine public, mais affichaient en réalité Zola/Dumas/Hugo mélangés aux 3 vraies œuvres d'auteurs.
+- **Cause** : `api.getOeuvres({ exclureSysteme: true })` excluait seulement `auteur_id = '00000000-…-0001'` — mais les imports en masse (`import_d1.mjs`…`import_d9.mjs`) utilisent chacun un `auteur_id` système différent. Vérifié en direct contre la base réelle : 288/288 œuvres passaient le filtre (0 exclue). Seul `estOeuvreImportee()` (déjà utilisé par `getStatsAccueil`) identifie correctement les 3 vrais auteurs via une combinaison nom/texte.
+- **Correctif** : `getOeuvres({ exclureSysteme: true })` sur-récupère (jusqu'à 300 lignes) puis filtre en JS avec `estOeuvreImportee`, avant de paginer. Un seul correctif central profite à tous les appelants (accueil, catalogue). Vérifié en direct : total passe de 288 à 3, exactement les bons titres.
+- **Fichier(s)** : `assets/js/api.js`.
+- **Leçon** : un paramètre nommé `exclureSysteme` qui ne fait que comparer à un unique UUID codé en dur ment sur ce qu'il fait dès qu'un deuxième import utilise un autre UUID. Toujours vérifier un filtre de ce genre contre la base réelle, pas seulement contre son intention.
+
+### [2026-07-20] Le navigateur de test servait un `app.js` vieux d'un jour malgré le serveur à jour
+- **Symptôme** : après avoir réécrit `app.js`, la page rendait un accueil vide (rail auteurs vide, aucune erreur console) — alors que `curl` direct sur le même port renvoyait bien le fichier à jour.
+- **Cause** : le Service Worker PWA (`kala-v32`, installé lors de tests précédents dans le même onglet) interceptait la requête `/assets/js/app.js` et servait sa copie en cache, indépendamment du serveur. Redémarrer le serveur de preview n'y changeait rien : le cache vit dans le navigateur, pas le serveur.
+- **Correctif** : `navigator.serviceWorker.getRegistrations()` + `unregister()` + `caches.delete()` pour repartir propre en test ; **et**, côté livrable réel, bump systématique de `VERSION` dans `sw.js` (`kala-v32` → `kala-v33`) à chaque changement d'assets — la vraie protection en production, déjà une règle du dépôt (`CLAUDE.md`) mais facile à oublier en cours de session.
+- **Fichier(s)** : `sw.js`.
+- **Leçon** : si une page semble « ne pas refléter » un changement de code sans aucune erreur, soupçonner le Service Worker avant de soupçonner le serveur ou le code — surtout sur une PWA offline-first où le cache est justement conçu pour survivre au réseau.
+
+### [2026-07-20] `check-gift-flow.mjs` cassé par un ajout antérieur non répercuté dans son mock
+- **Symptôme** : `npm run check` échouait sur `check-gift-flow.mjs` (« Le webhook doit confirmer 1 cadeau (obtenu undefined) »), sans lien apparent avec le travail de réorganisation de l'accueil en cours.
+- **Cause** : `fapshi-webhook.js` appelle désormais `getCommandesOccasion()` en plus de `getPaiements()`/`getCadeaux()` (ajouté plus tôt dans la même session, pour le séquestre occasion) — mais le mock de `check-gift-flow.mjs` n'avait pas été mis à jour avec cette troisième requête, qui échouait donc silencieusement (« Appel non mocké ») et faisait avorter le test.
+- **Correctif** : ajout de `{ method: 'GET', match: '/rest/v1/commandes_occasion', json: [] }` aux deux mocks webhook du test.
+- **Fichier(s)** : `scripts/check-gift-flow.mjs`.
+- **Leçon** : quand un fichier partagé (ici `fapshi-webhook.js`) gagne un nouvel appel réseau, **tous** ses tests par mock doivent être mis à jour dans le même geste — `npm run check` complet (pas juste le test du sujet du jour) doit tourner avant de conclure qu'une session est terminée, précisément pour attraper ce genre de rupture différée.
+
 ### [2026-07-20] Un abonné Reader+ lisait n'importe quelle œuvre premium sans que l'auteur soit payé
 - **Symptôme** : après le correctif du même jour (« abonné devait racheter chaque œuvre »), un abonné Reader+/Auteur Pro obtenait un accès illimité à **toutes** les œuvres premium — y compris celles d'auteurs qui n'ont rien choisi de tel. L'auteur touchait **0 FCFA** pour ces lectures (signalé par Franklin : « les auteurs ne vont pas le faire gratuitement »).
 - **Cause** : le correctif précédent honorait la promesse marketing (« accès illimité ») mais ignorait une restriction déjà actée dans le design (`ADAPTATION_STANDARDS_KDP.md` §5.3, écrit avant tout code) : **seules les œuvres explicitement en « Kalamundi Select »** (opt-in auteur, exclusivité, 70 % au lieu de 50 %) doivent être incluses dans l'abonnement. Le fonds mensuel qui doit rémunérer l'auteur à la page lue (§5.2) n'existe pas non plus — donc même les œuvres Select ne seraient pas payées aujourd'hui, mais au moins l'auteur aurait consenti à l'exclusivité en échange.

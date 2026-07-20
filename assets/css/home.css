@@ -364,6 +364,42 @@
   overflow: hidden;
 }
 
+/* Tuile « Ta place est ici » — CTA de publication à la fin du rail auteurs.
+   Le catalogue d'auteurs est petit aujourd'hui (cf. audit 20/07) : plutôt
+   que de le cacher, on en fait un appel à publier. */
+.book-mini--cta {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--spacing-sm);
+  border-style: dashed;
+  border-width: 1.5px;
+  padding: var(--spacing-md);
+  min-height: 174px;
+  color: var(--text-secondary);
+}
+.book-mini--cta:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.book-mini__cta-icon { font-size: 1.6rem; }
+.book-mini__cta-text { font-size: var(--font-size-sm); font-weight: 600; line-height: 1.3; }
+
+/* Bibliothèque patrimoine — volontairement discrète, jamais mélangée aux
+   œuvres d'auteurs (cf. audit 20/07 : 285/288 œuvres du catalogue). */
+.section--patrimoine { padding-top: var(--spacing-lg); border-top: 1px solid var(--border-color); }
+.section__title--muted { font-size: var(--font-size-lg); color: var(--text-secondary); }
+.books-carousel--muted { opacity: 0.85; }
+.books-carousel--muted .book-mini__cover { height: 80px; }
+
+/* Occasion — état vide honnête (aucune fausse annonce). */
+.occasion-vide {
+  background: var(--bg-card);
+  border: 1.5px dashed var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--text-secondary);
+}
+.occasion-vide p { margin-bottom: var(--spacing-sm); font-size: var(--font-size-sm); }
+
 .book-mini__cover img {
   width: 100%;
   height: 100%;

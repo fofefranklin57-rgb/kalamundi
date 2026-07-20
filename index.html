@@ -80,96 +80,20 @@
 
     <main class="main-content">
 
-      <!-- CARROUSEL PRÉSENTATION -->
+      <!-- SECTION : À découvrir — SEULEMENT les œuvres d'auteurs Kalamundi.
+           Le patrimoine (domaine public) a sa propre section plus bas, jamais
+           mélangé ici (cf. audit du 20/07 : 285/288 œuvres importées noyaient
+           les 3 vraies créations d'auteurs). -->
       <section class="section container">
         <div class="section__header">
-          <h2 class="section__title" data-i18n="home.pourquoi.titre">Pourquoi Kalamundi ?</h2>
-          <a href="/pages/bienvenue.html" class="btn btn--ghost btn--sm" data-i18n="btn.en_savoir_plus">En savoir plus →</a>
+          <div>
+            <h2 class="section__title">À découvrir — nos auteurs</h2>
+            <p class="section__subtitle">Les créations publiées sur Kalamundi, pas le domaine public.</p>
+          </div>
+          <a href="/pages/library.html?collection=originaux" class="btn btn--ghost btn--sm">Tout voir →</a>
         </div>
         <div class="books-carousel-wrap">
-          <div class="promo-carousel">
-            <a href="/pages/bienvenue.html#pour-qui" class="promo-card promo-card--green">
-              <div class="promo-card__icon">✍️</div>
-              <div class="promo-card__title">Publiez gratuitement</div>
-              <div class="promo-card__text">Amateurs ou pros — votre œuvre mérite d'exister. Protégée dès le premier mot.</div>
-            </a>
-            <a href="/pages/bienvenue.html#valeurs" class="promo-card promo-card--gold">
-              <div class="promo-card__icon">🌍</div>
-              <div class="promo-card__title">30 langues</div>
-              <div class="promo-card__text">Lisez n'importe quelle œuvre dans votre langue grâce à la traduction automatique.</div>
-            </a>
-            <a href="/pages/bienvenue.html#valeurs" class="promo-card promo-card--green">
-              <div class="promo-card__icon">🔐</div>
-              <div class="promo-card__title">Droits protégés</div>
-              <div class="promo-card__text">Horodatage SHA-256 automatique. Votre paternité prouvable à tout moment.</div>
-            </a>
-            <a href="/pages/bienvenue.html#valeurs" class="promo-card promo-card--gold">
-              <div class="promo-card__icon">🆓</div>
-              <div class="promo-card__title">Gratuit pour toujours</div>
-              <div class="promo-card__text">Lecture et publication gratuites. Aucune carte bancaire requise.</div>
-            </a>
-            <a href="/pages/abonnements.html" class="promo-card promo-card--green">
-              <div class="promo-card__icon">📱</div>
-              <div class="promo-card__title">Hors ligne</div>
-              <div class="promo-card__text">Sauvegardez vos livres et continuez la lecture sans internet.</div>
-            </a>
-            <a href="/pages/abonnements.html" class="promo-card promo-card--gold">
-              <div class="promo-card__icon">💰</div>
-              <div class="promo-card__title">Gagnez de l'argent</div>
-              <div class="promo-card__text">50% des ventes premium reversés à l'auteur, paiements via Fapshi.</div>
-            </a>
-            <a href="/pages/bienvenue.html#pour-qui" class="promo-card promo-card--green">
-              <div class="promo-card__icon">⭐</div>
-              <div class="promo-card__title">Auteur Fondateur</div>
-              <div class="promo-card__text">Parmi les 500 premiers ? Badge exclusif et mise en avant permanente.</div>
-            </a>
-            <a href="/pages/abonnements.html" class="promo-card promo-card--gold">
-              <div class="promo-card__icon">💎</div>
-              <div class="promo-card__title">Reader+</div>
-              <div class="promo-card__text">Une expérience sans publicité, hors-ligne et pensée pour les lecteurs fidèles.</div>
-            </a>
-            <!-- Duplication boucle infinie -->
-            <a href="/pages/bienvenue.html#pour-qui" class="promo-card promo-card--green">
-              <div class="promo-card__icon">✍️</div>
-              <div class="promo-card__title">Publiez gratuitement</div>
-              <div class="promo-card__text">Amateurs ou pros — votre œuvre mérite d'exister. Protégée dès le premier mot.</div>
-            </a>
-            <a href="/pages/bienvenue.html#valeurs" class="promo-card promo-card--gold">
-              <div class="promo-card__icon">🌍</div>
-              <div class="promo-card__title">30 langues</div>
-              <div class="promo-card__text">Lisez n'importe quelle œuvre dans votre langue grâce à la traduction automatique.</div>
-            </a>
-            <a href="/pages/bienvenue.html#valeurs" class="promo-card promo-card--green">
-              <div class="promo-card__icon">🔐</div>
-              <div class="promo-card__title">Droits protégés</div>
-              <div class="promo-card__text">Horodatage SHA-256 automatique. Votre paternité prouvable à tout moment.</div>
-            </a>
-            <a href="/pages/bienvenue.html#valeurs" class="promo-card promo-card--gold">
-              <div class="promo-card__icon">🆓</div>
-              <div class="promo-card__title">Gratuit pour toujours</div>
-              <div class="promo-card__text">Lecture et publication gratuites. Aucune carte bancaire requise.</div>
-            </a>
-            <a href="/pages/abonnements.html" class="promo-card promo-card--green">
-              <div class="promo-card__icon">📱</div>
-              <div class="promo-card__title">Hors ligne</div>
-              <div class="promo-card__text">Sauvegardez vos livres et continuez la lecture sans internet.</div>
-            </a>
-            <a href="/pages/abonnements.html" class="promo-card promo-card--gold">
-              <div class="promo-card__icon">💰</div>
-              <div class="promo-card__title">Gagnez de l'argent</div>
-              <div class="promo-card__text">50% des ventes premium reversés à l'auteur, paiements via Fapshi.</div>
-            </a>
-            <a href="/pages/bienvenue.html#pour-qui" class="promo-card promo-card--green">
-              <div class="promo-card__icon">⭐</div>
-              <div class="promo-card__title">Auteur Fondateur</div>
-              <div class="promo-card__text">Parmi les 500 premiers ? Badge exclusif et mise en avant permanente.</div>
-            </a>
-            <a href="/pages/abonnements.html" class="promo-card promo-card--gold">
-              <div class="promo-card__icon">💎</div>
-              <div class="promo-card__title">Reader+</div>
-              <div class="promo-card__text">Une expérience sans publicité, hors-ligne et pensée pour les lecteurs fidèles.</div>
-            </a>
-          </div>
+          <div class="books-carousel" id="grid-auteurs"></div>
         </div>
       </section>
 
@@ -209,76 +133,28 @@
         </div>
       </section>
 
-      <!-- SECTION : Œuvres vedettes -->
-      <section class="section container">
+      <!-- SECTION : Occasion — vrai état vide si aucune annonce, jamais inventé. -->
+      <section class="section container" id="section-occasion">
         <div class="section__header">
-          <h2 class="section__title" data-i18n="home.vedettes">Œuvres du moment</h2>
-          <a href="/pages/library.html" class="btn btn--ghost btn--sm" data-i18n="btn.voir_tout">Tout voir →</a>
+          <h2 class="section__title">🛒 Occasion entre lecteurs</h2>
+          <a href="/pages/occasion.html" class="btn btn--ghost btn--sm">Tout voir →</a>
         </div>
-        <div class="books-carousel-wrap">
-          <div class="books-carousel" id="grid-vedettes"></div>
-        </div>
+        <div id="home-occasion"><div class="skeleton-card"></div></div>
       </section>
 
-      <section class="section container commerce-rails" id="section-rails-commerce">
+      <!-- SECTION : Patrimoine — délibérément séparée et discrète (285 œuvres
+           du domaine public), jamais mélangée au flux des auteurs Kalamundi
+           ci-dessus (audit du 20/07). -->
+      <section class="section container section--patrimoine" id="section-patrimoine">
         <div class="section__header">
           <div>
-            <h2 class="section__title">Rayons de lecture</h2>
-            <p class="section__subtitle">Choisir vite quoi lire, acheter ou garder hors ligne.</p>
+            <h2 class="section__title section__title--muted">Bibliothèque patrimoine</h2>
+            <p class="section__subtitle" id="patrimoine-compte">Classiques du domaine public — libres et gratuits.</p>
           </div>
-          <a href="/pages/library.html" class="btn btn--ghost btn--sm">Catalogue complet →</a>
-        </div>
-        <div class="commerce-rails__grid" id="home-commerce-rails">
-          <div class="skeleton-card"></div>
-          <div class="skeleton-card"></div>
-          <div class="skeleton-card"></div>
-        </div>
-      </section>
-
-      <!-- SECTION : Genres -->
-      <section class="section section--alt">
-        <div class="container">
-          <h2 class="section__title" style="margin-bottom: var(--spacing-lg)" data-i18n="home.genres.titre">Explorer par genre</h2>
-          <div class="genres-grid">
-            <a href="/pages/library.html?genre=roman" class="genre-card"><span class="genre-card__icon">📖</span><span class="genre-card__name">Roman</span></a>
-            <a href="/pages/library.html?genre=poesie" class="genre-card"><span class="genre-card__icon">🖊️</span><span class="genre-card__name">Poésie</span></a>
-            <a href="/pages/library.html?genre=conte" class="genre-card"><span class="genre-card__icon">🌙</span><span class="genre-card__name">Conte</span></a>
-            <a href="/pages/library.html?genre=nouvelle" class="genre-card"><span class="genre-card__icon">📝</span><span class="genre-card__name">Nouvelle</span></a>
-            <a href="/pages/library.html?genre=essai" class="genre-card"><span class="genre-card__icon">💡</span><span class="genre-card__name">Essai</span></a>
-            <a href="/pages/library.html?genre=theatre" class="genre-card"><span class="genre-card__icon">🎭</span><span class="genre-card__name">Théâtre</span></a>
-            <a href="/pages/library.html?genre=biographie" class="genre-card"><span class="genre-card__icon">👤</span><span class="genre-card__name">Biographie</span></a>
-            <a href="/pages/library.html?genre=bd" class="genre-card"><span class="genre-card__icon">🎨</span><span class="genre-card__name">BD / Manga</span></a>
-          </div>
-        </div>
-      </section>
-
-      <!-- SECTION : Nouvelles publications -->
-      <section class="section container" id="section-nouveautes">
-        <div class="section__header">
-          <h2 class="section__title" data-i18n="home.nouveautes">Nouvelles publications</h2>
-          <a href="/pages/library.html?tri=recent" class="btn btn--ghost btn--sm" data-i18n="btn.voir_tout">Tout voir →</a>
+          <a href="/pages/library.html?collection=patrimoine" class="btn btn--ghost btn--sm">Explorer →</a>
         </div>
         <div class="books-carousel-wrap">
-          <div class="books-carousel" id="grid-nouveautes"></div>
-        </div>
-      </section>
-
-      <!-- SECTION : Nouveaux talents -->
-      <section class="section container" id="section-nouveaux-talents">
-        <div class="section__header">
-          <h2 class="section__title" data-i18n="home.nouveaux_talents">✨ Nouveaux talents</h2>
-          <a href="/pages/library.html?tri=recent" class="btn btn--ghost btn--sm" data-i18n="btn.tous_auteurs">Tous les auteurs →</a>
-        </div>
-        <!-- Spotlight auteur tournant -->
-        <div class="spotlight-wrap" id="spotlight-auteur">
-          <div class="spotlight-skeleton">
-            <div class="spinner"></div>
-          </div>
-        </div>
-        <!-- Grille "Premiers pas" -->
-        <h3 class="premiers-pas__titre" data-i18n="home.premieres_oeuvres">📝 Leurs premières œuvres</h3>
-        <div class="books-carousel-wrap" style="margin-top:var(--spacing-md)">
-          <div class="books-carousel" id="grid-premiers-pas"></div>
+          <div class="books-carousel books-carousel--muted" id="grid-patrimoine"></div>
         </div>
       </section>
 
