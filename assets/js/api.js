@@ -1497,7 +1497,7 @@ export const api = {
   async adminGetOeuvres({ page = 1, limit = 20 } = {}) {
     const { data, error, count } = await supabase
       .from('oeuvres')
-      .select(`id, titre, genre, statut, visible, nb_lectures, created_at, auteur_id,
+      .select(`id, titre, genre, statut, visible, prix, couverture_url, nb_lectures, created_at, auteur_id,
                profiles!oeuvres_auteur_id_fkey(nom)`, { count: 'exact' })
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);

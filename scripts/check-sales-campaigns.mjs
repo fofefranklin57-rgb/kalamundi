@@ -49,6 +49,9 @@ must(api, 'adminCreerCampagneVente', 'API création admin absente');
 const admin = readFileSync(files.admin, 'utf8');
 must(admin, 'chargerCampagnesVente', 'admin campagnes absent');
 must(admin, 'creerCampagneVente', 'création campagne admin absente');
+must(admin, 'Prix campagne requis : minimum 100 XAF.', 'validation prix campagne absente');
+must(admin, 'La date de fin doit être après la date de début.', 'validation dates campagne absente');
+must(admin, 'Lien copié.', 'copie lien campagne après création absente');
 
 const sw = readFileSync(files.sw, 'utf8');
 must(sw, 'kala-v34', 'Service Worker non bumpé pour les campagnes');

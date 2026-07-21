@@ -606,7 +606,10 @@ window.chargerCampagnesVente = async function () {
                 ${Number(c.impressions || 0).toLocaleString('fr-FR')} vues<br>
                 ${Number(c.clics || 0).toLocaleString('fr-FR')} clics · ${Number(c.intentions_achat || 0).toLocaleString('fr-FR')} achats lancés
               </td>
-              <td><button class="btn-xs btn-muted" onclick="copierTexte('${encodeURIComponent(lien)}')">Copier</button></td>
+              <td style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn-xs btn-muted" onclick="copierTexte('${encodeURIComponent(lien)}')">Copier</button>
+                <a class="btn-xs btn-success" href="${lien}" target="_blank" rel="noopener" style="text-decoration:none">Ouvrir</a>
+              </td>
               <td>
                 <select class="form-input" style="padding:4px 8px;font-size:11px;height:28px"
                   onchange="changerStatutCampagne('${c.id}', this.value)">
@@ -628,12 +631,20 @@ async function chargerSelectOeuvresCampagne() {
   try {
     const { data } = await api.adminGetOeuvres({ limit: 200 });
     const oeuvres = (data || []).filter(o => o.visible);
-    select.innerHTML = oeuvres.map(o => `<option value="${o.id}" data-titre="${escapeAttr(o.titre || '')}">${escapeHtml(o.titre || 'Sans titre')}</option>`).join('');
+    select.innerHTML = oeuvres.map(o => `
+      <option value="${o.id}"
+        data-titre="${escapeAttr(o.titre || '')}"
+        data-prix="${Number(o.prix || 0)}">
+        ${escapeHtml(o.titre || 'Sans titre')} ${o.prix ? `— ${Number(o.prix).toLocaleString('fr-FR')} XAF` : ''}
+      </option>`).join('');
     const mettreTitre = () => {
       const option = select.selectedOptions[0];
       const titre = option?.dataset.titre || '';
+      const prix = Number(option?.dataset.prix || 0);
       if (!document.getElementById('camp-titre').value) document.getElementById('camp-titre').value = titre;
       if (!document.getElementById('camp-slug').value) document.getElementById('camp-slug').value = slugify(titre);
+      if (!document.getElementById('camp-prix').value && prix > 0) document.getElementById('camp-prix').value = prix;
+      if (!document.getElementById('camp-prix-barre').value && prix > 0) document.getElementById('camp-prix-barre').placeholder = String(Math.round(prix * 1.35));
     };
     select.addEventListener('change', mettreTitre);
     mettreTitre();
@@ -646,23 +657,34 @@ window.creerCampagneVente = async function () {
   const oeuvreId = document.getElementById('camp-oeuvre')?.value;
   const titre = document.getElementById('camp-titre')?.value.trim();
   const slug = slugify(document.getElementById('camp-slug')?.value || titre);
+  const dateDebut = dateLocaleVersIso(document.getElementById('camp-debut')?.value) || new Date().toISOString();
+  const dateFin = dateLocaleVersIso(document.getElementById('camp-fin')?.value);
+  const prixCampagne = valeurNombre('camp-prix');
   if (!oeuvreId || !titre || !slug) {
     toast('Œuvre, titre et slug sont requis.', 'error');
+    return;
+  }
+  if (prixCampagne == null || prixCampagne < 100) {
+    toast('Prix campagne requis : minimum 100 XAF.', 'error');
+    return;
+  }
+  if (dateFin && new Date(dateFin) <= new Date(dateDebut)) {
+    toast('La date de fin doit être après la date de début.', 'error');
     return;
   }
 
   try {
     const oeuvre = (await api.adminGetOeuvres({ limit: 200 })).data.find(o => o.id === oeuvreId);
-    await api.adminCreerCampagneVente({
+    const campagne = await api.adminCreerCampagneVente({
       oeuvre_id: oeuvreId,
       auteur_id: oeuvre?.auteur_id || null,
       titre,
       slogan: document.getElementById('camp-slogan')?.value.trim() || null,
       slug,
       statut: 'active',
-      date_debut: dateLocaleVersIso(document.getElementById('camp-debut')?.value) || new Date().toISOString(),
-      date_fin: dateLocaleVersIso(document.getElementById('camp-fin')?.value),
-      prix_campagne: valeurNombre('camp-prix'),
+      date_debut: dateDebut,
+      date_fin: dateFin,
+      prix_campagne: prixCampagne,
       prix_barre: valeurNombre('camp-prix-barre'),
       devise: 'XAF',
       budget_pub_xaf: valeurNombre('camp-budget') || 0,
@@ -670,7 +692,9 @@ window.creerCampagneVente = async function () {
         .split(',').map(v => v.trim()).filter(Boolean),
       conditions_admin: document.getElementById('camp-conditions')?.value.trim() || null,
     });
-    toast('Campagne créée.', 'success');
+    const lien = `${location.origin}/pages/campaign.html?c=${encodeURIComponent(campagne.slug || slug)}`;
+    await navigator.clipboard?.writeText(lien).catch(() => {});
+    toast('Campagne créée. Lien copié.', 'success');
     chargerCampagnesVente();
   } catch (e) {
     toast(e.message || 'Création impossible.', 'error');
