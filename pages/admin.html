@@ -161,6 +161,9 @@
         <button class="sidebar__btn" data-section="promotions" onclick="showSection('promotions',this)">
           🏷️ Promotions
         </button>
+        <button class="sidebar__btn" data-section="campagnes" onclick="showSection('campagnes',this)">
+          🚀 Campagnes livre
+        </button>
       </div>
       <div class="sidebar__section">
         <div class="sidebar__label">Finances</div>
@@ -284,6 +287,75 @@
           Renseignez un « prix avant » supérieur au prix de vente pour afficher un badge de réduction sur la fiche du livre. Laissez vide pour retirer la promo.
         </p>
         <div id="table-promotions"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
+      </section>
+
+      <!-- CAMPAGNES DE VENTE -->
+      <section class="admin-section" id="section-campagnes">
+        <div class="section-header">
+          <h2>Campagnes de vente livre</h2>
+          <button class="btn btn--ghost btn--sm" onclick="chargerCampagnesVente()">↻ Actualiser</button>
+        </div>
+        <div class="card-block" style="margin-bottom:var(--spacing-lg)">
+          <h3>Créer une campagne partageable</h3>
+          <div class="cards-2">
+            <div class="form-group">
+              <label>Œuvre</label>
+              <select id="camp-oeuvre" class="form-select"></select>
+            </div>
+            <div class="form-group">
+              <label>Slug du lien</label>
+              <input id="camp-slug" class="form-input" placeholder="ex. enfants-meme-ventre-juillet" />
+            </div>
+          </div>
+          <div class="cards-2">
+            <div class="form-group">
+              <label>Titre campagne</label>
+              <input id="camp-titre" class="form-input" placeholder="Titre visible dans la campagne" />
+            </div>
+            <div class="form-group">
+              <label>Slogan</label>
+              <input id="camp-slogan" class="form-input" placeholder="Une phrase courte pour vendre le livre" />
+            </div>
+          </div>
+          <div class="cards-2">
+            <div class="form-group">
+              <label>Prix campagne XAF</label>
+              <input id="camp-prix" class="form-input" type="number" min="0" step="1" />
+            </div>
+            <div class="form-group">
+              <label>Prix avant XAF</label>
+              <input id="camp-prix-barre" class="form-input" type="number" min="0" step="1" />
+            </div>
+          </div>
+          <div class="cards-2">
+            <div class="form-group">
+              <label>Début</label>
+              <input id="camp-debut" class="form-input" type="datetime-local" />
+            </div>
+            <div class="form-group">
+              <label>Fin</label>
+              <input id="camp-fin" class="form-input" type="datetime-local" />
+            </div>
+          </div>
+          <div class="cards-2">
+            <div class="form-group">
+              <label>Budget pub XAF</label>
+              <input id="camp-budget" class="form-input" type="number" min="0" step="1" value="0" />
+            </div>
+            <div class="form-group">
+              <label>Canaux</label>
+              <input id="camp-canaux" class="form-input" value="facebook, whatsapp, tiktok" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Conditions admin / auteur</label>
+            <input id="camp-conditions" class="form-input" placeholder="Ex: budget sponsorisé, durée, commission, engagements auteur" />
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn btn--primary" onclick="creerCampagneVente()">Créer la campagne</button>
+          </div>
+        </div>
+        <div id="table-campagnes"><div class="empty-state"><div class="empty-state__icon">⏳</div><p class="empty-state__title">Chargement…</p></div></div>
       </section>
 
       <!-- LITIGES OCCASION -->

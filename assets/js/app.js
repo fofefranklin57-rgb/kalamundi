@@ -7,7 +7,7 @@ import { getSession, supabase } from './auth.js';
 import { api, estOeuvreImportee } from './api.js';
 import { injecterPub } from './pub.js';
 import { initNotificationsPush } from './notifications.js';
-import { echapperAttr, normaliserUrlImage } from './cover-utils.js';
+import { echapperAttr, normaliserUrlImage, genererCouvertureOeuvre } from './cover-utils.js';
 import i18n from './i18n.js';
 
 /* ============================================================
@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const [session] = await Promise.all([
     initNavbar(),
     chargerAuteurs(),
+    chargerCampagnes(),
     chargerOccasion(),
     chargerPatrimoine(),
   ]);
@@ -292,6 +293,57 @@ async function chargerPatrimoine() {
 }
 
 /* ============================================================
+   Campagnes de vente — ouvrages mis en avant sur période donnée.
+   Pensé pour les liens sponsorisés : Facebook/WhatsApp/TikTok pointent vers
+   /pages/campaign.html?c=slug et l'accueil relaie les campagnes actives.
+   ============================================================ */
+
+async function chargerCampagnes() {
+  const section = document.getElementById('section-campagnes');
+  const wrap = document.getElementById('home-campagnes');
+  if (!section || !wrap) return;
+
+  try {
+    const campagnes = await api.getCampagnesVenteActives({ limit: 4 });
+    if (!campagnes.length) return;
+
+    wrap.innerHTML = campagnes.map(renderCampagneCard).join('');
+    gererErreurImages(wrap);
+    section.style.display = '';
+  } catch (err) {
+    console.warn('Campagnes indisponibles :', err);
+  }
+}
+
+function renderCampagneCard(campagne) {
+  const oeuvre = campagne.oeuvres || {};
+  const titre = campagne.titre || oeuvre.titre || 'Livre Kalamundi';
+  const auteur = oeuvre.profiles?.nom || 'Auteur Kalamundi';
+  const prix = Number(campagne.prix_campagne ?? oeuvre.prix ?? 0);
+  const prixBarre = Number(campagne.prix_barre || 0);
+  const coverUrl = normaliserUrlImage(campagne.visuel_url || oeuvre.couverture_url);
+  const cover = coverUrl
+    ? `<img src="${echapperAttr(coverUrl)}" alt="${echapperAttr(titre)}" loading="lazy" class="campaign-card__img">`
+    : `<img src="${genererCouvertureOeuvre({ ...oeuvre, titre, profiles: { nom: auteur } }, 360, 520)}" alt="${echapperAttr(titre)}" loading="lazy" class="campaign-card__img">`;
+  const fin = campagne.date_fin ? new Date(campagne.date_fin).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) : 'durée limitée';
+
+  return `
+    <a class="campaign-card" href="/pages/campaign.html?c=${encodeURIComponent(campagne.slug)}">
+      <div class="campaign-card__cover">${cover}</div>
+      <div class="campaign-card__body">
+        <div class="campaign-card__kicker">Campagne · jusqu'au ${fin}</div>
+        <h3 class="campaign-card__title">${titre}</h3>
+        <p class="campaign-card__author">${auteur}</p>
+        ${campagne.slogan ? `<p class="campaign-card__text">${campagne.slogan}</p>` : ''}
+        <div class="campaign-card__price">
+          <strong>${prix ? prix.toLocaleString('fr-FR') + ' ' + (campagne.devise || 'XAF') : 'Lire maintenant'}</strong>
+          ${prixBarre > prix && prix > 0 ? `<span>${prixBarre.toLocaleString('fr-FR')} ${campagne.devise || 'XAF'}</span>` : ''}
+        </div>
+      </div>
+    </a>`;
+}
+
+/* ============================================================
    Occasion — vrai état vide si aucune annonce, jamais d'annonce
    inventée (cf. audit 20/07).
    ============================================================ */
@@ -352,7 +404,7 @@ async function chargerReprendre(userId) {
   const wrap = document.getElementById('home-reprendre');
   if (!section || !wrap) return;
   try {
-    const historique = (await api.getBibliotheque(userId)).slice(0, 4);
+    const historique = dedupliquerHistorique(await api.getBibliotheque(userId)).slice(0, 4);
     if (!historique.length) return;
 
     wrap.innerHTML = historique.map(renderReprendreCard).join('');
@@ -361,6 +413,16 @@ async function chargerReprendre(userId) {
   } catch (err) {
     console.error(err);
   }
+}
+
+function dedupliquerHistorique(lignes = []) {
+  const vus = new Set();
+  return (lignes || []).filter(item => {
+    const id = item.oeuvres?.id;
+    if (!id || vus.has(id)) return false;
+    vus.add(id);
+    return true;
+  });
 }
 
 function renderReprendreCard(item) {
@@ -396,13 +458,14 @@ function renderBookMini(oeuvre, lazyDuplicate = false) {
   const couleur  = couleurs[titre.charCodeAt(0) % couleurs.length];
   const initiale = titre.charAt(0).toUpperCase();
   const coverUrl = normaliserUrlImage(oeuvre.couverture_url);
+  const coverGeneree = !coverUrl ? genererCouvertureOeuvre(oeuvre, 260, 380) : '';
 
   // Doublons du carrousel → lazy loading, aria-hidden pour accessibilité
   const lazyAttr = lazyDuplicate ? 'loading="lazy" aria-hidden="true"' : 'loading="lazy"';
   const cover = coverUrl
     ? `<img src="${echapperAttr(coverUrl)}" alt="${echapperAttr(titre)}" ${lazyAttr} class="book-mini__img" data-fallback-color="${couleur}" data-fallback-initiale="${initiale}">`
-    : '';
-  const fallback = `<div class="book-mini__fallback" style="background:${couleur};display:${coverUrl ? 'none' : 'flex'}">
+    : `<img src="${coverGeneree}" alt="${echapperAttr(titre)}" ${lazyAttr} class="book-mini__img" data-fallback-color="${couleur}" data-fallback-initiale="${initiale}">`;
+  const fallback = `<div class="book-mini__fallback" style="background:${couleur};display:none">
     <span>${initiale}</span>
   </div>`;
 

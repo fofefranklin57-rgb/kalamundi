@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campagne livre — Kalamundi</title>
+  <meta name="description" content="Découvrez une campagne de vente Kalamundi et achetez l'ouvrage en paiement sécurisé Fapshi." />
+  <link rel="icon" href="/assets/img/favicon.ico" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/home.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="navbar__inner">
+      <a href="/index.html" class="navbar__logo"><img src="/assets/img/logo-mark-km.png" alt="" aria-hidden="true"><span>Kalamundi</span></a>
+      <div class="navbar__actions">
+        <a class="btn btn--ghost btn--sm" style="color:rgba(255,255,255,.9)" href="/pages/library.html">Catalogue</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="campaign-page" id="campaign-root">
+    <div class="container">
+      <div class="empty-state">
+        <div class="empty-state__icon">⏳</div>
+        <p class="empty-state__title">Chargement de la campagne…</p>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+  <script type="module" src="/assets/js/campaign.js"></script>
+  <script type="module" src="/assets/js/theme-init.js"></script>
+  <script type="module" src="/assets/js/i18n-boot.js"></script>
+</body>
+</html>

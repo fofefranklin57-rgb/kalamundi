@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     cadeau:    qs.get('cadeau') === '1', /* offrir à un proche (diaspora) */
     occasion:  qs.get('occasion') === '1', /* livre d'occasion (séquestre) */
     commandeOccasionId: qs.get('commande') || null,
+    campaign:  qs.get('campaign') || null,
     montant:   parseFloat(qs.get('montant')) || 0,
     titre:     qs.get('titre') || '',
   };
@@ -106,9 +107,11 @@ async function chargerInfoOeuvre() {
   try {
     const oeuvre = await api.getOeuvre(PARAMS.oeuvreId);
     PARAMS.titre   = oeuvre.titre;
-    PARAMS.montant = parseFloat(oeuvre.prix) || 0;
+    PARAMS.montant = PARAMS.campaign && PARAMS.montant > 0
+      ? PARAMS.montant
+      : parseFloat(oeuvre.prix) || 0;
     PARAMS.devise  = 'XAF';
-    afficherHeader('Achat œuvre premium', oeuvre.titre, PARAMS.montant, 'XAF');
+    afficherHeader(PARAMS.campaign ? 'Campagne livre' : 'Achat œuvre premium', oeuvre.titre, PARAMS.montant, 'XAF');
   } catch {
     afficherErreur('Œuvre introuvable.');
   }
@@ -284,6 +287,7 @@ async function _fapshiHandler() {
         oeuvreId:    PARAMS.oeuvreId || null,
         plan:        (estCadeau || estOccasion) ? null : (PARAMS.type || null),
         items:       (estCadeau || estOccasion) ? null : (PARAMS.items || null),
+        campaign:    PARAMS.campaign || null,
         cadeau:      estCadeau,
         commandeOccasionId: estOccasion ? PARAMS.commandeOccasionId : null,
         beneficiaireContact: estCadeau ? (document.getElementById('gift-contact')?.value || null) : null,

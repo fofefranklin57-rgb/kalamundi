@@ -1497,7 +1497,7 @@ export const api = {
   async adminGetOeuvres({ page = 1, limit = 20 } = {}) {
     const { data, error, count } = await supabase
       .from('oeuvres')
-      .select(`id, titre, genre, statut, visible, nb_lectures, created_at,
+      .select(`id, titre, genre, statut, visible, nb_lectures, created_at, auteur_id,
                profiles!oeuvres_auteur_id_fkey(nom)`, { count: 'exact' })
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
@@ -1577,6 +1577,88 @@ export const api = {
       .update({ prix_barre: prixBarre })
       .eq('id', offreId);
     if (error) throw new Error(error.message || 'Mise à jour impossible.');
+  },
+
+  /* ---- Campagnes de vente (V017) -------------------------- */
+
+  async getCampagnesVenteActives({ limit = 6 } = {}) {
+    const { data, error } = await supabase
+      .from('campagnes_vente')
+      .select(`
+        id, oeuvre_id, offre_id, auteur_id, titre, slogan, visuel_url, slug,
+        date_debut, date_fin, prix_campagne, prix_barre, devise, canaux,
+        impressions, clics, intentions_achat,
+        oeuvres(id, titre, genre, couverture_url, resume, prix,
+          profiles!oeuvres_auteur_id_fkey(nom, pays))
+      `)
+      .eq('statut', 'active')
+      .lte('date_debut', new Date().toISOString())
+      .or(`date_fin.is.null,date_fin.gte.${new Date().toISOString()}`)
+      .order('date_debut', { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.warn('Campagnes de vente indisponibles :', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  async getCampagneVente(slug) {
+    const { data, error } = await supabase
+      .from('campagnes_vente')
+      .select(`
+        id, oeuvre_id, offre_id, auteur_id, titre, slogan, visuel_url, slug,
+        statut, date_debut, date_fin, prix_campagne, prix_barre, devise,
+        canaux, conditions_admin, impressions, clics, intentions_achat,
+        oeuvres(id, titre, genre, couverture_url, resume, prix, chapitres_gratuits,
+          profiles!oeuvres_auteur_id_fkey(nom, pays, bio))
+      `)
+      .eq('slug', slug)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  async trackCampagneVente(slug, evenement = 'vue') {
+    if (!slug) return;
+    await supabase.rpc('track_campagne_vente', {
+      p_slug: slug,
+      p_evenement: evenement,
+    }).catch(() => {});
+  },
+
+  async adminGetCampagnesVente() {
+    const { data, error } = await supabase
+      .from('campagnes_vente')
+      .select(`
+        id, oeuvre_id, offre_id, auteur_id, titre, slogan, visuel_url, slug,
+        statut, date_debut, date_fin, prix_campagne, prix_barre, devise,
+        commission_plateforme_pct, budget_pub_xaf, canaux, conditions_admin,
+        impressions, clics, intentions_achat, conversions, revenu_xaf,
+        oeuvres(id, titre, prix, couverture_url, profiles!oeuvres_auteur_id_fkey(nom))
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return data || [];
+  },
+
+  async adminCreerCampagneVente(champs) {
+    const { data, error } = await supabase
+      .from('campagnes_vente')
+      .insert(champs)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async adminUpdateCampagneVente(id, champs) {
+    const { error } = await supabase
+      .from('campagnes_vente')
+      .update(champs)
+      .eq('id', id);
+    if (error) throw error;
   },
 
   async adminGetInstitutions() {

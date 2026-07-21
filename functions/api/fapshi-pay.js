@@ -33,7 +33,8 @@ export async function onRequestPost({ request, env }) {
     return new Response(JSON.stringify({ error: 'Corps JSON invalide' }), { status: 400, headers: corsHeaders });
   }
 
-  const { montant, devise, description, userId, oeuvreId, plan, redirectUrl } = body;
+  let { montant, devise, description, userId, oeuvreId, plan, redirectUrl } = body;
+  const campaignSlug = body.campaign || null;
 
   /* Vente suspendue (2026-07-20) : la fonctionnalité équipe/tableau de bord
      n'est pas construite (cf. ERROR_LOG.md). Le blocage frontend seul n'est
@@ -60,6 +61,24 @@ export async function onRequestPost({ request, env }) {
   const user = await getUser(jwt, env);
   if (!user?.id || user.id !== userId) {
     return new Response(JSON.stringify({ error: 'Session invalide.' }), { status: 401, headers: corsHeaders });
+  }
+
+  /* Campagne de vente : le prix vient du serveur, jamais de l'URL.
+     Une pub sociale pointe vers payment.html avec un montant visible, mais
+     l'acheteur peut modifier cette URL ; on relit donc la campagne active
+     avec la clé service avant d'initier Fapshi. */
+  if (campaignSlug && !estCadeau && !estOccasion && !items.length) {
+    const campagne = await getCampagneActive(env, campaignSlug).catch(() => null);
+    if (!campagne) {
+      return new Response(JSON.stringify({ error: 'Campagne inactive ou introuvable.' }), { status: 404, headers: corsHeaders });
+    }
+    if (oeuvreId && campagne.oeuvre_id !== oeuvreId) {
+      return new Response(JSON.stringify({ error: 'Campagne incohérente avec cette œuvre.' }), { status: 400, headers: corsHeaders });
+    }
+    oeuvreId = campagne.oeuvre_id;
+    montant = Number(campagne.prix_campagne || campagne.oeuvres?.prix || 0);
+    devise = campagne.devise || 'XAF';
+    description = description || `Campagne Kalamundi — ${campagne.titre || campagne.oeuvres?.titre || 'Livre'}`;
   }
 
   /* Montant en XAF (Fapshi encaisse en XAF).
@@ -122,6 +141,7 @@ export async function onRequestPost({ request, env }) {
         externalId:  estOccasion ? `occ-${commandeOccasionId}`
                    : estCadeau ? `gift-${userId}-${Date.now()}`
                    : items.length ? `cart-${userId}-${Date.now()}`
+                   : campaignSlug ? `campaign-${campaignSlug}-${userId}-${Date.now()}`
                    : (oeuvreId || plan || userId),
       }),
     });
@@ -185,6 +205,21 @@ export async function onRequestPost({ request, env }) {
     status: 200,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
   });
+}
+
+async function getCampagneActive(env, slug) {
+  if (!env.SUPABASE_SERVICE_KEY || !slug) return null;
+  const now = new Date().toISOString();
+  const url = `${SUPABASE_URL}/rest/v1/campagnes_vente?slug=eq.${encodeURIComponent(slug)}&statut=eq.active&date_debut=lte.${encodeURIComponent(now)}&or=(date_fin.is.null,date_fin.gte.${encodeURIComponent(now)})&select=oeuvre_id,titre,prix_campagne,devise,oeuvres(prix,titre)&limit=1`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+    },
+  });
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length ? rows[0] : null;
 }
 
 async function getCommandeOccasion(env, id) {

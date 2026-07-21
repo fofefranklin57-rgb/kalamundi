@@ -14,6 +14,13 @@ Format par entrée :
 - **Leçon** : la règle à retenir pour ne pas recommencer
 ```
 
+### [2026-07-20] Accueil : reprise de lecture dupliquée et cartes sans vraie couverture
+- **Symptôme** : l'accueil montrait plusieurs cartes du même livre dans « Reprendre la lecture » et des couvertures très pauvres en simple initiale, donnant une impression de contenu cassé ou peu moderne.
+- **Cause** : l'historique `lectures` peut contenir plusieurs entrées pour la même œuvre et `chargerReprendre()` les affichait telles quelles. En parallèle, `renderBookMini()` n'utilisait pas le générateur de couverture déjà disponible quand `couverture_url` était vide.
+- **Correctif** : déduplication par `oeuvre.id` avant rendu, lien conservé vers le chapitre courant le plus récent, et fallback visuel remplacé par `genererCouvertureOeuvre()`. Le carrousel ne s'anime plus quand il contient trop peu de livres.
+- **Fichier(s)** : `assets/js/app.js`, `assets/css/home.css`.
+- **Leçon** : un rail d'accueil doit être filtré comme un produit éditorial, pas juste rendre les lignes brutes de la base. Une PWA de lecture ne peut pas se permettre des cartes qui ressemblent à des placeholders permanents.
+
 ### [2026-07-20] `exclureSysteme` ne filtrait rien — le patrimoine noyait les auteurs partout, pas seulement sur l'accueil
 - **Symptôme** : les rails « Rayons de lecture » (accueil) et l'onglet « Œuvres Kalamundi » du catalogue (`library.js?collection=originaux`) prétendaient filtrer les imports du domaine public, mais affichaient en réalité Zola/Dumas/Hugo mélangés aux 3 vraies œuvres d'auteurs.
 - **Cause** : `api.getOeuvres({ exclureSysteme: true })` excluait seulement `auteur_id = '00000000-…-0001'` — mais les imports en masse (`import_d1.mjs`…`import_d9.mjs`) utilisent chacun un `auteur_id` système différent. Vérifié en direct contre la base réelle : 288/288 œuvres passaient le filtre (0 exclue). Seul `estOeuvreImportee()` (déjà utilisé par `getStatsAccueil`) identifie correctement les 3 vrais auteurs via une combinaison nom/texte.

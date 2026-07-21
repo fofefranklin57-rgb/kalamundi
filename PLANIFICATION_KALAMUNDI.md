@@ -25,7 +25,7 @@ Statut : ✅ tranché · 🟡 proposé (attente Franklin) · ⬜ ouvert
 | **D11** | **Diaspora** : ouvrir achat/location à la diaspora → **paiement international** (cartes/PayPal) + **multi-devises** (EUR/USD/FCFA) + pattern **gifting** (acheter/offrir un livre livré à un proche au pays) | Oui | ✅ **acté par Franklin** (mise en œuvre à cadrer) |
 | **D15** | **Commission occasion** = **20 %** (niveau PangoBooks) ; la plateforme porte les frais Fapshi ; répartition documentée pour le vendeur (CGU §5.5) | 20 % | ✅ **validé (Franklin)** |
 | **D16** | **Prise en charge des frais Fapshi (3 % encaissement, 0 % payout)** : la **plateforme absorbe seule** les frais → l'auteur touche sa part pleine. Documenté côté auteur (publish, contrat-auteur, dashboard). | `plateforme` | ✅ **validé (Franklin)** |
-| **D17** | **Promo** : livre mis en avant/soldé où la plateforme prend une **part majorée** (`repartirVentePromo`, remise + part plateforme paramétrables) | Oui, à cadrer | 🟡 |
+| **D17** | **Promo / campagne de vente** : livre mis en avant sur période donnée, page publique partageable, prix campagne/prix barré, conditions admin-auteur et tracking vues/clics/intention d'achat | Oui | ✅ **validé par Franklin** — migration `V017__campagnes_vente.sql` |
 | **D12** | **Stratégie éducation** : option **(a)** — intégré maintenant, séparable plus tard en PWA dédiée **« Kalamundi Campus »** sur backend partagé — détail dans `PROPOSITION_EDUCATION.md` | (a) | ✅ **validé** (nom « Kalamundi Campus » retenu) |
 | **D13** | **Canal maisons d'édition** : comptes catalogue + ingestion **ONIX**/EPUB + revenus **négociés** (≠ 50/50 auteur) ; onboarding via collectifs (African Books Collective, OAPE, Alliance) — détail `VISION_EDITEURS_ET_PATRIMOINE.md` | Oui, Phase 2/3 | ✅ **acté** (mise en œuvre à cadrer) |
 | **D14** | **Mission culturelle / bibliothèque numérique** : Fonds patrimoine **« Kalamundi Héritage »** (accès public-bien, distinct du commercial) + **partenariat MINAC/OIF/UNESCO** ; mené en parallèle, sans détourner le socle | Oui | ✅ **acté** (partenariats à initier) |
@@ -69,7 +69,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 ### Phase 2 — Espace Acheter (numérique, sans logistique)
 - [x] Entité Livre/produit + offres — ✅ Socle DB progressif livré (`livres`, `livre_editions`, `livre_offres`) ; reste UI panier/checkout en P3
 - [x] Panier + checkout multi-articles (Fapshi) — ✅ Codex 17/07 : panier local, page paiement `cart=1`, paiements multi-lignes confirmés par webhook
-- [ ] Store à rails (nouveautés, promos, catégories), prix FCFA barré/soldé
+- [x] Store à rails (nouveautés, promos, catégories), prix FCFA barré/soldé — ✅ promotions/prix barré `V016`, campagnes de vente accueil + landing publique + admin `V017`
 - [x] Historique de commandes, bibliothèque achetée — ✅ Codex 17/07 : section Mes achats dans la bibliothèque locale/offline
 
 ### Phase 3 — Espace Vendre / occasion (le plus dur)
@@ -127,7 +127,7 @@ Chaque phase est **livrable seule** et rapporte avant la suivante. Jamais 3 chan
 11. ✅ **Royalties 50/50 + reporting auteur niveau KDP + option Kalamundi Select.** `⟶ 5` *(livré 17/07 : reporting KDP dashboard, 50/50 visible, Select préparé mais non activé)*
 
 ### 🟩 P3 — Espace Acheter (Phase 2, numérique, sans logistique)
-12. 🟡 Entité produit/offres → **panier** → **checkout Fapshi** → store à rails → historique de commandes. `⟶ 5` *(panier, checkout multi-livres et historique achats livrés 17/07 ; prix barré/promo livré 19/07 — `V016__promo_prix_barre.sql`, section admin Promotions, badge sur la fiche œuvre uniquement pour l'instant ; reste : étendre l'affichage promo aux rails d'accueil et au catalogue, catégories avancées)*
+12. ✅ Entité produit/offres → **panier** → **checkout Fapshi** → store à rails → historique de commandes + campagnes. `⟶ 5` *(panier, checkout multi-livres et historique achats livrés 17/07 ; prix barré/promo livré 19/07 — `V016__promo_prix_barre.sql` ; campagnes livre livrées 20/07 — `V017__campagnes_vente.sql`, page publique partageable, rail accueil, admin création/suivi, prix spécial respecté par Fapshi. Reste futur : catégories avancées du store.)*
 13. 🟡 **Diaspora (D11)** — paiement international (cartes/PayPal) + multi-devises + **gifting**. `⟶ 12`
     - ✅ **Multi-devises** (16/07) : `scripts/lib/devises.mjs` — XAF/EUR/USD, parité fixe EUR 655,957, USD flottant via `TAUX_USD_XAF`, devise inconnue refusée. A corrigé 2 bugs graves (cf. ERROR_LOG). Contrôle `check-devises`.
     - ✅ **Gifting — serveur** (16/07) : migration `V011` + RPC `reclamer_cadeau` + codes `scripts/lib/cadeaux.mjs` + **flux paiement branché** (`fapshi-pay` crée le cadeau, `fapshi-webhook` le confirme et crédite l'auteur sans donner l'accès à l'acheteur). Contrôles `check-cadeaux` + `check-gift-flow`. ✅ **V011 appliquée sur Supabase (16/07).**

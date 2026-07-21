@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   chargerConfig();
   chargerLitiges();
   chargerPromotions();
+  chargerCampagnesVente();
+  chargerSelectOeuvresCampagne();
 });
 
 /* ============================================================
@@ -570,6 +572,125 @@ window.sauvegarderPromo = async function (offreId) {
 };
 
 /* ============================================================
+   Campagnes de vente livre (V017)
+   ============================================================ */
+
+window.chargerCampagnesVente = async function () {
+  const el = document.getElementById('table-campagnes');
+  if (!el) return;
+  el.innerHTML = loading();
+  try {
+    const data = await api.adminGetCampagnesVente();
+    if (!data.length) { el.innerHTML = vide('Aucune campagne de vente.'); return; }
+
+    el.innerHTML = `
+      <table class="admin-table">
+        <thead><tr>
+          <th>Campagne</th><th>Œuvre</th><th>Prix</th><th>Période</th>
+          <th>Statut</th><th>Performance</th><th>Lien</th><th>Actions</th>
+        </tr></thead>
+        <tbody>${data.map(c => {
+          const prix = Number(c.prix_campagne || c.oeuvres?.prix || 0);
+          const lien = `${location.origin}/pages/campaign.html?c=${encodeURIComponent(c.slug)}`;
+          return `
+            <tr>
+              <td>
+                <strong>${escapeHtml(c.titre)}</strong>
+                <div style="font-size:11px;color:var(--text-light)">${escapeHtml(c.slogan || c.conditions_admin || '')}</div>
+              </td>
+              <td>${escapeHtml(c.oeuvres?.titre || '—')}<br><span style="font-size:11px;color:var(--text-light)">${escapeHtml(c.oeuvres?.profiles?.nom || '')}</span></td>
+              <td>${prix.toLocaleString('fr-FR')} ${c.devise || 'XAF'}</td>
+              <td style="font-size:11px">${fmtDate(c.date_debut)}<br>${c.date_fin ? fmtDate(c.date_fin) : 'Sans fin'}</td>
+              <td><span class="badge ${c.statut === 'active' ? 'badge--success' : c.statut === 'suspendue' ? 'badge--error' : 'badge--warning'}">${c.statut}</span></td>
+              <td style="font-size:11px">
+                ${Number(c.impressions || 0).toLocaleString('fr-FR')} vues<br>
+                ${Number(c.clics || 0).toLocaleString('fr-FR')} clics · ${Number(c.intentions_achat || 0).toLocaleString('fr-FR')} achats lancés
+              </td>
+              <td><button class="btn-xs btn-muted" onclick="copierTexte('${encodeURIComponent(lien)}')">Copier</button></td>
+              <td>
+                <select class="form-input" style="padding:4px 8px;font-size:11px;height:28px"
+                  onchange="changerStatutCampagne('${c.id}', this.value)">
+                  ${['brouillon','programmee','active','terminee','suspendue'].map(s => `<option value="${s}" ${c.statut === s ? 'selected' : ''}>${s}</option>`).join('')}
+                </select>
+              </td>
+            </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  } catch (e) {
+    el.innerHTML = erreur('Impossible de charger les campagnes. Appliquez la migration V017 si nécessaire.');
+    console.error(e);
+  }
+};
+
+async function chargerSelectOeuvresCampagne() {
+  const select = document.getElementById('camp-oeuvre');
+  if (!select) return;
+  try {
+    const { data } = await api.adminGetOeuvres({ limit: 200 });
+    const oeuvres = (data || []).filter(o => o.visible);
+    select.innerHTML = oeuvres.map(o => `<option value="${o.id}" data-titre="${escapeAttr(o.titre || '')}">${escapeHtml(o.titre || 'Sans titre')}</option>`).join('');
+    const mettreTitre = () => {
+      const option = select.selectedOptions[0];
+      const titre = option?.dataset.titre || '';
+      if (!document.getElementById('camp-titre').value) document.getElementById('camp-titre').value = titre;
+      if (!document.getElementById('camp-slug').value) document.getElementById('camp-slug').value = slugify(titre);
+    };
+    select.addEventListener('change', mettreTitre);
+    mettreTitre();
+  } catch {
+    select.innerHTML = '<option value="">Œuvres indisponibles</option>';
+  }
+}
+
+window.creerCampagneVente = async function () {
+  const oeuvreId = document.getElementById('camp-oeuvre')?.value;
+  const titre = document.getElementById('camp-titre')?.value.trim();
+  const slug = slugify(document.getElementById('camp-slug')?.value || titre);
+  if (!oeuvreId || !titre || !slug) {
+    toast('Œuvre, titre et slug sont requis.', 'error');
+    return;
+  }
+
+  try {
+    const oeuvre = (await api.adminGetOeuvres({ limit: 200 })).data.find(o => o.id === oeuvreId);
+    await api.adminCreerCampagneVente({
+      oeuvre_id: oeuvreId,
+      auteur_id: oeuvre?.auteur_id || null,
+      titre,
+      slogan: document.getElementById('camp-slogan')?.value.trim() || null,
+      slug,
+      statut: 'active',
+      date_debut: dateLocaleVersIso(document.getElementById('camp-debut')?.value) || new Date().toISOString(),
+      date_fin: dateLocaleVersIso(document.getElementById('camp-fin')?.value),
+      prix_campagne: valeurNombre('camp-prix'),
+      prix_barre: valeurNombre('camp-prix-barre'),
+      devise: 'XAF',
+      budget_pub_xaf: valeurNombre('camp-budget') || 0,
+      canaux: (document.getElementById('camp-canaux')?.value || '')
+        .split(',').map(v => v.trim()).filter(Boolean),
+      conditions_admin: document.getElementById('camp-conditions')?.value.trim() || null,
+    });
+    toast('Campagne créée.', 'success');
+    chargerCampagnesVente();
+  } catch (e) {
+    toast(e.message || 'Création impossible.', 'error');
+  }
+};
+
+window.changerStatutCampagne = async function (id, statut) {
+  try {
+    await api.adminUpdateCampagneVente(id, { statut });
+    toast('Statut mis à jour.', 'success');
+    chargerCampagnesVente();
+  } catch (e) { toast(e.message || 'Erreur.', 'error'); }
+};
+
+window.copierTexte = async function (encoded) {
+  await navigator.clipboard?.writeText(decodeURIComponent(encoded)).catch(() => {});
+  toast('Lien copié.', 'success');
+};
+
+/* ============================================================
    Utilisateurs
    ============================================================ */
 
@@ -801,6 +922,46 @@ function _telechargerCSV(nom, lignes) {
 
 function fmtMoney(n) {
   return Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(date) {
+  if (!date) return '—';
+  return new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' });
+}
+
+function valeurNombre(id) {
+  const valeur = document.getElementById(id)?.value;
+  if (valeur == null || String(valeur).trim() === '') return null;
+  return Number(valeur);
+}
+
+function dateLocaleVersIso(valeur) {
+  if (!valeur) return null;
+  const date = new Date(valeur);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function slugify(text) {
+  return String(text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 72);
+}
+
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function escapeAttr(text) {
+  return escapeHtml(text).replace(/`/g, '&#096;');
 }
 
 function loading() {
