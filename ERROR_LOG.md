@@ -14,6 +14,13 @@ Format par entrée :
 - **Leçon** : la règle à retenir pour ne pas recommencer
 ```
 
+### [2026-07-21] APK Android pointait vers le dashboard owner au lieu de l'app publique
+- **Symptôme** : le dossier Android existant pouvait faire croire qu'une app Play Store était prête, mais le code lançait `kalamundi.pages.dev/pages/owner.html`, s'appelait « Kalamundi Owner » et utilisait `com.kalamundi.owner`.
+- **Cause** : ce wrapper avait été créé pour tester le dashboard owner, pas pour publier l'application lecteur/catalogue. En plus, `gradlew.bat` pointait vers un chemin Gradle local inexistant dans le profil utilisateur, donc la génération CLI n'était pas reproductible.
+- **Correctif** : URL remplacée par `https://kalamundi.afrisaas.com/`, package/applicationId `com.kalamundi.app`, nom `Kalamundi`, splash `La Plume du Monde`, domaines Fapshi/Supabase autorisés, wrapper Gradle redirigé vers le zip local du projet, et contrôle `check-android-wrapper`.
+- **Fichier(s)** : `android-owner/app/build.gradle`, `android-owner/app/src/main/java/com/kalamundi/app/MainActivity.java`, `android-owner/app/src/main/res/**`, `android-owner/gradlew.bat`, `scripts/check-android-wrapper.mjs`.
+- **Leçon** : un APK « qui existe » n'est pas forcément un livrable marché. Avant Play Store, vérifier le package, le nom public, l'URL de production, le paiement externe et la capacité à générer un build signé.
+
 ### [2026-07-20] Accueil : reprise de lecture dupliquée et cartes sans vraie couverture
 - **Symptôme** : l'accueil montrait plusieurs cartes du même livre dans « Reprendre la lecture » et des couvertures très pauvres en simple initiale, donnant une impression de contenu cassé ou peu moderne.
 - **Cause** : l'historique `lectures` peut contenir plusieurs entrées pour la même œuvre et `chargerReprendre()` les affichait telles quelles. En parallèle, `renderBookMini()` n'utilisait pas le générateur de couverture déjà disponible quand `couverture_url` était vide.

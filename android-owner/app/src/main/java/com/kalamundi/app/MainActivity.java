@@ -1,4 +1,4 @@
-package com.kalamundi.owner;
+package com.kalamundi.app;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -13,12 +13,10 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
-    // ⚠️ REMPLACE ICI avec ton vrai domaine Cloudflare Pages
-    private static final String OWNER_URL = "https://kalamundi.pages.dev/pages/owner.html";
+    private static final String APP_URL = "https://kalamundi.afrisaas.com/";
 
     private WebView webView;
 
@@ -27,7 +25,6 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Plein écran immersif
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().getDecorView().setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
@@ -35,44 +32,34 @@ public class MainActivity extends Activity {
         );
 
         setContentView(R.layout.activity_main);
-
         webView = findViewById(R.id.webview);
 
-        // ── Paramètres WebView ──────────────────────────────────
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);       // localStorage pour Supabase session
+        settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
-        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        webView.clearCache(true);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setAllowFileAccess(false);
         settings.setGeolocationEnabled(false);
         settings.setUserAgentString(
-            settings.getUserAgentString() + " KalamundiOwner/1.0"
+            settings.getUserAgentString() + " KalamundiAndroid/1.0"
         );
 
-        // Cookies persistants (session Supabase)
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
 
-        // ── Client WebView — navigation interne uniquement ──────
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                // Garder la navigation dans la WebView pour le même domaine
-                if (url.contains("kalamundi.pages.dev") || url.contains("supabase.co")) {
-                    return false;
-                }
-                // Liens externes → ignorer (pas de navigateur externe depuis le dashboard owner)
+                if (estDomaineAutorise(url)) return false;
                 return true;
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                // Masquer l'écran de chargement une fois la page prête
                 View splash = findViewById(R.id.splash);
                 if (splash != null) splash.setVisibility(View.GONE);
                 webView.setVisibility(View.VISIBLE);
@@ -81,20 +68,17 @@ public class MainActivity extends Activity {
             @Override
             public void onReceivedError(WebView view, int errorCode,
                                         String description, String failingUrl) {
-                // Pas de réseau — afficher écran offline
                 afficherOffline();
             }
         });
 
-        // ── Chargement ──────────────────────────────────────────
         if (estConnecte()) {
-            webView.loadUrl(OWNER_URL);
+            webView.loadUrl(APP_URL);
         } else {
             afficherOffline();
         }
     }
 
-    // ── Bouton retour — naviguer dans WebView ──────────────────
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
@@ -104,7 +88,14 @@ public class MainActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
-    // ── Réseau ─────────────────────────────────────────────────
+    private boolean estDomaineAutorise(String url) {
+        return url.contains("kalamundi.afrisaas.com")
+            || url.contains("kalamundi.pages.dev")
+            || url.contains("iobieffnaauecyukecds.supabase.co")
+            || url.contains("live.fapshi.com")
+            || url.contains("fapshi.com");
+    }
+
     private boolean estConnecte() {
         ConnectivityManager cm =
             (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
@@ -121,7 +112,6 @@ public class MainActivity extends Activity {
         if (splash != null) splash.setVisibility(View.GONE);
     }
 
-    // Réessayer depuis l'écran offline
     public void reessayer(View v) {
         View offline = findViewById(R.id.offline);
         View splash  = findViewById(R.id.splash);
@@ -129,7 +119,7 @@ public class MainActivity extends Activity {
         if (splash  != null) splash.setVisibility(View.VISIBLE);
         webView.setVisibility(View.VISIBLE);
         if (estConnecte()) {
-            webView.reload();
+            webView.loadUrl(APP_URL);
         } else {
             afficherOffline();
         }

@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.kalamundi.owner'
+    namespace 'com.kalamundi.app'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.kalamundi.owner"
+        applicationId "com.kalamundi.app"
         minSdk 26
         targetSdk 35
         versionCode 1
@@ -17,9 +17,9 @@ android {
     signingConfigs {
         release {
             // Remplis avec ton keystore après génération
-            // storeFile file("owner-release.jks")
+            // storeFile file("kalamundi-release.jks")
             // storePassword "TON_MOT_DE_PASSE"
-            // keyAlias "owner"
+            // keyAlias "kalamundi"
             // keyPassword "TON_MOT_DE_PASSE"
         }
     }

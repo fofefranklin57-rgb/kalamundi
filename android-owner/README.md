@@ -1,14 +1,11 @@
-# Kalamundi Owner — APK WebView
+# Kalamundi — Android WebView
 
-Application Android minimale (WebView) ouvrant directement le Owner Dashboard.
+Application Android minimale (WebView) ouvrant directement la plateforme publique Kalamundi.
 
-## Avant de builder
+## URL de production
 
-1. Ouvre `app/src/main/java/com/kalamundi/owner/MainActivity.java`
-2. Ligne 16 — remplace l'URL par ton vrai domaine :
-   ```java
-   private static final String OWNER_URL = "https://TON-DOMAINE.com/pages/owner.html";
-   ```
+L'app charge `https://kalamundi.afrisaas.com/`.
+Les domaines Kalamundi, Supabase et Fapshi sont autorisés dans la WebView.
 
 ## Builder l'APK (Android Studio)
 
@@ -26,12 +23,13 @@ gradlew.bat assembleDebug
 ./gradlew assembleDebug
 ```
 
-## Générer un APK signé (release)
+## Générer un AAB signé pour Google Play
 
 1. Menu → **Build → Generate Signed Bundle / APK**
-2. Créer ou utiliser un keystore existant
-3. Remplir les champs dans `app/build.gradle` section `signingConfigs`
-4. Builder en mode `release`
+2. Choisir **Android App Bundle (AAB)** pour Google Play
+3. Créer ou utiliser un keystore existant
+4. Remplir les champs dans `app/build.gradle` section `signingConfigs`
+5. Builder en mode `release`
 
 ## Caractéristiques de l'app
 

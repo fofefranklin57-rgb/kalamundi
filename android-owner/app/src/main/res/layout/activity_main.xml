@@ -23,8 +23,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📚"
-            android:textSize="52sp"
+            android:text="KM"
+            android:textColor="#D4A017"
+            android:textSize="42sp"
+            android:textStyle="bold"
             android:layout_marginBottom="16dp" />
 
         <TextView
@@ -39,7 +41,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="OWNER DASHBOARD"
+            android:text="LA PLUME DU MONDE"
             android:textColor="#D4A017"
             android:textSize="11sp"
             android:letterSpacing="0.2"
@@ -66,8 +68,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📡"
-            android:textSize="48sp"
+            android:text="KM"
+            android:textColor="#D4A017"
+            android:textSize="38sp"
+            android:textStyle="bold"
             android:layout_marginBottom="16dp" />
 
         <TextView

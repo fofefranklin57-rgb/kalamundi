@@ -2,4 +2,8 @@
 set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 set PATH=%JAVA_HOME%\bin;%PATH%
 set ANDROID_HOME=C:\Users\Franklin\AppData\Local\Android\Sdk
-"C:\Users\Franklin\.gradle\wrapper\dists\gradle-8.8-all\6gdy1pgp427xkqcjbxw3ylt6h\gradle-8.8\bin\gradle.bat" %*
+set GRADLE_HOME=%TEMP%\kalamundi-gradle-8.4\gradle-8.4
+if not exist "%GRADLE_HOME%\bin\gradle.bat" (
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '%~dp0gradle-8.4-bin.zip' -DestinationPath '%TEMP%\kalamundi-gradle-8.4' -Force"
+)
+"%GRADLE_HOME%\bin\gradle.bat" %*

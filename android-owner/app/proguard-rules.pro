@@ -2,4 +2,4 @@
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
--keep class com.kalamundi.owner.** { *; }
+-keep class com.kalamundi.app.** { *; }
