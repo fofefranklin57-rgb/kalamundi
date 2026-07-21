@@ -79,6 +79,7 @@ export async function onRequestPost({ request, env }) {
     montant = Number(campagne.prix_campagne || campagne.oeuvres?.prix || 0);
     devise = campagne.devise || 'XAF';
     description = description || `Campagne Kalamundi — ${campagne.titre || campagne.oeuvres?.titre || 'Livre'}`;
+    body.campagneId = campagne.id;
   }
 
   /* Montant en XAF (Fapshi encaisse en XAF).
@@ -198,6 +199,7 @@ export async function onRequestPost({ request, env }) {
     montant: montantXAF,
     transId: data.transId,
     items,
+    campagneId: body.campagneId || null,
   }).catch(() => {});
 
   /* Fapshi retourne { link, transId } */
@@ -210,7 +212,7 @@ export async function onRequestPost({ request, env }) {
 async function getCampagneActive(env, slug) {
   if (!env.SUPABASE_SERVICE_KEY || !slug) return null;
   const now = new Date().toISOString();
-  const url = `${SUPABASE_URL}/rest/v1/campagnes_vente?slug=eq.${encodeURIComponent(slug)}&statut=eq.active&date_debut=lte.${encodeURIComponent(now)}&or=(date_fin.is.null,date_fin.gte.${encodeURIComponent(now)})&select=oeuvre_id,titre,prix_campagne,devise,oeuvres(prix,titre)&limit=1`;
+  const url = `${SUPABASE_URL}/rest/v1/campagnes_vente?slug=eq.${encodeURIComponent(slug)}&statut=eq.active&date_debut=lte.${encodeURIComponent(now)}&or=(date_fin.is.null,date_fin.gte.${encodeURIComponent(now)})&select=id,oeuvre_id,titre,prix_campagne,devise,oeuvres(prix,titre)&limit=1`;
   const res = await fetch(url, {
     headers: {
       apikey: env.SUPABASE_SERVICE_KEY,
@@ -282,7 +284,7 @@ async function enregistrerCadeau({ env, offreurId, oeuvreId, montant, devise, mo
   throw new Error('Impossible de générer un code cadeau unique.');
 }
 
-async function enregistrerPaiement({ env, userId, oeuvreId, plan, montant, transId, items = [] }) {
+async function enregistrerPaiement({ env, userId, oeuvreId, plan, montant, transId, items = [], campagneId = null }) {
   if (!env.SUPABASE_SERVICE_KEY || !userId || !transId) return;
   const payload = items.length
     ? items.map(item => ({
@@ -304,6 +306,7 @@ async function enregistrerPaiement({ env, userId, oeuvreId, plan, montant, trans
         methode: 'fapshi',
         reference_transaction: transId,
         statut: 'en_attente',
+        campagne_id: campagneId,
       };
   const res = await fetch(`${SUPABASE_URL}/rest/v1/paiements`, {
     method: 'POST',
@@ -315,6 +318,27 @@ async function enregistrerPaiement({ env, userId, oeuvreId, plan, montant, trans
     },
     body: JSON.stringify(payload),
   });
+  if (!res.ok && campagneId) {
+    const texte = await res.text();
+    if (/campagne_id|Could not find|schema cache/i.test(texte)) {
+      const payloadSansCampagne = Array.isArray(payload)
+        ? payload.map(({ campagne_id, ...ligne }) => ligne)
+        : (({ campagne_id, ...ligne }) => ligne)(payload);
+      const retry = await fetch(`${SUPABASE_URL}/rest/v1/paiements`, {
+        method: 'POST',
+        headers: {
+          apikey: env.SUPABASE_SERVICE_KEY,
+          Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify(payloadSansCampagne),
+      });
+      if (!retry.ok) throw new Error(await retry.text());
+      return;
+    }
+    throw new Error(texte);
+  }
   if (!res.ok) throw new Error(await res.text());
 }
 

@@ -46,6 +46,7 @@ export async function onRequestPost({ request, env }) {
       }
       if (paiement.oeuvre_id) {
         await activerAccesOeuvre(env, paiement);
+        await confirmerConversionCampagne(env, paiement).catch(() => {});
       } else {
         await activerAbonnement(env, paiement);
       }
@@ -78,6 +79,24 @@ export async function onRequestPost({ request, env }) {
   } catch (err) {
     return json({ error: err.message || 'Erreur webhook Fapshi.' }, 500);
   }
+}
+
+async function confirmerConversionCampagne(env, paiement) {
+  if (!paiement.campagne_id || paiement.statut === 'confirme') return;
+  const campagne = await supabaseFetch(
+    env,
+    `${SUPABASE_URL}/rest/v1/campagnes_vente?id=eq.${encodeURIComponent(paiement.campagne_id)}&select=conversions,revenu_xaf&limit=1`
+  ).then(rows => rows?.[0]);
+  if (!campagne) return;
+
+  await supabaseFetch(env, `${SUPABASE_URL}/rest/v1/campagnes_vente?id=eq.${encodeURIComponent(paiement.campagne_id)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      conversions: Number(campagne.conversions || 0) + 1,
+      revenu_xaf: Number(campagne.revenu_xaf || 0) + Number(paiement.montant || 0),
+    }),
+  });
 }
 
 export async function onRequestOptions() {

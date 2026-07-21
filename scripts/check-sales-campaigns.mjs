@@ -31,6 +31,11 @@ must(js, '/pages/payment.html?', 'paiement Fapshi non relié');
 const fapshi = readFileSync('functions/api/fapshi-pay.js', 'utf8');
 must(fapshi, 'getCampagneActive', 'prix campagne non relu côté serveur');
 must(fapshi, 'Campagne incohérente avec cette œuvre', 'cohérence campagne/œuvre non vérifiée');
+must(fapshi, 'campagne_id', 'paiement non attribué à la campagne');
+
+const webhook = readFileSync('functions/api/fapshi-webhook.js', 'utf8');
+must(webhook, 'confirmerConversionCampagne', 'conversion campagne non confirmée au webhook');
+must(webhook, 'revenu_xaf', 'revenu campagne non incrémenté');
 
 const app = readFileSync(files.app, 'utf8');
 must(app, 'chargerCampagnes()', 'accueil ne charge pas les campagnes');
